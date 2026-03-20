@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Recommendation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class RecommendationController extends Controller
 {
@@ -23,22 +24,20 @@ class RecommendationController extends Controller
 
         $recommendations = $query->latest()->paginate($request->get('per_page', 15));
 
-        return response()->json($recommendations);
+        return ApiResponse::paginate($recommendations, 'Recommendations retrieved');
     }
 
     public function show(Recommendation $recommendation): JsonResponse
     {
         $recommendation->load(['incident', 'prediction.predictionEdges', 'approver']);
 
-        return response()->json(['data' => $recommendation]);
+        return ApiResponse::success($recommendation, 'Recommendation details retrieved');
     }
 
     public function approve(Request $request, Recommendation $recommendation): JsonResponse
     {
         if ($recommendation->status !== 'pending') {
-            return response()->json([
-                'message' => 'Chỉ có thể duyệt đề xuất đang ở trạng thái pending.',
-            ], 422);
+            return ApiResponse::validationError(null, 'Chỉ có thể duyệt đề xuất đang ở trạng thái pending.');
         }
 
         $recommendation->update([
@@ -47,10 +46,7 @@ class RecommendationController extends Controller
             'approved_at' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Đề xuất đã được phê duyệt.',
-            'data' => $recommendation->fresh(['approver']),
-        ]);
+        return ApiResponse::success($recommendation->fresh(['approver']), 'Đề xuất đã được phê duyệt.');
     }
 
     public function reject(Request $request, Recommendation $recommendation): JsonResponse
@@ -60,9 +56,7 @@ class RecommendationController extends Controller
         ]);
 
         if ($recommendation->status !== 'pending') {
-            return response()->json([
-                'message' => 'Chỉ có thể từ chối đề xuất đang ở trạng thái pending.',
-            ], 422);
+            return ApiResponse::validationError(null, 'Chỉ có thể từ chối đề xuất đang ở trạng thái pending.');
         }
 
         $recommendation->update([
@@ -70,9 +64,6 @@ class RecommendationController extends Controller
             'rejected_reason' => $request->reason,
         ]);
 
-        return response()->json([
-            'message' => 'Đề xuất đã bị từ chối.',
-            'data' => $recommendation,
-        ]);
+        return ApiResponse::success($recommendation, 'Đề xuất đã bị từ chối.');
     }
 }

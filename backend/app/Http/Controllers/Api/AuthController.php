@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Helpers\ApiResponse;
 
 class AuthController extends Controller
 {
@@ -37,10 +38,10 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
+        return ApiResponse::success([
             'user' => $this->formatUser($user),
             'token' => $token,
-        ]);
+        ], 'Login successful');
     }
 
     public function register(Request $request): JsonResponse
@@ -63,24 +64,24 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return response()->json([
+        return ApiResponse::created([
             'user' => $this->formatUser($user),
             'token' => $token,
-        ], 201);
+        ], 'Registration successful');
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json([
+        return ApiResponse::success([
             'user' => $this->formatUser($request->user()),
-        ]);
+        ], 'User profile retrieved');
     }
 
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Đăng xuất thành công.']);
+        return ApiResponse::success(null, 'Logged out successfully');
     }
 
     private function formatUser(User $user): array

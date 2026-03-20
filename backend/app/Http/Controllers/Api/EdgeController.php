@@ -7,6 +7,7 @@ use App\Models\Edge;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ApiResponse;
 
 class EdgeController extends Controller
 {
@@ -36,8 +37,7 @@ class EdgeController extends Controller
             'status' => $edge->status,
             'metrics_updated_at' => $edge->metrics_updated_at,
         ]);
-
-        return response()->json(['data' => $edges]);
+        return ApiResponse::success($edges, 'Traffic edges retrieved');
     }
 
     public function geojson(Request $request): JsonResponse
@@ -90,26 +90,24 @@ class EdgeController extends Controller
             [$edge->id]
         );
 
-        return response()->json([
-            'data' => [
-                'id' => $edge->id,
-                'name' => $edge->name,
-                'source_node' => $edge->sourceNode,
-                'target_node' => $edge->targetNode,
-                'geometry' => json_decode($geom->geojson),
-                'length_m' => $edge->length_m,
-                'lanes' => $edge->lanes,
-                'speed_limit_kmh' => $edge->speed_limit_kmh,
-                'direction' => $edge->direction,
-                'road_type' => $edge->road_type,
-                'current_density' => $edge->current_density,
-                'current_speed_kmh' => $edge->current_speed_kmh,
-                'current_flow' => $edge->current_flow,
-                'congestion_level' => $edge->congestion_level,
-                'status' => $edge->status,
-                'metrics_updated_at' => $edge->metrics_updated_at,
-                'sensors_count' => $edge->sensors->count(),
-            ],
-        ]);
+        return ApiResponse::success([
+            'id' => $edge->id,
+            'name' => $edge->name,
+            'source_node' => $edge->sourceNode,
+            'target_node' => $edge->targetNode,
+            'geometry' => json_decode($geom->geojson),
+            'length_m' => $edge->length_m,
+            'lanes' => $edge->lanes,
+            'speed_limit_kmh' => $edge->speed_limit_kmh,
+            'direction' => $edge->direction,
+            'road_type' => $edge->road_type,
+            'current_density' => $edge->current_density,
+            'current_speed_kmh' => $edge->current_speed_kmh,
+            'current_flow' => $edge->current_flow,
+            'congestion_level' => $edge->congestion_level,
+            'status' => $edge->status,
+            'metrics_updated_at' => $edge->metrics_updated_at,
+            'sensors_count' => $edge->sensors->count(),
+        ], 'Edge details retrieved');
     }
 }

@@ -8,6 +8,7 @@ use App\Jobs\CallAIPrediction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ApiResponse;
 
 class IncidentController extends Controller
 {
@@ -26,7 +27,7 @@ class IncidentController extends Controller
 
         $incidents = $query->paginate($request->get('per_page', 15));
 
-        return response()->json($incidents);
+        return ApiResponse::paginate($incidents, 'Incidents retrieved');
     }
 
     public function store(Request $request): JsonResponse
@@ -77,10 +78,7 @@ class IncidentController extends Controller
             CallAIPrediction::dispatch($incident);
         }
 
-        return response()->json([
-            'message' => 'Sự cố đã được tạo.',
-            'data' => $incident->fresh(['reporter']),
-        ], 201);
+        return ApiResponse::created($incident->fresh(['reporter']), 'Incident reported successfully');
     }
 
     public function show(Incident $incident): JsonResponse
@@ -95,11 +93,9 @@ class IncidentController extends Controller
             );
         }
 
-        return response()->json([
-            'data' => array_merge($incident->toArray(), [
-                'location' => $coords,
-            ]),
-        ]);
+        return ApiResponse::success(array_merge($incident->toArray(), [
+            'location' => $coords,
+        ]), 'Incident details retrieved');
     }
 
     public function update(Request $request, Incident $incident): JsonResponse
@@ -118,9 +114,6 @@ class IncidentController extends Controller
 
         $incident->update($validated);
 
-        return response()->json([
-            'message' => 'Sự cố đã được cập nhật.',
-            'data' => $incident->fresh(['reporter', 'assignee']),
-        ]);
+        return ApiResponse::success($incident->fresh(['reporter', 'assignee']), 'Incident updated successfully');
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Prediction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class PredictionController extends Controller
 {
@@ -23,13 +24,13 @@ class PredictionController extends Controller
 
         $predictions = $query->latest()->paginate($request->get('per_page', 15));
 
-        return response()->json($predictions);
+        return ApiResponse::paginate($predictions, 'Predictions retrieved');
     }
 
     public function show(Prediction $prediction): JsonResponse
     {
         $prediction->load(['incident', 'predictionEdges.edge', 'recommendations']);
 
-        return response()->json(['data' => $prediction]);
+        return ApiResponse::success($prediction, 'Prediction details retrieved');
     }
 }

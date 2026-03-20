@@ -7,6 +7,7 @@ use App\Models\Node;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ApiResponse;
 
 class NodeController extends Controller
 {
@@ -39,7 +40,7 @@ class NodeController extends Controller
             ),
         ]);
 
-        return response()->json(['data' => $nodes]);
+        return ApiResponse::success($nodes, 'Nodes retrieved');
     }
 
     public function show(Node $node): JsonResponse
@@ -51,19 +52,17 @@ class NodeController extends Controller
             [$node->id]
         );
 
-        return response()->json([
-            'data' => [
-                'id' => $node->id,
-                'name' => $node->name,
-                'type' => $node->type,
-                'zone' => $node->zone?->name,
-                'has_traffic_light' => $node->has_traffic_light,
-                'status' => $node->status,
-                'metadata' => $node->metadata,
-                'location' => $coords,
-                'outgoing_edges_count' => $node->outgoingEdges()->count(),
-                'incoming_edges_count' => $node->incomingEdges()->count(),
-            ],
-        ]);
+        return ApiResponse::success([
+            'id' => $node->id,
+            'name' => $node->name,
+            'type' => $node->type,
+            'zone' => $node->zone?->name,
+            'has_traffic_light' => $node->has_traffic_light,
+            'status' => $node->status,
+            'metadata' => $node->metadata,
+            'location' => $coords,
+            'outgoing_edges_count' => $node->outgoingEdges()->count(),
+            'incoming_edges_count' => $node->incomingEdges()->count(),
+        ], 'Node details retrieved');
     }
 }

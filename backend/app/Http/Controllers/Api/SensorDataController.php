@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\TrafficAutoDetector;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
 
 class SensorDataController extends Controller
 {
@@ -31,9 +32,7 @@ class SensorDataController extends Controller
             $validated
         );
 
-        return response()->json([
-            'message' => 'Sensor data processed.',
-        ]);
+        return ApiResponse::success(null, 'Sensor data processed.');
     }
 
     /**
@@ -58,9 +57,8 @@ class SensorDataController extends Controller
             $processed++;
         }
 
-        return response()->json([
-            'message' => "{$processed} readings processed.",
+        return ApiResponse::success([
             'count' => $processed,
-        ]);
+        ], "{$processed} readings processed.");
     }
 }
