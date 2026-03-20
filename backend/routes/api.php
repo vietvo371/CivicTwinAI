@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
+    
+    // Socialite Login 
+    Route::get('google/redirect', [\App\Http\Controllers\Api\SocialAuthController::class, 'redirectToGoogle']);
+    Route::get('google/callback', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleGoogleCallback']);
 });
 
 // APIs that don't need authentication (e.g. Map embedding for public)
