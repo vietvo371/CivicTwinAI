@@ -1,23 +1,35 @@
-# CivicTwin AI
+# CivicTwin AI: From Urban Chaos to Intelligent Flow
 
-> 🏙️ Digital Twin — Chuyển đổi quản lý giao thông đô thị từ **phản ứng** sang **dự đoán & chủ động**
+> 🏆 **Official Entry - TechGuard ASEAN Competition 2026**  
+> **Team:** DTU 1 - TechGuard ASEAN (Duy Tan University, Vietnam)  
+> **Track:** Smart City & Urban Sustainability  
 
-## Tổng quan
+<br>
 
-CivicTwin AI là nền tảng Digital Twin quản lý giao thông đô thị thông minh — chuyển đổi từ mô hình quản lý **"phản ứng" (reactive)** truyền thống sang mô hình **"dự đoán và chủ động" (predictive & proactive)**.
+<div align="center">
+  <h3><em>"Chuyển đổi quản lý giao thông đô thị từ phản ứng sang Bức tranh Toàn cảnh Dự đoán & Chủ động."</em></h3>
+</div>
 
-### Vấn đề hiện tại (Reactive)
+---
 
-Hệ thống quản lý giao thông truyền thống chỉ **phản ứng sau khi sự cố đã xảy ra**: ùn tắc lan rộng rồi mới biết, tai nạn rồi mới xử lý, quy hoạch dựa trên cảm tính — gây lãng phí thời gian, tài nguyên và tăng rủi ro.
+## 🌎 The Challenge (Vấn đề)
 
-### Giải pháp CivicTwin AI (Predictive & Proactive)
+In rapidly growing coastal cities like Da Nang, the convergence of tourism-driven urbanization and climate vulnerability creates critical management challenges. During peak tourist seasons, traffic congestion around the Dragon Bridge, My Khe Beach, and Hoi An approach routes intensifies dramatically. When localized incidents occur—a tour bus accident on Nguyen Van Linh or flash flooding on Le Duan—the disruption cascades through the city's limited road network, delaying emergency vehicles and stranding residents.
 
-| Giá trị | Reactive (Cũ) | Proactive (CivicTwin AI) |
-|---------|---------------|--------------------------|
-| 🚦 **Giảm ùn tắc** | Phát hiện ùn tắc khi đã xảy ra | Dự đoán ùn tắc 15–60 phút trước, đề xuất chuyển hướng sớm |
-| 🚑 **Xử lý khẩn cấp nhanh** | Tìm đường cứu hộ bằng kinh nghiệm | Tính tuyến ưu tiên tối ưu tránh tắc bằng AI |
-| 📊 **Ra quyết định dữ liệu** | Dựa trên cảm tính, báo cáo cũ | Dựa trên dữ liệu realtime + mô phỏng tác động |
-| 💰 **Tiết kiệm chi phí** | Phản ứng chậm → tắc lan rộng → thiệt hại lớn | Can thiệp sớm → ngăn lan rộng → giảm thiệt hại |
+The 2022 Da Nang floods demonstrated how quickly a weather event can paralyze entire districts. Currently, the city's traffic management center monitors cameras reactively. The urgency is threefold: Da Nang's population doubles during tourism peaks; climate change increases flash flood frequency; and the critical "golden hour" for emergency services demands predictive, not reactive, management.
+
+## 🧠 The AI Concept (Giải pháp)
+
+**CivicTwin AI** creates a digital twin of Da Nang's transportation network—modeling key intersections (nodes) and roads (edges) as a dynamic graph system. The platform integrates real-time data from traffic cameras, flood sensors, weather stations, and citizen reports.
+
+The AI engine employs three specialized approaches: 
+- **LSTM Networks**: Predict traffic flow patterns during peak tourist hours.
+- **Graph Neural Networks (GNN)**: Analyze how flooding on one riverside road propagates through interconnected streets.
+- **Reinforcement Learning**: Optimize traffic light timing dynamically during emergencies.
+
+When an incident occurs near the airport or beach areas, the system **simulates its cascading impact within seconds**, predicts gridlocks on evacuation routes, and automatically suggests optimal diversions. This transforms urban management from reactive monitoring to proactive decision-making.
+
+---
 
 ## Tech Stack
 
