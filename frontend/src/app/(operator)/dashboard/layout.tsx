@@ -1,6 +1,6 @@
 'use client';
 
-import { AuthProvider, useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -14,7 +14,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
       if (!user) {
         router.push('/login');
       } else {
-        const hasAccess = user.roles?.includes('traffic_operator') || user.roles?.includes('city_admin');
+        const hasAccess = user.roles?.includes('traffic_operator') || user.roles?.includes('city_admin') || user.roles?.includes('super_admin');
         if (!hasAccess) {
           router.push('/unauthorized');
         }
@@ -45,9 +45,5 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <DashboardGuard>{children}</DashboardGuard>
-    </AuthProvider>
-  );
+  return <DashboardGuard>{children}</DashboardGuard>;
 }

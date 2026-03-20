@@ -3,6 +3,7 @@ import { Fira_Code, Fira_Sans, Geist } from 'next/font/google';
 import './globals.css';
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from '@/lib/auth';
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -29,9 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
       </head>
       <body className="antialiased min-h-screen bg-bg-primary text-text-primary font-body">
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
       </body>
     </html>
   );

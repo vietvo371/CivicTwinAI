@@ -15,6 +15,8 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasRoles, HasApiTokens, SoftDeletes;
 
+    protected $guard_name = 'sanctum';
+
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'is_active', 'last_login_at',
     ];

@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
-import api from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('admin@civictwin.local');
   const [password, setPassword] = useState('password');
+  const { login } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,8 +19,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', res.data.token);
+      await login(email, password);
       router.push('/dashboard');
     } catch {
       setError('Email hoặc mật khẩu không đúng.');

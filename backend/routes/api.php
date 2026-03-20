@@ -45,9 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('edges/{edge}', [EdgeController::class, 'show']);
     
     // ==========================================
-    // 3. OPERATOR ROUTES (traffic_operator | city_admin)
     // ==========================================
-    Route::middleware('role:traffic_operator|city_admin')->group(function () {
+    // 3. OPERATOR ROUTES (traffic_operator | city_admin | super_admin)
+    // ==========================================
+    Route::middleware('role:traffic_operator|city_admin|super_admin')->group(function () {
         // Sensor Data Ingestion
         Route::post('sensor-data', [SensorDataController::class, 'ingest']);
         Route::post('sensor-data/batch', [SensorDataController::class, 'batchIngest']);

@@ -43,3 +43,9 @@ Route::prefix('operator')->middleware(['auth:sanctum', 'role:operator'])->group(
 ## Khi nào áp dụng
 - Hệ thống SaaS, Dashboard, ERP, Command Center có từ 2 Actors trở lên với giao diện hoàn toàn khác biệt.
 - Yêu cầu bảo mật cấp cao, chống User thường gọi API của Admin.
+
+## 5. Cạm bẫy phổ biến (Pitfalls) khi triển khai Đa Actor
+- **Lag Sync Context (Auth State):** Frontend SPA (React/Next.js) DỄ dính lỗi Redirect Loop nếu Login Page gọi trực tiếp API `/auth/login` thay vì gọi thông qua Global Context (`useAuth()`). Khi nhảy trang Client-side sang `/dashboard`, Guard Frontend sẽ lập tức active, nhưng biến State chưa kịp đồng bộ => đẩy người dùng ra `/unauthorized`. **Must-do:** Hàm Login của bất kỳ App nào CŨNG phải update Global State chứa `roles` trước khi `router.push()`. 
+- **Quên Super Admin Override:** Ở các file `layout.tsx` kiểm duyệt quyền (VD: Operator Guard), Lập trình viên hay check `user.roles.includes('operator')` mà quên thêm `|| user.roles.includes('super_admin')`. Hậu quả: Super Admin (Người cao nhất) lại bị chặn ở các màn hình quản trị. Luôn nhớ thêm Bypass Role cho Super Admin vào mọi Guard.
+- **Che UI chưa đủ:** Route Groups của Next.js chỉ "chia luồng", KHÔNG có tính năng bảo mật. Middleware Backend (Laravel) check Role trên TỪNG API là bắt buộc để ngăn chặn cào dữ liệu trái phép (Postman).
+- **Spatie Guard Mismatch (Cực kỳ nguy hiểm):** Khi build API-only với `Sanctum` nhưng dùng Spatie Permission, Seeder mặc định tạo Roles dưới Guard là `web`. Khi gắn middleware kiểm tra API (`middleware('role:admin')`), Spatie sẽ lấy Role của User *nhưng tự động lọc theo Guard đang dùng (sanctum)* -> Kết quả là hàm trả về rỗng, nhả lỗi `UnauthorizedException` mặc dù User có quyền. **Giải quyết:** Luôn thêm `protected $guard_name = 'sanctum';` vào Model User và explicitly gán `'guard_name' => 'sanctum'` khi Seed Roles.

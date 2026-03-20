@@ -1,6 +1,6 @@
 'use client';
 
-import { AuthProvider, useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -45,9 +45,5 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <DashboardGuard>{children}</DashboardGuard>
-    </AuthProvider>
-  );
+  return <DashboardGuard>{children}</DashboardGuard>;
 }

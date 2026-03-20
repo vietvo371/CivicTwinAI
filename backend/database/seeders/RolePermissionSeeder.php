@@ -42,17 +42,17 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::create(['name' => $permission, 'guard_name' => 'sanctum']);
         }
         
         // Clear cache again after creating permissions to avoid cache misses
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Super Admin — full access (bypass all permissions via Gate::before)
-        Role::create(['name' => 'super_admin']);
+        Role::create(['name' => 'super_admin', 'guard_name' => 'sanctum']);
 
         // City Admin
-        $cityAdmin = Role::create(['name' => 'city_admin']);
+        $cityAdmin = Role::create(['name' => 'city_admin', 'guard_name' => 'sanctum']);
         $cityAdmin->givePermissionTo([
             'dashboard.view', 'dashboard.configure',
             'map.view', 'map.edit-layers',
@@ -69,7 +69,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Traffic Operator
-        $operator = Role::create(['name' => 'traffic_operator']);
+        $operator = Role::create(['name' => 'traffic_operator', 'guard_name' => 'sanctum']);
         $operator->givePermissionTo([
             'dashboard.view',
             'map.view', 'map.edit-layers',
@@ -81,7 +81,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Urban Planner
-        $planner = Role::create(['name' => 'urban_planner']);
+        $planner = Role::create(['name' => 'urban_planner', 'guard_name' => 'sanctum']);
         $planner->givePermissionTo([
             'dashboard.view',
             'map.view',
@@ -91,7 +91,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Emergency Services
-        $emergency = Role::create(['name' => 'emergency']);
+        $emergency = Role::create(['name' => 'emergency', 'guard_name' => 'sanctum']);
         $emergency->givePermissionTo([
             'map.view',
             'incidents.view',
@@ -100,7 +100,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Citizen
-        $citizen = Role::create(['name' => 'citizen']);
+        $citizen = Role::create(['name' => 'citizen', 'guard_name' => 'sanctum']);
         $citizen->givePermissionTo([
             'citizen-reports.create',
             'citizen-reports.view-own',
