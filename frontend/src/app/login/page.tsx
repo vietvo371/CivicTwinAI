@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
@@ -34,14 +36,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted/40">
       <Card className="w-full max-w-md shadow-lg border-muted">
-        <CardHeader className="text-center space-y-4 pt-8">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto shadow-sm">
-            <Activity className="w-6 h-6 text-primary-foreground" />
+        <CardHeader className="flex flex-row items-center justify-center gap-5 space-y-0 pt-8 pb-4">
+          <div className="flex items-center justify-center relative shrink-0 group">
+            <Image src="/logo.png" alt="CivicTwin AI Logo" width={64} height={64} className="object-contain w-16 h-16 relative z-10 drop-shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-transform duration-300 group-hover:scale-105" unoptimized />
           </div>
-          <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">CivicTwin AI</CardTitle>
-            <CardDescription className="text-sm">
-              Predictive & Proactive Traffic Management
+          <div className="flex flex-col text-left">
+            <CardTitle className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">CivicTwin AI</CardTitle>
+            <CardDescription className="text-sm font-medium mt-1">
+              Traffic Command Center
             </CardDescription>
           </div>
         </CardHeader>

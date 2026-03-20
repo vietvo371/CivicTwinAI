@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -44,13 +46,13 @@ export default function Sidebar() {
     >
       {/* Logo Area */}
       <div className="flex items-center gap-3 p-4 h-[72px] border-b border-border bg-muted/20">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary border border-primary/20 shadow-sm">
-          <Activity className="w-5 h-5" />
+        <div className="flex items-center justify-center shrink-0 relative group">
+          <Image src="/logo.png" alt="CivicTwin AI Logo" width={40} height={40} className="object-contain w-10 h-10 relative z-10 drop-shadow-[0_0_10px_rgba(59,130,246,0.3)] transition-transform duration-300 group-hover:scale-110" unoptimized />
         </div>
         
         <div className={`flex flex-col min-w-0 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
           <span className="font-heading font-bold text-[15px] tracking-tight text-foreground truncate">CivicTwin AI</span>
-          <span className="text-[10px] font-bold text-muted-foreground truncate tracking-widest uppercase">Command Center</span>
+          <span className="text-[10px] font-bold text-muted-foreground truncate tracking-widest uppercase mt-0.5">Command Center</span>
         </div>
 
         {!isMobile && (

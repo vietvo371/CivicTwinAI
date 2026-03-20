@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -29,13 +31,12 @@ export default function AdminSidebar() {
     <aside className="fixed inset-y-0 left-0 z-50 w-[72px] lg:w-[260px] bg-card/95 backdrop-blur-3xl border-r border-border transition-all duration-300 flex flex-col items-center lg:items-stretch shadow-2xl">
       {/* Brand */}
       <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-border bg-muted/20">
-        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.15)] overflow-hidden relative shrink-0">
-          <div className="absolute inset-0 bg-purple-500/20 animate-pulse" />
-          <ShieldCheck className="w-6 h-6 text-purple-400 relative z-10" />
+        <div className="flex items-center justify-center relative shrink-0 group">
+          <Image src="/logo.png" alt="CivicTwin AI Logo" width={40} height={40} className="relative z-10 object-contain w-10 h-10 drop-shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-transform duration-300 group-hover:scale-110" unoptimized />
         </div>
         <div className="hidden lg:flex flex-col ml-3">
           <span className="text-lg font-bold font-heading text-foreground tracking-wider">CivicTwin</span>
-          <span className="text-[10px] font-bold text-purple-500 uppercase tracking-[0.2em]">City Admin</span>
+          <span className="text-[10px] font-bold text-purple-500 uppercase tracking-[0.2em] mt-0.5">City Admin</span>
         </div>
       </div>
 
