@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,72 +25,69 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch {
-      setError('Email hoặc mật khẩu không đúng.');
+      setError('Invalid email or password.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
-
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-            <Activity className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-muted/40">
+      <Card className="w-full max-w-md shadow-lg border-muted">
+        <CardHeader className="text-center space-y-4 pt-8">
+          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto shadow-sm">
+            <Activity className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>CivicTwin AI</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Predictive & Proactive Traffic Management
-          </p>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-2xl p-6 space-y-5"
-          style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
-
-          {error && (
-            <div className="text-sm px-4 py-2.5 rounded-lg" style={{ background: '#ef44441a', color: 'var(--danger)' }}>
-              {error}
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold tracking-tight">CivicTwin AI</CardTitle>
+            <CardDescription className="text-sm">
+              Predictive & Proactive Traffic Management
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md font-medium">
+                {error}
+              </div>
+            )}
+            <div className="space-y-2 flex flex-col items-start text-left">
+              <label htmlFor="email" className="text-sm font-medium leading-none">Email Address</label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="bg-background w-full"
+              />
             </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Email</label>
-            <input
-              type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none transition-colors"
-              style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Mật khẩu</label>
-            <input
-              type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none transition-colors"
-              style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-              required
-            />
-          </div>
-
-          <button
-            type="submit" disabled={loading}
-            className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, var(--accent), #8b5cf6)' }}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
-
-        <p className="text-center mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
-          Demo: admin@civictwin.local / password
-        </p>
-      </div>
+            <div className="space-y-2 flex flex-col items-start text-left">
+              <div className="flex items-center justify-between w-full">
+                <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-background w-full"
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Authenticating...' : 'Sign In'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center pb-8 border-t border-border pt-4 mt-2">
+          <p className="text-xs text-muted-foreground">
+            Demo: admin@civictwin.local / password
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -24,7 +24,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
@@ -33,7 +33,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-50 flex relative">
+    <div className="min-h-screen bg-background text-foreground flex relative">
       <AdminSidebar />
       <main className="flex-1 transition-all duration-300 pl-[72px] lg:pl-[260px] min-w-0">
         <div className="p-4 md:p-6 lg:p-8">

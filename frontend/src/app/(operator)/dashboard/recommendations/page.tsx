@@ -24,10 +24,10 @@ const typeIcons: Record<string, typeof Shield> = {
 };
 
 const statusMap: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: 'Chờ duyệt', variant: 'outline' },
-  approved: { label: 'Đã duyệt', variant: 'default' },
-  rejected: { label: 'Từ chối', variant: 'destructive' },
-  executed: { label: 'Đã thực thi', variant: 'secondary' },
+  pending: { label: 'Pending Review', variant: 'outline' },
+  approved: { label: 'Approved', variant: 'default' },
+  rejected: { label: 'Rejected', variant: 'destructive' },
+  executed: { label: 'Executed', variant: 'secondary' },
 };
 
 export default function RecommendationsPage() {
@@ -72,8 +72,8 @@ export default function RecommendationsPage() {
             <Lightbulb className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Quyết định Vận hành</h1>
-            <p className="text-sm text-muted-foreground mt-1">Danh sách đề xuất được AI sinh ra cần BĐH phê duyệt</p>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">Operational Decisions</h1>
+            <p className="text-sm text-muted-foreground mt-1">AI-generated mitigation strategies pending operator approval</p>
           </div>
         </div>
       </div>
@@ -82,7 +82,7 @@ export default function RecommendationsPage() {
         <Card className="p-16 text-center border-dashed">
           <div className="flex flex-col items-center gap-4">
             <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
-            <span className="font-medium text-muted-foreground animate-pulse">Đang tải danh sách đề xuất...</span>
+            <span className="font-medium text-muted-foreground animate-pulse">Fetching smart recommendations...</span>
           </div>
         </Card>
       ) : recs.length === 0 ? (
@@ -91,8 +91,8 @@ export default function RecommendationsPage() {
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-2">
               <Check className="w-6 h-6 text-emerald-500 opacity-50" />
             </div>
-            <p className="font-medium text-lg">Tuyệt vời!</p>
-            <p className="text-sm text-muted-foreground">Không có đề xuất nào đang chờ xử lý.</p>
+            <p className="font-medium text-lg">All caught up!</p>
+            <p className="text-sm text-muted-foreground">No operational decisions are pending your review.</p>
           </div>
         </Card>
       ) : (
@@ -115,7 +115,7 @@ export default function RecommendationsPage() {
                   <div className="space-y-1">
                     <CardTitle className="uppercase tracking-wide text-sm">{rec.type.replace('_', ' ')}</CardTitle>
                     <p className="text-[11px] font-semibold text-muted-foreground">
-                      LIÊN QUAN SỰ CỐ: <span className="text-primary/80">#{rec.incident_id}</span>
+                      CORRELATED INCIDENT: <span className="text-primary/80">#{rec.incident_id}</span>
                     </p>
                   </div>
                 </CardHeader>
@@ -126,8 +126,8 @@ export default function RecommendationsPage() {
                   </p>
                   <div className="flex items-center gap-1.5 mt-5 pt-4 border-t border-border/50 text-xs font-medium text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
-                    {new Date(rec.created_at).toLocaleString('vi-VN', {
-                      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                    {new Date(rec.created_at).toLocaleString('en-US', {
+                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                     })}
                   </div>
                 </CardContent>
@@ -139,14 +139,14 @@ export default function RecommendationsPage() {
                       className="rounded-none h-12 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => setRejectId(rec.id)}
                     >
-                      <X className="w-4 h-4 mr-2" /> Từ chối
+                      <X className="w-4 h-4 mr-2" /> Decline
                     </Button>
                     <Button 
                       variant="ghost" 
                       className="rounded-none h-12 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
                       onClick={() => handleApprove(rec.id)}
                     >
-                      <Check className="w-4 h-4 mr-2" /> Phê duyệt
+                      <Check className="w-4 h-4 mr-2" /> Approve
                     </Button>
                   </CardFooter>
                 )}
@@ -162,10 +162,10 @@ export default function RecommendationsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <X className="w-5 h-5 text-destructive" />
-              Từ chối đề xuất
+              Decline Recommendation
             </DialogTitle>
             <DialogDescription>
-              Vui lòng cung cấp lý do từ chối để hệ thống AI học hỏi và cải thiện trong tương lai.
+              Please provide a reason for declining. This feedback helps train the AI model for future accuracy.
             </DialogDescription>
           </DialogHeader>
           
@@ -174,17 +174,17 @@ export default function RecommendationsPage() {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
-              placeholder="Ghi chú cụ thể lý do hủy bỏ..."
+              placeholder="State your reason clearly..."
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             />
           </div>
 
           <DialogFooter className="sm:justify-end gap-2">
             <Button variant="secondary" onClick={() => { setRejectId(null); setReason(''); }}>
-              Đóng
+              Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={!reason}>
-              Xác nhận Từ chối
+              Confirm Decline
             </Button>
           </DialogFooter>
         </DialogContent>

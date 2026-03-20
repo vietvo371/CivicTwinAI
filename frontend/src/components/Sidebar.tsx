@@ -8,13 +8,14 @@ import {
   LogOut, Menu, X, Activity,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
   { href: '/dashboard', icon: Map, label: 'Traffic Map' },
-  { href: '/dashboard/incidents', icon: AlertTriangle, label: 'Sự cố' },
-  { href: '/dashboard/predictions', icon: Brain, label: 'Dự đoán' },
-  { href: '/dashboard/recommendations', icon: Lightbulb, label: 'Đề xuất' },
-  { href: '/dashboard/analytics', icon: BarChart3, label: 'Phân tích' },
+  { href: '/dashboard/incidents', icon: AlertTriangle, label: 'Incidents' },
+  { href: '/dashboard/predictions', icon: Brain, label: 'Predictions' },
+  { href: '/dashboard/recommendations', icon: Lightbulb, label: 'Recommendations' },
+  { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
 ];
 
 export default function Sidebar() {
@@ -37,25 +38,25 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-700/50 bg-slate-800/90 backdrop-blur-xl ${
+      className={`fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-border bg-card/95 backdrop-blur-xl ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
       }`}
     >
       {/* Logo Area */}
-      <div className="flex items-center gap-3 p-4 h-[72px] border-b border-slate-700/50 bg-slate-800/50">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/20">
-          <Activity className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 p-4 h-[72px] border-b border-border bg-muted/20">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/10 text-primary border border-primary/20 shadow-sm">
+          <Activity className="w-5 h-5" />
         </div>
         
         <div className={`flex flex-col min-w-0 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
-          <span className="font-heading font-bold text-[15px] tracking-tight text-slate-100 truncate">CivicTwin AI</span>
-          <span className="text-xs font-medium text-slate-400 truncate tracking-wide uppercase">Command Center</span>
+          <span className="font-heading font-bold text-[15px] tracking-tight text-foreground truncate">CivicTwin AI</span>
+          <span className="text-[10px] font-bold text-muted-foreground truncate tracking-widest uppercase">Command Center</span>
         </div>
 
         {!isMobile && (
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 ml-auto rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors shrink-0"
+            className="p-1.5 ml-auto rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
           >
             {collapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
           </button>
@@ -63,7 +64,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-3 flex flex-col gap-1.5 overflow-y-auto override-scrollbar">
+      <nav className="flex-1 py-4 px-3 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           
@@ -74,18 +75,18 @@ export default function Sidebar() {
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 group cursor-pointer ${
                 isActive 
-                  ? 'bg-blue-500/10 text-blue-400 font-semibold shadow-sm shadow-blue-500/5' 
-                  : 'text-slate-400 hover:bg-slate-700/40 hover:text-slate-200 font-medium'
+                  ? 'bg-primary/10 text-primary font-semibold' 
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground font-medium'
               }`}
             >
-              <item.icon className={`w-5 h-5 shrink-0 transition-transform ${isActive ? 'scale-110 text-blue-400' : 'group-hover:scale-110'}`} />
+              <item.icon className={`w-5 h-5 shrink-0 transition-transform ${isActive ? 'scale-110 text-primary' : 'group-hover:scale-110'}`} />
               
               <span className={`text-sm whitespace-nowrap transition-all duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
                 {item.label}
               </span>
               
               {isActive && !collapsed && (
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
               )}
             </Link>
           );
@@ -93,26 +94,32 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className="p-3 border-t border-slate-700/50 bg-slate-800/30">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:border-slate-600 transition-colors">
+      <div className="p-3 border-t border-border bg-muted/10">
+        <div className="flex items-center gap-3 px-2 py-2 mb-2 rounded-xl bg-card border border-border/50 hover:border-border transition-colors">
           <div className="w-9 h-9 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-500 font-heading font-bold flex items-center justify-center shrink-0">
             {user?.name?.[0]?.toUpperCase() || '?'}
           </div>
           
           <div className={`flex flex-col min-w-0 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
-            <span className="text-sm font-semibold text-slate-200 truncate">{user?.name}</span>
-            <span className="text-[11px] font-medium text-slate-500 tracking-wider uppercase truncate">
+            <span className="text-sm font-semibold text-foreground truncate">{user?.name}</span>
+            <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase truncate">
               {user?.roles?.[0]?.replace('_', ' ') || 'Operator'}
             </span>
           </div>
 
           <button 
             onClick={logout}
-            title="Đăng xuất" 
-            className={`p-2 rounded-lg shrink-0 text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors ${collapsed ? 'mx-auto' : ''}`}
+            title="Logout" 
+            className={`p-2 rounded-lg shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ${collapsed ? 'hidden' : ''}`}
           >
             <LogOut className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Theme Toggle */}
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between px-2'} pt-1`}>
+          {!collapsed && <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Theme</span>}
+          <ThemeToggle collapsed={collapsed} />
         </div>
       </div>
     </aside>

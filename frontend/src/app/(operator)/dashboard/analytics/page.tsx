@@ -1,8 +1,26 @@
 'use client';
 
-import { BarChart3, TrendingUp, AlertTriangle, Lightbulb, CheckCircle, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { BarChart3, TrendingUp, AlertOctagon, Clock, ActivitySquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Legend, PieChart, Pie, Cell
+} from 'recharts';
+
+const mockTrendyData = [
+  { time: '00:00', density: 10, incidents: 0 },
+  { time: '04:00', density: 15, incidents: 1 },
+  { time: '08:00', density: 85, incidents: 4 },
+  { time: '12:00', density: 60, incidents: 2 },
+  { time: '16:00', density: 95, incidents: 7 },
+  { time: '20:00', density: 40, incidents: 1 },
+];
+
+const mockSeverityData = [
+  { name: 'Critical', value: 4, color: '#f43f5e' },
+  { name: 'High', value: 12, color: '#f97316' },
+  { name: 'Medium', value: 25, color: '#eab308' },
+];
 
 export default function AnalyticsPage() {
   return (
@@ -11,91 +29,121 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card/50 p-6 rounded-2xl border border-border backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 shadow-inner">
-            <BarChart3 className="w-6 h-6 text-indigo-400" />
+            <BarChart3 className="w-6 h-6 text-indigo-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Phân tích giao thông</h1>
-            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-              Báo cáo đa chiều & Dự báo xu hướng dài hạn
+            <h1 className="text-2xl font-heading font-bold tracking-tight">Traffic Analytics</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Multi-dimensional reporting from historical data & Edge AI telemetry
             </p>
           </div>
         </div>
-        
-        <Badge variant="outline" className="px-4 py-2 bg-background/50 text-sm font-medium gap-2">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          Hôm nay, {new Date().toLocaleDateString('vi-VN')}
-        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-        {[
-          { 
-            label: 'Sự cố phát sinh (24h)', 
-            value: '—', 
-            color: 'text-amber-500', 
-            trend: '+12%', 
-            trendUp: true,
-            icon: AlertTriangle,
-            bgContainer: 'bg-amber-500/10 border-amber-500/20'
-          },
-          { 
-            label: 'Dự đoán chính xác', 
-            value: '—', 
-            color: 'text-emerald-500', 
-            trend: '+5.4%', 
-            trendUp: true,
-            icon: CheckCircle,
-            bgContainer: 'bg-emerald-500/10 border-emerald-500/20'
-          },
-          { 
-            label: 'Đề xuất chờ duyệt', 
-            value: '—', 
-            color: 'text-blue-500', 
-            trend: '-2', 
-            trendUp: false,
-            icon: Lightbulb,
-            bgContainer: 'bg-blue-500/10 border-blue-500/20'
-          },
-        ].map((kpi, idx) => (
-          <Card 
-            key={idx} 
-            className="group relative overflow-hidden bg-card/60 backdrop-blur-xl hover:border-muted-foreground/50 transition-colors"
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4 relative z-10">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${kpi.bgContainer}`}>
-                  <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
-                </div>
-                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-background/50 ${kpi.trendUp ? 'text-emerald-400' : 'text-muted-foreground'}`}>
-                  {kpi.trendUp && <TrendingUp className="w-3 h-3" />}
-                  {kpi.trend}
-                </div>
-              </div>
-              
-              <div className="relative z-10">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">{kpi.label}</div>
-                <div className={`text-4xl font-heading font-bold ${kpi.color}`}>{kpi.value}</div>
-              </div>
-              
-              {/* Ambient Background Glow */}
-              <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl opacity-10 transition-opacity group-hover:opacity-20 ${kpi.bgContainer.split(' ')[0]}`} />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
+              <AlertOctagon className="w-3.5 h-3.5 text-rose-500" /> Total Bottlenecks
+            </CardDescription>
+            <CardTitle className="text-4xl font-heading text-rose-500">24<span className="text-lg text-muted-foreground font-normal ml-2">nodes</span></CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs font-medium text-muted-foreground">
+              <span className="text-rose-500 font-bold">+12%</span> vs last week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-amber-500" /> Avg. Delay Time
+            </CardDescription>
+            <CardTitle className="text-4xl font-heading text-amber-500">18<span className="text-lg text-muted-foreground font-normal ml-2">mins</span></CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs font-medium text-muted-foreground">
+              <span className="text-emerald-500 font-bold">-2.5 mins</span> vs yesterday
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
+              <ActivitySquare className="w-3.5 h-3.5 text-emerald-500" /> Resolution Rate
+            </CardDescription>
+            <CardTitle className="text-4xl font-heading text-emerald-500">92<span className="text-lg text-muted-foreground font-normal ml-2">%</span></CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Optimal performance
+            </p>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Card className="w-full min-h-[400px] flex flex-col items-center justify-center gap-4 bg-card/30 backdrop-blur-xl p-8 text-center relative overflow-hidden border-dashed">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-        <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-2 z-10 shadow-[0_0_30px_rgba(99,102,241,0.15)]">
-          <BarChart3 className="w-8 h-8 text-indigo-400" />
-        </div>
-        <div className="z-10 space-y-2 max-w-md mx-auto">
-          <CardTitle className="text-xl font-heading">Không gian trực quan hóa (Phase 2)</CardTitle>
-          <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-            Hệ thống biểu đồ tương tác, phân tích Time-series (Line charts), Mức độ ùn tắc (Bar charts) và Báo cáo tự động sẽ được triển khai trong bản cập nhật tới.
-          </p>
-        </div>
-      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-card/50 backdrop-blur-xl border-border shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-lg font-heading">12-Hour Density Forecast</CardTitle>
+            <CardDescription>Predicted traffic pattern curve</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={mockTrendyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorDensity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="time" tick={{fontSize: 12, fill: '#888'}} axisLine={false} tickLine={false} />
+                <YAxis tick={{fontSize: 12, fill: '#888'}} axisLine={false} tickLine={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderColor: '#334155', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Area type="monotone" dataKey="density" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorDensity)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/50 backdrop-blur-xl border-border shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-lg font-heading">Incidents by Severity</CardTitle>
+            <CardDescription>Weekly aggregated metrics</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[300px] w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={mockSeverityData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {mockSeverityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderColor: '#334155', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
