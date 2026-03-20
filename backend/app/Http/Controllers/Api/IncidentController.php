@@ -7,6 +7,7 @@ use App\Models\Incident;
 use App\Jobs\CallAIPrediction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class IncidentController extends Controller
 {
@@ -52,18 +53,20 @@ class IncidentController extends Controller
             'metadata' => [],
         ]);
 
+        $isPostgres = DB::connection()->getDriverName() === 'pgsql';
+
         // Set PostGIS location if provided
-        if (isset($validated['latitude'], $validated['longitude'])) {
-            \DB::statement(
+        if ($isPostgres && isset($validated['latitude'], $validated['longitude'])) {
+            DB::statement(
                 'UPDATE incidents SET location = ST_SetSRID(ST_Point(?, ?), 4326) WHERE id = ?',
                 [$validated['longitude'], $validated['latitude'], $incident->id]
             );
         }
 
         // Set affected edges
-        if (! empty($validated['affected_edge_ids'])) {
+        if ($isPostgres && ! empty($validated['affected_edge_ids'])) {
             $edgeArray = '{' . implode(',', $validated['affected_edge_ids']) . '}';
-            \DB::statement(
+            DB::statement(
                 'UPDATE incidents SET affected_edge_ids = ? WHERE id = ?',
                 [$edgeArray, $incident->id]
             );
@@ -84,10 +87,13 @@ class IncidentController extends Controller
     {
         $incident->load(['reporter', 'assignee', 'predictions.predictionEdges', 'recommendations']);
 
-        $coords = \DB::selectOne(
-            'SELECT ST_X(location) as lng, ST_Y(location) as lat FROM incidents WHERE id = ? AND location IS NOT NULL',
-            [$incident->id]
-        );
+        $coords = null;
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $coords = DB::selectOne(
+                'SELECT ST_X(location) as lng, ST_Y(location) as lat FROM incidents WHERE id = ? AND location IS NOT NULL',
+                [$incident->id]
+            );
+        }
 
         return response()->json([
             'data' => array_merge($incident->toArray(), [

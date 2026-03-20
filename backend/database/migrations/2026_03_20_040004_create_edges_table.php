@@ -37,9 +37,11 @@ return new class extends Migration
             $table->index('metrics_updated_at');
         });
 
-        DB::statement('ALTER TABLE edges ADD COLUMN geometry geometry(LineString, 4326) NOT NULL');
-        DB::statement('CREATE INDEX edges_geometry_gist ON edges USING GIST(geometry)');
-        DB::statement('ALTER TABLE edges ADD CONSTRAINT edges_no_self_loop CHECK (source_node_id != target_node_id)');
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE edges ADD COLUMN geometry geometry(LineString, 4326) NOT NULL');
+            DB::statement('CREATE INDEX edges_geometry_gist ON edges USING GIST(geometry)');
+            DB::statement('ALTER TABLE edges ADD CONSTRAINT edges_no_self_loop CHECK (source_node_id != target_node_id)');
+        }
     }
 
     public function down(): void

@@ -1,12 +1,32 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // Simplified sensor_readings for SQLite test env
+            Schema::create('sensor_readings', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('sensor_id')->constrained('sensors');
+                $table->foreignId('edge_id')->constrained('edges');
+                $table->timestamp('recorded_at');
+                $table->integer('vehicle_count')->nullable();
+                $table->decimal('avg_speed_kmh', 6, 2)->nullable();
+                $table->decimal('occupancy_pct', 5, 2)->nullable();
+                $table->decimal('density', 5, 4)->nullable();
+                $table->decimal('data_quality', 3, 2)->default(1.0);
+                $table->boolean('is_anomaly')->default(false);
+                $table->json('raw_data')->nullable();
+            });
+            return;
+        }
+
         DB::statement("
             CREATE TABLE sensor_readings (
                 id BIGSERIAL,
@@ -24,7 +44,6 @@ return new class extends Migration
             ) PARTITION BY RANGE (recorded_at)
         ");
 
-        // Create partition for current month
         $year = date('Y');
         $month = date('m');
         $nextMonth = date('Y-m', strtotime('+1 month'));
@@ -41,6 +60,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            Schema::dropIfExists('sensor_readings');
+            return;
+        }
         DB::statement('DROP TABLE IF EXISTS sensor_readings CASCADE');
     }
 };

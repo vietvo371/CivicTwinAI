@@ -23,8 +23,10 @@ return new class extends Migration
             $table->index('type');
         });
 
-        DB::statement('ALTER TABLE nodes ADD COLUMN location geometry(Point, 4326) NOT NULL');
-        DB::statement('CREATE INDEX nodes_location_gist ON nodes USING GIST(location)');
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE nodes ADD COLUMN location geometry(Point, 4326) NOT NULL');
+            DB::statement('CREATE INDEX nodes_location_gist ON nodes USING GIST(location)');
+        }
     }
 
     public function down(): void

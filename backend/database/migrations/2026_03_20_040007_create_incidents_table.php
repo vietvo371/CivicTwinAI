@@ -28,10 +28,12 @@ return new class extends Migration
             $table->index(['created_at']);
         });
 
-        DB::statement('ALTER TABLE incidents ADD COLUMN location geometry(Point, 4326)');
-        DB::statement('CREATE INDEX incidents_location_gist ON incidents USING GIST(location)');
-        DB::statement('ALTER TABLE incidents ADD COLUMN affected_edge_ids BIGINT[] DEFAULT \'{}\'');
-        DB::statement('CREATE INDEX incidents_edge_ids_gin ON incidents USING GIN(affected_edge_ids)');
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE incidents ADD COLUMN location geometry(Point, 4326)');
+            DB::statement('CREATE INDEX incidents_location_gist ON incidents USING GIST(location)');
+            DB::statement('ALTER TABLE incidents ADD COLUMN affected_edge_ids BIGINT[] DEFAULT \'{}\'');
+            DB::statement('CREATE INDEX incidents_edge_ids_gin ON incidents USING GIN(affected_edge_ids)');
+        }
     }
 
     public function down(): void

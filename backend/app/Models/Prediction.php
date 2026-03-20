@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Prediction extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'incident_id', 'model_version', 'processing_time_ms', 'status', 'error_message',
     ];

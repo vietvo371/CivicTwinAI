@@ -17,8 +17,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        DB::statement('ALTER TABLE zones ADD COLUMN boundary geometry(Polygon, 4326) NOT NULL');
-        DB::statement('CREATE INDEX zones_boundary_gist ON zones USING GIST(boundary)');
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE zones ADD COLUMN boundary geometry(Polygon, 4326) NOT NULL');
+            DB::statement('CREATE INDEX zones_boundary_gist ON zones USING GIST(boundary)');
+        }
     }
 
     public function down(): void
