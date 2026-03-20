@@ -1,0 +1,306 @@
+// CivicTwinAI — Database Schema
+// Paste vào https://dbdiagram.io để xem ERD
+// =============================================
+
+// =============================================
+// QUẢN LÝ NGƯỜI DÙNG & PHÂN QUYỀN
+// =============================================
+
+Table users {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên hiển thị']
+  email varchar(255) [unique, not null, note: 'Email đăng nhập']
+  email_verified_at timestamp [note: 'Thời điểm xác minh email']
+  password varchar(255) [not null, note: 'Mật khẩu đã mã hóa']
+  phone varchar(20) [note: 'Số điện thoại']
+  avatar varchar(500) [note: 'Đường dẫn ảnh đại diện']
+  is_active boolean [default: true, note: 'Tài khoản còn hoạt động?']
+  last_login_at timestamp [note: 'Lần đăng nhập gần nhất']
+  remember_token varchar(100) [note: 'Token ghi nhớ đăng nhập']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Bảng người dùng hệ thống. Phân quyền qua Spatie Permission.'
+}
+
+Table roles {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên vai trò: super_admin, city_admin, traffic_operator, urban_planner, emergency, citizen']
+  guard_name varchar(255) [not null, default: 'web', note: 'Guard xác thực']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Bảng vai trò (Spatie). Quản lý động qua Dashboard, không cần deploy lại.'
+}
+
+Table permissions {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên quyền: incidents.create, map.view, simulation.run, ...']
+  guard_name varchar(255) [not null, default: 'web', note: 'Guard xác thực']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Bảng quyền hạn (Spatie). 31 permissions theo module: dashboard, map, incidents, predictions, ...'
+}
+
+Table model_has_roles {
+  role_id bigint [not null, ref: > roles.id, note: 'ID vai trò']
+  model_type varchar(255) [not null, note: 'Loại model (App\\Models\\User)']
+  model_id bigint [not null, note: 'ID người dùng']
+
+  indexes {
+    (role_id, model_id, model_type) [pk]
+  }
+
+  Note: 'Bảng trung gian: gán vai trò cho người dùng. 1 user có thể nhiều roles.'
+}
+
+Table model_has_permissions {
+  permission_id bigint [not null, ref: > permissions.id, note: 'ID quyền hạn']
+  model_type varchar(255) [not null, note: 'Loại model']
+  model_id bigint [not null, note: 'ID người dùng']
+
+  indexes {
+    (permission_id, model_id, model_type) [pk]
+  }
+
+  Note: 'Bảng trung gian: gán quyền trực tiếp cho người dùng (ngoài role).'
+}
+
+Table role_has_permissions {
+  permission_id bigint [not null, ref: > permissions.id, note: 'ID quyền hạn']
+  role_id bigint [not null, ref: > roles.id, note: 'ID vai trò']
+
+  indexes {
+    (permission_id, role_id) [pk]
+  }
+
+  Note: 'Bảng trung gian: vai trò nào có quyền nào.'
+}
+
+Table personal_access_tokens {
+  id bigserial [pk]
+  tokenable_type varchar(255) [not null, note: 'Loại model']
+  tokenable_id bigint [not null, note: 'ID người dùng']
+  name varchar(255) [not null, note: 'Tên token (VD: mobile-app)']
+  token varchar(64) [unique, not null, note: 'Token đã mã hóa']
+  abilities text [note: 'Quyền của token (JSON)']
+  last_used_at timestamp [note: 'Lần cuối sử dụng']
+  expires_at timestamp [note: 'Thời hạn hết hiệu lực']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Laravel Sanctum — Token xác thực API cho mobile app và service.'
+}
+
+// =============================================
+// MẠNG GIAO THÔNG (ĐỒ THỊ)
+// =============================================
+
+Table zones {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên vùng (VD: Quận 1, Quận Bình Thạnh)']
+  code varchar(50) [unique, note: 'Mã vùng duy nhất']
+  type varchar(50) [default: 'district', note: 'Loại vùng: district (quận) / ward (phường) / special_zone']
+  boundary geometry [not null, note: 'Ranh giới vùng - PostGIS Polygon(4326)']
+  metadata jsonb [default: '{}', note: 'Thông tin bổ sung (dân số, diện tích, ...)']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Vùng đô thị (quận/huyện). Dùng để nhóm nodes và gửi cảnh báo theo khu vực.'
+}
+
+Table nodes {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên nút (VD: Ngã tư Hàng Xanh)']
+  type varchar(50) [not null, default: 'intersection', note: 'Loại: intersection (ngã tư) / roundabout (bùng binh) / highway_entry (nút cao tốc) / bridge (cầu) / terminal (điểm cuối)']
+  location geometry [not null, note: 'Tọa độ GPS - PostGIS Point(4326)']
+  zone_id bigint [ref: > zones.id, note: 'Thuộc vùng nào']
+  has_traffic_light boolean [default: false, note: 'Có đèn giao thông không?']
+  metadata jsonb [default: '{}', note: 'Dữ liệu mở rộng']
+  status varchar(20) [default: 'active', note: 'Trạng thái: active / inactive / under_construction (đang xây)']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Nút giao thông trong đồ thị. Mỗi node là 1 ngã tư, bùng binh, hoặc nút giao.'
+}
+
+Table edges {
+  id bigserial [pk]
+  name varchar(255) [not null, note: 'Tên đường (VD: Điện Biên Phủ)']
+  source_node_id bigint [not null, ref: > nodes.id, note: 'Nút bắt đầu']
+  target_node_id bigint [not null, ref: > nodes.id, note: 'Nút kết thúc']
+  geometry geometry [not null, note: 'Hình dạng đường trên bản đồ - PostGIS LineString(4326)']
+  length_m decimal(10,2) [not null, note: 'Chiều dài (mét)']
+  lanes smallint [not null, default: 2, note: 'Số làn xe']
+  speed_limit_kmh smallint [not null, default: 50, note: 'Giới hạn tốc độ (km/h)']
+  direction varchar(10) [default: 'two_way', note: 'Chiều: one_way (một chiều) / two_way (hai chiều)']
+  road_type varchar(50) [default: 'urban', note: 'Loại đường: highway / urban / residential / service']
+
+  // Chỉ số Realtime (cập nhật bởi sensor)
+  current_density decimal(5,4) [default: 0.0, note: 'Mật độ hiện tại: 0.0 (trống) → 1.0 (kẹt cứng)']
+  current_speed_kmh decimal(6,2) [default: 0.0, note: 'Tốc độ hiện tại (km/h)']
+  current_flow decimal(8,2) [default: 0.0, note: 'Lưu lượng = density × speed']
+  congestion_level varchar(20) [default: 'none', note: 'Mức tắc: none (xanh) / light (vàng) / moderate (cam) / heavy (đỏ) / gridlock (kẹt cứng)']
+  status varchar(20) [default: 'normal', note: 'Trạng thái: normal / congested / blocked / closed']
+  metrics_updated_at timestamp [note: 'Lần cuối cập nhật chỉ số từ sensor']
+
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Đoạn đường nối 2 nút giao. Bảng cốt lõi chứa cả thuộc tính tĩnh (lanes, speed_limit) và chỉ số realtime (density, speed). Ràng buộc: source_node_id ≠ target_node_id.'
+}
+
+// =============================================
+// CẢM BIẾN IoT & DỮ LIỆU
+// =============================================
+
+Table sensors {
+  id bigserial [pk]
+  sensor_code varchar(100) [unique, not null, note: 'Mã cảm biến (VD: CAM_DBP_01)']
+  edge_id bigint [not null, ref: > edges.id, note: 'Gắn trên đoạn đường nào']
+  type varchar(50) [not null, note: 'Loại: camera / radar / loop_detector (vòng từ) / manual (thủ công)']
+  model varchar(100) [note: 'Model thiết bị']
+  firmware_version varchar(50) [note: 'Phiên bản firmware']
+  status varchar(20) [default: 'online', note: 'Trạng thái: online / offline / maintenance (bảo trì)']
+  last_active_at timestamp [note: 'Lần cuối gửi dữ liệu']
+  metadata jsonb [default: '{}', note: 'Thông tin bổ sung']
+  installed_at timestamp [note: 'Ngày lắp đặt']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Thiết bị cảm biến gắn trên đoạn đường. Mỗi edge có thể nhiều sensors.'
+}
+
+Table sensor_readings {
+  id bigserial
+  sensor_id bigint [not null, ref: > sensors.id, note: 'Cảm biến nào gửi']
+  edge_id bigint [not null, ref: > edges.id, note: 'Đoạn đường (denormalized để query nhanh)']
+  recorded_at timestamp [not null, note: 'Thời điểm đo (đóng vai trò created_at)']
+  vehicle_count integer [note: 'Số xe đếm được']
+  avg_speed_kmh decimal(6,2) [note: 'Tốc độ trung bình (km/h)']
+  occupancy_pct decimal(5,2) [note: 'Phần trăm chiếm chỗ detector']
+  density decimal(5,4) [note: 'Mật độ đã tính']
+  data_quality decimal(3,2) [default: 1.0, note: 'Chất lượng dữ liệu: 0.0 (kém) → 1.0 (tốt)']
+  is_anomaly boolean [default: false, note: 'Dữ liệu bất thường?']
+  raw_data jsonb [note: 'Dữ liệu thô từ sensor']
+
+  indexes {
+    (id, recorded_at) [pk]
+  }
+
+  Note: 'Dữ liệu cảm biến theo chuỗi thời gian. PHÂN VÙNG theo tháng (PARTITION BY RANGE). Chỉ thêm mới, không sửa → không có updated_at.'
+}
+
+// =============================================
+// SỰ CỐ & DỰ ĐOÁN AI
+// =============================================
+
+Table incidents {
+  id bigserial [pk]
+  title varchar(255) [not null, note: 'Tiêu đề sự cố']
+  description text [note: 'Mô tả chi tiết']
+  type varchar(50) [not null, note: 'Loại: accident (tai nạn) / congestion (ùn tắc) / road_work (công trình) / flood (ngập) / other']
+  severity varchar(20) [not null, note: 'Mức nghiêm trọng: low / medium / high / critical']
+  status varchar(20) [default: 'open', note: 'Trạng thái: open → investigating → resolved → closed']
+  source varchar(30) [not null, note: 'Nguồn: citizen_report (người dân) / operator (điều hành) / auto_detected (tự động)']
+  location geometry [note: 'Vị trí sự cố - PostGIS Point(4326)']
+  affected_edge_ids "bigint[]" [default: '{}', note: 'Mảng ID các đoạn đường bị ảnh hưởng']
+  reported_by bigint [ref: > users.id, note: 'Người báo cáo']
+  assigned_to bigint [ref: > users.id, note: 'Người được giao xử lý']
+  resolved_at timestamp [note: 'Thời điểm giải quyết xong']
+  metadata jsonb [default: '{}', note: 'Dữ liệu thêm: ảnh, video, ghi chú']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Sự cố giao thông. Tạo bởi: người dân báo cáo, operator tạo thủ công, hoặc hệ thống tự phát hiện (density spike).'
+}
+
+Table predictions {
+  id bigserial [pk]
+  incident_id bigint [ref: > incidents.id, note: 'Dự đoán cho sự cố nào']
+  model_version varchar(50) [not null, note: 'Phiên bản model AI (VD: lstm_v2.1)']
+  processing_time_ms integer [note: 'Thời gian xử lý (millisecond)']
+  status varchar(20) [default: 'completed', note: 'Trạng thái: pending (đang chạy) / completed (xong) / failed (lỗi)']
+  error_message text [note: 'Thông báo lỗi nếu thất bại']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Kết quả dự đoán từ AI service (Python FastAPI). Mỗi incident có thể nhiều predictions.'
+}
+
+Table prediction_edges {
+  id bigserial [pk]
+  prediction_id bigint [not null, ref: > predictions.id, note: 'Thuộc prediction nào']
+  edge_id bigint [not null, ref: > edges.id, note: 'Đoạn đường bị ảnh hưởng']
+  time_horizon_minutes smallint [not null, note: 'Dự đoán sau bao lâu: 15 / 30 / 60 phút']
+  predicted_density decimal(5,4) [note: 'Mật độ dự đoán']
+  predicted_delay_s integer [note: 'Thời gian chậm trễ dự đoán (giây)']
+  confidence decimal(3,2) [note: 'Độ tin cậy: 0.00 → 1.00']
+  severity varchar(20) [note: 'Mức nghiêm trọng dự đoán: low / medium / high / critical']
+  created_at timestamp [not null, note: 'Ngày tạo']
+
+  Note: 'Chi tiết dự đoán cho từng đoạn đường. Bất biến (chỉ thêm, không sửa). Xóa cascade theo predictions.'
+}
+
+// =============================================
+// ĐỀ XUẤT HÀNH ĐỘNG
+// =============================================
+
+Table recommendations {
+  id bigserial [pk]
+  prediction_id bigint [ref: > predictions.id, note: 'Dựa trên dự đoán nào']
+  incident_id bigint [ref: > incidents.id, note: 'Liên quan sự cố nào']
+  type varchar(30) [not null, note: 'Loại: reroute (chuyển hướng) / priority_route (tuyến ưu tiên) / alert (cảnh báo) / signal_control (điều khiển đèn)']
+  description text [not null, note: 'Mô tả đề xuất']
+  details jsonb [default: '{}', note: 'Chi tiết: tuyến thay thế, thời gian tiết kiệm, thông điệp cảnh báo']
+  status varchar(20) [default: 'pending', note: 'Trạng thái: pending (chờ duyệt) / approved (đã duyệt) / rejected (từ chối) / executed (đã thực thi)']
+  approved_by bigint [ref: > users.id, note: 'Người phê duyệt']
+  approved_at timestamp [note: 'Thời điểm phê duyệt']
+  rejected_reason text [note: 'Lý do từ chối']
+  executed_at timestamp [note: 'Thời điểm thực thi']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+  deleted_at timestamp [note: 'Xóa mềm']
+
+  Note: 'Đề xuất hành động dựa trên kết quả dự đoán AI. Operator duyệt/từ chối trên Dashboard.'
+}
+
+// =============================================
+// HỆ THỐNG (Nhật ký & Thông báo)
+// =============================================
+
+Table activity_log {
+  id bigserial [pk]
+  log_name varchar(255) [note: 'Nhóm log: incident / recommendation / user / sensor']
+  description text [not null, note: 'Hành động: created / updated / deleted / approved / rejected']
+  subject_type varchar(255) [note: 'Loại đối tượng bị tác động (VD: App\\Models\\Incident)']
+  subject_id bigint [note: 'ID đối tượng bị tác động']
+  causer_type varchar(255) [note: 'Loại người thực hiện (VD: App\\Models\\User)']
+  causer_id bigint [note: 'ID người thực hiện']
+  properties jsonb [note: 'Giá trị cũ/mới (diff): {"old": {...}, "new": {...}}']
+  batch_uuid uuid [note: 'Nhóm các hành động liên quan']
+  event varchar(255) [note: 'Sự kiện: created / updated / deleted']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Nhật ký hoạt động (Spatie Activity Log). Ghi lại ai làm gì, khi nào, thay đổi gì. Không xóa.'
+}
+
+Table notifications {
+  id uuid [pk, note: 'UUID ngẫu nhiên']
+  type varchar(255) [not null, note: 'Loại thông báo (tên class Laravel)']
+  notifiable_type varchar(255) [not null, note: 'Loại đối tượng nhận (User)']
+  notifiable_id bigint [not null, note: 'ID người nhận']
+  data jsonb [not null, note: 'Nội dung: tiêu đề, incident_id, severity, đường dẫn']
+  read_at timestamp [note: 'Đã đọc lúc nào? NULL = chưa đọc']
+  created_at timestamp [not null, note: 'Ngày tạo']
+  updated_at timestamp [not null, note: 'Ngày cập nhật']
+
+  Note: 'Thông báo hệ thống (Laravel Notifications). Hỗ trợ push, email, SMS. read_at = NULL nghĩa là chưa đọc.'
+}
