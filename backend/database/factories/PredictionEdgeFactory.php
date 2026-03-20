@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Edge;
 use App\Models\Prediction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -11,7 +12,7 @@ class PredictionEdgeFactory extends Factory
     {
         return [
             'prediction_id' => Prediction::factory(),
-            'edge_id' => 1,
+            'edge_id' => Edge::factory(),
             'time_horizon_minutes' => fake()->randomElement([15, 30, 60]),
             'predicted_density' => fake()->randomFloat(4, 0.3, 0.95),
             'predicted_delay_s' => fake()->numberBetween(30, 300),

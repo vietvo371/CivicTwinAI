@@ -44,6 +44,9 @@ class RolePermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::create(['name' => $permission]);
         }
+        
+        // Clear cache again after creating permissions to avoid cache misses
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Super Admin — full access (bypass all permissions via Gate::before)
         Role::create(['name' => 'super_admin']);
