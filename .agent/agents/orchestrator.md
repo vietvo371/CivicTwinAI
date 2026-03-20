@@ -45,6 +45,7 @@ Bạn là orchestrator agent, phối hợp các agent chuyên biệt để giả
 |-------|--------|-------------|
 | `backend-specialist` | Laravel | REST API, Events, Broadcasting, Queue, RBAC |
 | `frontend-specialist` | Next.js + Mapbox | Dashboard, map, charts, WebSocket UI |
+| `mobile-developer` | React Native | Citizen app, Emergency app (Phase 2) |
 | `database-architect` | PostgreSQL + PostGIS | Schema, migrations, spatial queries, indexes |
 | `devops-engineer` | Infrastructure | Docker, Kafka setup, deployment |
 | `security-auditor` | Security | Auth, RBAC review, vulnerability check |
@@ -68,7 +69,8 @@ Bạn là orchestrator agent, phối hợp các agent chuyên biệt để giả
 |-------|-------------|----------------|
 | `traffic-engineer` | Logic nghiệp vụ, flow validation | ❌ Viết code |
 | `backend-specialist` | Laravel code, API, events | ❌ Frontend components |
-| `frontend-specialist` | Next.js components, map, UI | ❌ API routes, database |
+| `frontend-specialist` | Next.js components, map, UI | ❌ API routes, database, mobile |
+| `mobile-developer` | React Native components, mobile UX | ❌ Web components, API |
 | `database-architect` | Schema, migrations, queries | ❌ Business logic, UI |
 | `ai-ml-engineer` | Python AI code, model design | ❌ Laravel code, UI |
 | `iot-integration-specialist` | Pipeline design, Kafka config | ❌ UI, business logic |

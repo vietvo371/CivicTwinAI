@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # APPLICATION SERVICES
+  # ============================================
+
+  laravel:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civictwin-laravel
+    ports:
+      - '8000:8000'
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-civictwin}
+      - DB_USERNAME=${DB_USERNAME:-civictwin}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BROKERS=kafka:9092
+      - AI_SERVICE_URL=http://python-ai:8001
+      - AI_SERVICE_KEY=${AI_SERVICE_KEY:-internal-key}
+      - BROADCAST_DRIVER=pusher
+      - PUSHER_APP_ID=civictwin
+      - PUSHER_APP_KEY=${PUSHER_APP_KEY:-civictwin-key}
+      - PUSHER_APP_SECRET=${PUSHER_APP_SECRET:-civictwin-secret}
+      - PUSHER_HOST=soketi
+      - PUSHER_PORT=6001
+      - PUSHER_SCHEME=http
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - civictwin
+
+  laravel-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: civictwin-worker
+    command: php artisan queue:work --queue=high,default --sleep=3 --tries=3
+    depends_on:
+      - laravel
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-civictwin}
+      - DB_USERNAME=${DB_USERNAME:-civictwin}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - KAFKA_BROKERS=kafka:9092
+      - AI_SERVICE_URL=http://python-ai:8001
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - civictwin
+
+  python-ai:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: civictwin-ai
+    ports:
+      - '8001:8001'
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql://${DB_USERNAME:-civictwin}:${DB_PASSWORD:-secret}@postgres:5432/${DB_DATABASE:-civictwin}
+      - AI_SERVICE_KEY=${AI_SERVICE_KEY:-internal-key}
+    volumes:
+      - ./ai-service:/app
+      - ./ai-service/ml/saved_models:/app/ml/saved_models
+    networks:
+      - civictwin
+
+  nextjs:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: civictwin-frontend
+    ports:
+      - '3000:3000'
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_MAPBOX_TOKEN=${MAPBOX_TOKEN}
+      - NEXT_PUBLIC_WS_HOST=localhost
+      - NEXT_PUBLIC_WS_PORT=6001
+      - NEXT_PUBLIC_WS_KEY=${PUSHER_APP_KEY:-civictwin-key}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - civictwin
+
+  # ============================================
+  # DATA LAYER
+  # ============================================
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: civictwin-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-civictwin}
+      - POSTGRES_USER=${DB_USERNAME:-civictwin}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - civictwin
+
+  redis:
+    image: redis:7-alpine
+    container_name: civictwin-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - civictwin
+
+  # ============================================
+  # MESSAGING
+  # ============================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: civictwin-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - civictwin
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: civictwin-kafka
+    ports:
+      - '9092:9092'
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    networks:
+      - civictwin
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: civictwin-mqtt
+    ports:
+      - '1883:1883'
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - civictwin
+
+  # ============================================
+  # REALTIME
+  # ============================================
+
+  soketi:
+    image: quay.io/soketi/soketi:1.6-16-debian
+    container_name: civictwin-soketi
+    ports:
+      - '6001:6001'
+    environment:
+      SOKETI_DEFAULT_APP_ID: civictwin
+      SOKETI_DEFAULT_APP_KEY: ${PUSHER_APP_KEY:-civictwin-key}
+      SOKETI_DEFAULT_APP_SECRET: ${PUSHER_APP_SECRET:-civictwin-secret}
+      SOKETI_DEBUG: '1'
+    networks:
+      - civictwin
+
+# ============================================
+# VOLUMES & NETWORKS
+# ============================================
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  civictwin:
+    driver: bridge

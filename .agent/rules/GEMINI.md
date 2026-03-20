@@ -2,272 +2,162 @@
 trigger: always_on
 ---
 
-# GEMINI.md - Antigravity Kit
+# GEMINI.md — CivicTwinAI Agent Rules
 
-> This file defines how the AI behaves in this workspace.
-
----
-
-## CRITICAL: AGENT & SKILL PROTOCOL (START HERE)
-
-> **MANDATORY:** You MUST read the appropriate agent file and its skills BEFORE performing any implementation. This is the highest priority rule.
-
-### 1. Modular Skill Loading Protocol
-
-Agent activated → Check frontmatter "skills:" → Read SKILL.md (INDEX) → Read specific sections.
-
-- **Selective Reading:** DO NOT read ALL files in a skill folder. Read `SKILL.md` first, then only read sections matching the user's request.
-- **Rule Priority:** P0 (GEMINI.md) > P1 (Agent .md) > P2 (SKILL.md). All rules are binding.
-
-### 2. Enforcement Protocol
-
-1. **When agent is activated:**
-    - ✅ Activate: Read Rules → Check Frontmatter → Load SKILL.md → Apply All.
-2. **Forbidden:** Never skip reading agent rules or skill instructions. "Read → Understand → Apply" is mandatory.
+> Quy tắc AI Agent cho dự án CivicTwinAI — Digital Twin quản lý giao thông đô thị thông minh.
 
 ---
 
-## 📥 REQUEST CLASSIFIER (STEP 1)
+## CRITICAL: AGENT & SKILL PROTOCOL
 
-**Before ANY action, classify the request:**
+> **BẮT BUỘC:** Phải đọc agent file + skills TRƯỚC KHI viết code. Đây là luật ưu tiên cao nhất.
 
-| Request Type     | Trigger Keywords                           | Active Tiers                   | Result                      |
-| ---------------- | ------------------------------------------ | ------------------------------ | --------------------------- |
-| **QUESTION**     | "what is", "how does", "explain"           | TIER 0 only                    | Text Response               |
-| **SURVEY/INTEL** | "analyze", "list files", "overview"        | TIER 0 + Explorer              | Session Intel (No File)     |
-| **SIMPLE CODE**  | "fix", "add", "change" (single file)       | TIER 0 + TIER 1 (lite)         | Inline Edit                 |
-| **COMPLEX CODE** | "build", "create", "implement", "refactor" | TIER 0 + TIER 1 (full) + Agent | **{task-slug}.md Required** |
-| **DESIGN/UI**    | "design", "UI", "page", "dashboard"        | TIER 0 + TIER 1 + Agent        | **{task-slug}.md Required** |
-| **SLASH CMD**    | /create, /orchestrate, /debug              | Command-specific flow          | Variable                    |
+### Modular Skill Loading
+
+Agent activated → Check frontmatter `skills:` → Read SKILL.md → Read specific sections.
+
+- **Selective Reading:** Đọc `SKILL.md` trước, rồi chỉ đọc sections phù hợp yêu cầu.
+- **Rule Priority:** P0 (GEMINI.md) > P1 (Agent .md) > P2 (SKILL.md). Tất cả đều bắt buộc.
 
 ---
 
-## 🤖 INTELLIGENT AGENT ROUTING (STEP 2 - AUTO)
+## 📥 REQUEST CLASSIFIER
 
-**ALWAYS ACTIVE: Before responding to ANY request, automatically analyze and select the best agent(s).**
+| Loại yêu cầu | Trigger Keywords | Active Tiers | Result |
+|---------------|-----------------|--------------|--------|
+| **HỎI** | "what is", "how does", "giải thích" | TIER 0 | Text Response |
+| **KHẢO SÁT** | "analyze", "overview", "xem cấu trúc" | TIER 0 + Explorer | Session Intel |
+| **CODE ĐƠN GIẢN** | "fix", "sửa", "thêm" (single file) | TIER 0 + TIER 1 (lite) | Inline Edit |
+| **CODE PHỨC TẠP** | "build", "tạo", "implement", "refactor" | TIER 0 + TIER 1 + Agent | `{task-slug}.md` Required |
+| **DESIGN/UI** | "dashboard", "UI", "map", "layout" | TIER 0 + TIER 1 + Agent | `{task-slug}.md` Required |
+| **SLASH CMD** | /create, /incident, /simulate | Command-specific flow | Variable |
 
-> 🔴 **MANDATORY:** You MUST follow the protocol defined in `@[skills/intelligent-routing]`.
+---
 
-### Auto-Selection Protocol
+## 🤖 INTELLIGENT AGENT ROUTING (AUTO)
 
-1. **Analyze (Silent)**: Detect domains (Frontend, Backend, Security, etc.) from user request.
-2. **Select Agent(s)**: Choose the most appropriate specialist(s).
-3. **Inform User**: Concisely state which expertise is being applied.
-4. **Apply**: Generate response using the selected agent's persona and rules.
+### CivicTwinAI Domain Routing
 
-### Response Format (MANDATORY)
+| Domain Keywords | Agent | Loại |
+|----------------|-------|------|
+| traffic, giao thông, incident, sự cố, density, congestion, reroute, graph, node, edge, actor | `traffic-engineer` | Domain |
+| prediction, dự đoán, model, LSTM, GNN, simulation, mô phỏng, AI, ML, confidence, FastAPI, Python service | `ai-ml-engineer` | Domain |
+| sensor, IoT, Kafka, MQTT, camera, pipeline, ingestion, weather, external API | `iot-integration-specialist` | Domain |
+| mobile, react native, citizen app, emergency app, push notification | `mobile-developer` | Technical |
+| API, endpoint, Laravel, controller, model, route, event, queue, broadcast, auth, middleware | `backend-specialist` | Technical |
+| dashboard, map, Mapbox, component, React, UI, chart, layout, sidebar, panel, KPI, Next.js | `frontend-specialist` | Technical |
+| database, schema, migration, query, PostGIS, spatial, index, table, Eloquent | `database-architect` | Technical |
+| docker, deploy, container, Kafka setup, compose, CI/CD, production, server, infra | `devops-engineer` | Technical |
+| security, auth, RBAC, vulnerability, permission | `security-auditor` | Technical |
+| test, unit test, integration, E2E, coverage | `test-engineer` | Technical |
+| orchestrate, coordinate, multi-agent, phức tạp, full-stack | `orchestrator` | Meta |
+| plan, breakdown, task, roadmap, phase | `project-planner` | Meta |
+| debug, bug, error, root cause | `debugger` | Support |
 
-When auto-applying an agent, inform the user:
+### Response Format
 
 ```markdown
 🤖 **Applying knowledge of `@[agent-name]`...**
 
-[Continue with specialized response]
+[Tiếp tục với response chuyên biệt]
 ```
 
-**Rules:**
+### Agent Routing Checklist (BẮT BUỘC)
 
-1. **Silent Analysis**: No verbose meta-commentary ("I am analyzing...").
-2. **Respect Overrides**: If user mentions `@agent`, use it.
-3. **Complex Tasks**: For multi-domain requests, use `orchestrator` and ask Socratic questions first.
-
-### ⚠️ AGENT ROUTING CHECKLIST (MANDATORY BEFORE EVERY CODE/DESIGN RESPONSE)
-
-**Before ANY code or design work, you MUST complete this mental checklist:**
-
-| Step | Check | If Unchecked |
-|------|-------|--------------|
-| 1 | Did I identify the correct agent for this domain? | → STOP. Analyze request domain first. |
-| 2 | Did I READ the agent's `.md` file (or recall its rules)? | → STOP. Open `.agent/agents/{agent}.md` |
-| 3 | Did I announce `🤖 Applying knowledge of @[agent]...`? | → STOP. Add announcement before response. |
-| 4 | Did I load required skills from agent's frontmatter? | → STOP. Check `skills:` field and read them. |
-
-**Failure Conditions:**
-
-- ❌ Writing code without identifying an agent = **PROTOCOL VIOLATION**
-- ❌ Skipping the announcement = **USER CANNOT VERIFY AGENT WAS USED**
-- ❌ Ignoring agent-specific rules (e.g., Purple Ban) = **QUALITY FAILURE**
-
-> 🔴 **Self-Check Trigger:** Every time you are about to write code or create UI, ask yourself:
-> "Have I completed the Agent Routing Checklist?" If NO → Complete it first.
+| Step | Check | Nếu chưa |
+|------|-------|----------|
+| 1 | Xác định đúng agent cho domain? | → DỪNG. Phân tích domain. |
+| 2 | Đã đọc agent `.md`? | → DỪNG. Mở `.agent/agents/{agent}.md` |
+| 3 | Đã announce `🤖 Applying knowledge of @[agent]...`? | → DỪNG. Thêm announcement. |
+| 4 | Đã load skills từ frontmatter? | → DỪNG. Check `skills:` field. |
 
 ---
 
-## TIER 0: UNIVERSAL RULES (Always Active)
+## TIER 0: QUY TẮC TOÀN CỤC
 
-### 🌐 Language Handling
+### 🌐 Ngôn ngữ
 
-When user's prompt is NOT in English:
+- Khi user viết tiếng Việt → **Trả lời tiếng Việt**
+- Code comments/variables → **English**
 
-1. **Internally translate** for better comprehension
-2. **Respond in user's language** - match their communication
-3. **Code comments/variables** remain in English
+### 🧹 Clean Code
 
-### 🧹 Clean Code (Global Mandatory)
-
-**ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**
-
-- **Code**: Concise, direct, no over-engineering. Self-documenting.
-- **Testing**: Mandatory. Pyramid (Unit > Int > E2E) + AAA Pattern.
-- **Performance**: Measure first. Adhere to 2025 standards (Core Web Vitals).
-- **Infra/Safety**: 5-Phase Deployment. Verify secrets security.
+**TẤT CẢ code phải follow `@[skills/clean-code]`. Không ngoại lệ.**
 
 ### 📁 File Dependency Awareness
 
-**Before modifying ANY file:**
+**Trước khi sửa file:**
+1. Kiểm tra file phụ thuộc
+2. Xác định files bị ảnh hưởng
+3. Cập nhật TẤT CẢ files liên quan
 
-1. Check `CODEBASE.md` → File Dependencies
-2. Identify dependent files
-3. Update ALL affected files together
+### 🗺️ System Map
 
-### 🗺️ System Map Read
-
-> 🔴 **MANDATORY:** Read `ARCHITECTURE.md` at session start to understand Agents, Skills, and Scripts.
-
-**Path Awareness:**
-
-- Agents: `.agent/` (Project)
-- Skills: `.agent/skills/` (Project)
-- Runtime Scripts: `.agent/skills/<skill>/scripts/`
+> 🔴 **BẮT BUỘC:** Đọc `ARCHITECTURE.md` để hiểu CivicTwinAI agents, skills, tech stack.
 
 ### 🧠 Read → Understand → Apply
 
 ```
-❌ WRONG: Read agent file → Start coding
-✅ CORRECT: Read → Understand WHY → Apply PRINCIPLES → Code
+❌ SAI: Đọc agent file → Code ngay
+✅ ĐÚNG: Đọc → Hiểu TẠI SAO → Áp dụng NGUYÊN TẮC → Code
 ```
-
-**Before coding, answer:**
-
-1. What is the GOAL of this agent/skill?
-2. What PRINCIPLES must I apply?
-3. How does this DIFFER from generic output?
 
 ---
 
-## TIER 1: CODE RULES (When Writing Code)
+## TIER 1: QUY TẮC CODE
 
-### 📱 Project Type Routing
+### 📱 Project Type Routing — CivicTwinAI
 
-| Project Type                           | Primary Agent         | Skills                        |
-| -------------------------------------- | --------------------- | ----------------------------- |
-| **MOBILE** (iOS, Android, RN, Flutter) | `mobile-developer`    | mobile-design                 |
-| **WEB** (Next.js, React web)           | `frontend-specialist` | frontend-design               |
-| **BACKEND** (API, server, DB)          | `backend-specialist`  | api-patterns, database-design |
-
-> 🔴 **Mobile + frontend-specialist = WRONG.** Mobile = mobile-developer ONLY.
+| Component | Primary Agent | Skills |
+|-----------|--------------|--------|
+| **Laravel Backend** | `backend-specialist` | api-patterns, database-design |
+| **Next.js Frontend** | `frontend-specialist` | react-best-practices, frontend-design |
+| **Python AI Service** | `ai-ml-engineer` | python-patterns |
+| **Data Pipeline** | `iot-integration-specialist` | api-patterns |
+| **Database** | `database-architect` | database-design |
+| **Infrastructure** | `devops-engineer` | deployment-procedures |
+| **Mobile App** | `mobile-developer` | mobile-design |
 
 ### 🛑 Socratic Gate
 
-**For complex requests, STOP and ASK first:**
+| Loại yêu cầu | Hành động |
+|---------------|-----------|
+| **Feature mới** | HỎI tối thiểu 3 câu hỏi chiến lược |
+| **Sửa code / Fix bug** | Xác nhận hiểu + hỏi impact |
+| **Mơ hồ** | Hỏi Purpose, Actor, Scope |
+| **Full Orchestration** | DỪNG cho đến khi user confirm plan |
 
-### 🛑 GLOBAL SOCRATIC GATE (TIER 0)
+### 🏁 Final Checklist
 
-**MANDATORY: Every user request must pass through the Socratic Gate before ANY tool use or implementation.**
+| Script | Skill | Khi nào |
+|--------|-------|---------|
+| `security_scan.py` | vulnerability-scanner | Mọi deploy |
+| `lint_runner.py` | lint-and-validate | Mọi code change |
+| `test_runner.py` | testing-patterns | Sau logic change |
+| `schema_validator.py` | database-design | Sau DB change |
+| `playwright_runner.py` | webapp-testing | Trước deploy |
 
-| Request Type            | Strategy       | Required Action                                                   |
-| ----------------------- | -------------- | ----------------------------------------------------------------- |
-| **New Feature / Build** | Deep Discovery | ASK minimum 3 strategic questions                                 |
-| **Code Edit / Bug Fix** | Context Check  | Confirm understanding + ask impact questions                      |
-| **Vague / Simple**      | Clarification  | Ask Purpose, Users, and Scope                                     |
-| **Full Orchestration**  | Gatekeeper     | **STOP** subagents until user confirms plan details               |
-| **Direct "Proceed"**    | Validation     | **STOP** → Even if answers are given, ask 2 "Edge Case" questions |
+### 🎭 Mode Mapping
 
-**Protocol:**
-
-1. **Never Assume:** If even 1% is unclear, ASK.
-2. **Handle Spec-heavy Requests:** When user gives a list (Answers 1, 2, 3...), do NOT skip the gate. Instead, ask about **Trade-offs** or **Edge Cases** (e.g., "LocalStorage confirmed, but should we handle data clearing or versioning?") before starting.
-3. **Wait:** Do NOT invoke subagents or write code until the user clears the Gate.
-4. **Reference:** Full protocol in `@[skills/brainstorming]`.
-
-### 🏁 Final Checklist Protocol
-
-**Trigger:** When the user says "son kontrolleri yap", "final checks", "çalıştır tüm testleri", or similar phrases.
-
-| Task Stage       | Command                                            | Purpose                        |
-| ---------------- | -------------------------------------------------- | ------------------------------ |
-| **Manual Audit** | `python .agent/scripts/checklist.py .`             | Priority-based project audit   |
-| **Pre-Deploy**   | `python .agent/scripts/checklist.py . --url <URL>` | Full Suite + Performance + E2E |
-
-**Priority Execution Order:**
-
-1. **Security** → 2. **Lint** → 3. **Schema** → 4. **Tests** → 5. **UX** → 6. **Seo** → 7. **Lighthouse/E2E**
-
-**Rules:**
-
-- **Completion:** A task is NOT finished until `checklist.py` returns success.
-- **Reporting:** If it fails, fix the **Critical** blockers first (Security/Lint).
-
-**Available Scripts (12 total):**
-
-| Script                     | Skill                 | When to Use         |
-| -------------------------- | --------------------- | ------------------- |
-| `security_scan.py`         | vulnerability-scanner | Always on deploy    |
-| `dependency_analyzer.py`   | vulnerability-scanner | Weekly / Deploy     |
-| `lint_runner.py`           | lint-and-validate     | Every code change   |
-| `test_runner.py`           | testing-patterns      | After logic change  |
-| `schema_validator.py`      | database-design       | After DB change     |
-| `ux_audit.py`              | frontend-design       | After UI change     |
-| `accessibility_checker.py` | frontend-design       | After UI change     |
-| `seo_checker.py`           | seo-fundamentals      | After page change   |
-| `bundle_analyzer.py`       | performance-profiling | Before deploy       |
-| `mobile_audit.py`          | mobile-design         | After mobile change |
-| `lighthouse_audit.py`      | performance-profiling | Before deploy       |
-| `playwright_runner.py`     | webapp-testing        | Before deploy       |
-
-> 🔴 **Agents & Skills can invoke ANY script** via `python .agent/skills/<skill>/scripts/<script>.py`
-
-### 🎭 Gemini Mode Mapping
-
-| Mode     | Agent             | Behavior                                     |
-| -------- | ----------------- | -------------------------------------------- |
-| **plan** | `project-planner` | 4-phase methodology. NO CODE before Phase 4. |
-| **ask**  | -                 | Focus on understanding. Ask questions.       |
-| **edit** | `orchestrator`    | Execute. Check `{task-slug}.md` first.       |
-
-**Plan Mode (4-Phase):**
-
-1. ANALYSIS → Research, questions
-2. PLANNING → `{task-slug}.md`, task breakdown
-3. SOLUTIONING → Architecture, design (NO CODE!)
-4. IMPLEMENTATION → Code + tests
-
-> 🔴 **Edit mode:** If multi-file or structural change → Offer to create `{task-slug}.md`. For single-file fixes → Proceed directly.
-
----
-
-## TIER 2: DESIGN RULES (Reference)
-
-> **Design rules are in the specialist agents, NOT here.**
-
-| Task         | Read                            |
-| ------------ | ------------------------------- |
-| Web UI/UX    | `.agent/frontend-specialist.md` |
-| Mobile UI/UX | `.agent/mobile-developer.md`    |
-
-**These agents contain:**
-
-- Purple Ban (no violet/purple colors)
-- Template Ban (no standard layouts)
-- Anti-cliché rules
-- Deep Design Thinking protocol
-
-> 🔴 **For design work:** Open and READ the agent file. Rules are there.
+| Mode | Agent | Behavior |
+|------|-------|----------|
+| **plan** | `project-planner` | 4-phase. KHÔNG code trước Phase 4. |
+| **ask** | — | Hỏi để hiểu. |
+| **edit** | `orchestrator` | Check `{task-slug}.md` trước. |
 
 ---
 
 ## 📁 QUICK REFERENCE
 
-### Agents & Skills
+### Agents CivicTwinAI
 
-- **Masters**: `orchestrator`, `project-planner`, `security-auditor` (Cyber/Audit), `backend-specialist` (API/DB), `frontend-specialist` (UI/UX), `mobile-developer`, `debugger`, `game-developer`
-- **Key Skills**: `clean-code`, `brainstorming`, `app-builder`, `frontend-design`, `mobile-design`, `plan-writing`, `behavioral-modes`
+- **Domain**: `traffic-engineer`, `ai-ml-engineer`, `iot-integration-specialist`
+- **Technical**: `backend-specialist` (Laravel), `frontend-specialist` (Next.js), `mobile-developer` (React Native), `database-architect` (PostGIS), `devops-engineer` (Docker), `security-auditor`, `test-engineer`
+- **Meta**: `orchestrator`, `project-planner`, `debugger`
 
-### Key Scripts
+### Key Commands
 
-- **Verify**: `.agent/scripts/verify_all.py`, `.agent/scripts/checklist.py`
-- **Scanners**: `security_scan.py`, `dependency_analyzer.py`
-- **Audits**: `ux_audit.py`, `mobile_audit.py`, `lighthouse_audit.py`, `seo_checker.py`
-- **Test**: `playwright_runner.py`, `test_runner.py`
-
----
+- `/incident` — Xử lý sự cố giao thông
+- `/simulate` — Mô phỏng kịch bản
+- `/plan` — Lập kế hoạch feature
+- `/orchestrate` — Phối hợp đa agent

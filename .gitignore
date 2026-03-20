@@ -1,0 +1,46 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Build
+.next/
+build/
+dist/
+*.egg-info/
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# ML Models (large files)
+ai-service/ml/saved_models/*.pt
+ai-service/ml/saved_models/*.h5
+ai-service/ml/saved_models/*.pkl
+
+# Logs
+*.log
+storage/logs/
+
+# OS
+Thumbs.db
+
+# Mobile
+mobile/android/app/build/
+mobile/ios/Pods/
+mobile/ios/build/
