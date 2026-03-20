@@ -84,6 +84,12 @@ Agent activated → Check frontmatter `skills:` → Read SKILL.md → Read speci
 
 **TẤT CẢ code phải follow `@[skills/clean-code]`. Không ngoại lệ.**
 
+### 📦 Package Manager
+
+- **Frontend (Next.js):** Luôn dùng `yarn`. KHÔNG dùng `npm`.
+- **Backend (Laravel):** Dùng `composer`.
+- **AI Service (Python):** Dùng `pip`.
+
 ### 📁 File Dependency Awareness
 
 **Trước khi sửa file:**
