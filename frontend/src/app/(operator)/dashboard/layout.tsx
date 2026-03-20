@@ -10,14 +10,22 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else {
+        const hasAccess = user.roles?.includes('traffic_operator') || user.roles?.includes('city_admin');
+        if (!hasAccess) {
+          router.push('/unauthorized');
+        }
+      }
+    }
   }, [user, loading, router]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-          style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -25,10 +33,12 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen bg-slate-900 text-slate-50 flex relative">
       <Sidebar />
-      <main className="transition-all duration-300" style={{ marginLeft: 'var(--sidebar-width)' }}>
-        {children}
+      <main className="flex-1 transition-all duration-300 pl-[72px] lg:pl-[260px] min-w-0">
+        <div className="p-4 md:p-6 lg:p-8">
+          {children}
+        </div>
       </main>
     </div>
   );

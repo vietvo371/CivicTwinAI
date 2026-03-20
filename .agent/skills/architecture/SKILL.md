@@ -19,6 +19,7 @@ allowed-tools: Read, Glob, Grep
 | `pattern-selection.md` | Decision trees, anti-patterns | Choosing patterns |
 | `examples.md` | MVP, SaaS, Enterprise examples | Reference implementations |
 | `patterns-reference.md` | Quick lookup for patterns | Pattern comparison |
+| `multi-actor-pattern.md` | Route Groups & Middleware Isolation | Thiết kế hệ thống đa quyền (Actors) |
 
 ---
 

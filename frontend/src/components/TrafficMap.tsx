@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import api from '@/lib/api';
-import { Layers, RefreshCw } from 'lucide-react';
+import { Layers, RefreshCw, Activity, AlertTriangle, TrendingUp } from 'lucide-react';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiZGVtbyIsImEiOiJjbHM0MjF0eG4wMDNqMmtvNGdqMDIxYmRyIn0.demo';
 
 const CONGESTION_COLORS: Record<string, string> = {
-  none: '#22c55e',
-  light: '#84cc16',
-  moderate: '#f59e0b',
-  heavy: '#ef4444',
-  gridlock: '#dc2626',
+  none: '#22c55e',       // green-500
+  light: '#eab308',      // yellow-500
+  moderate: '#f97316',   // orange-500
+  heavy: '#ef4444',      // red-500
+  gridlock: '#9f1239',   // rose-800
 };
 
 interface EdgeFeature {
@@ -31,7 +31,11 @@ interface EdgeFeature {
   };
 }
 
-export default function TrafficMap() {
+interface TrafficMapProps {
+  isPublic?: boolean;
+}
+
+export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +98,7 @@ export default function TrafficMap() {
             'moderate', CONGESTION_COLORS.moderate,
             'heavy', CONGESTION_COLORS.heavy,
             'gridlock', CONGESTION_COLORS.gridlock,
-            '#64748b',
+            '#475569', // slate-600 default
           ],
           'line-width': [
             'interpolate', ['linear'], ['zoom'],
@@ -112,17 +116,30 @@ export default function TrafficMap() {
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(`
-            <div style="font-family: Inter, sans-serif;">
-              <div style="font-weight: 600; margin-bottom: 6px;">${p.name}</div>
-              <div style="display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 12px;">
-                <span style="color: var(--text-muted);">Mật độ</span>
-                <span>${(p.current_density * 100).toFixed(1)}%</span>
-                <span style="color: var(--text-muted);">Tốc độ</span>
-                <span>${p.current_speed_kmh} km/h</span>
-                <span style="color: var(--text-muted);">Làn</span>
-                <span>${p.lanes}</span>
-                <span style="color: var(--text-muted);">Trạng thái</span>
-                <span style="color: ${CONGESTION_COLORS[p.congestion_level] || '#64748b'}; font-weight: 600;">
+            <div style="font-family: var(--font-body); min-width: 200px;">
+              <div style="font-weight: 700; font-family: var(--font-heading); font-size: 15px; margin-bottom: 12px; border-bottom: 1px solid rgba(71,85,105,0.5); padding-bottom: 8px;">
+                ${p.name}
+              </div>
+              <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13px;">
+                <span style="color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="width:14px; height:14px; display:inline-block; border-radius:2px; background:rgba(59,130,246,0.2); border:1px solid #3b82f6;"></span>
+                  Mật độ
+                </span>
+                <span style="font-family: var(--font-heading); font-weight: 600;">${(p.current_density * 100).toFixed(1)}%</span>
+                
+                <span style="color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="width:14px; height:14px; display:inline-block; border-radius:2px; background:rgba(16,185,129,0.2); border:1px solid #10b981;"></span>
+                  Tốc độ
+                </span>
+                <span style="font-family: var(--font-heading); font-weight: 600;">${p.current_speed_kmh} 
+                  <span style="font-size: 10px; color: var(--color-text-muted);">km/h</span>
+                </span>
+                
+                <span style="color: var(--color-text-secondary);">Làn xe</span>
+                <span style="font-weight: 500;">${p.lanes}</span>
+                
+                <span style="color: var(--color-text-secondary);">Trạng thái</span>
+                <span style="color: ${CONGESTION_COLORS[p.congestion_level] || '#64748b'}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px;">
                   ${p.congestion_level}
                 </span>
               </div>
@@ -142,55 +159,77 @@ export default function TrafficMap() {
     });
 
     return () => { map.current?.remove(); map.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="relative w-full h-[calc(100vh)]">
+    <div className="relative w-full h-[calc(100vh-2rem)] md:h-[calc(100vh-3rem)] lg:h-[calc(100vh-4rem)] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-700/50 bg-slate-900">
+      {/* Map Container */}
       <div ref={mapContainer} className="w-full h-full" />
 
-      {/* KPI Overlay */}
-      <div className="absolute top-4 left-4 flex gap-3 z-10">
-        {[
-          { label: 'Tổng đoạn', value: stats.total, color: 'var(--accent)' },
-          { label: 'Tắc nghẽn', value: stats.congested, color: 'var(--danger)' },
-          { label: 'Mật độ TB', value: `${stats.avgDensity}%`, color: 'var(--warning)' },
-        ].map((kpi) => (
-          <div key={kpi.label} className="px-4 py-3 rounded-xl backdrop-blur-md"
-            style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)' }}>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{kpi.label}</div>
-            <div className="text-xl font-bold" style={{ color: kpi.color }}>{kpi.value}</div>
+      {/* KPI Overlay - Top Right or Top Left depending on controls */}
+      <div className="absolute top-4 left-4 flex flex-col sm:flex-row gap-3 z-10">
+        <div className="flex flex-col gap-1 px-5 py-3.5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-lg group hover:border-slate-600 transition-colors">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-medium uppercase tracking-wider">
+            <Activity className="w-3.5 h-3.5 text-blue-400" /> Tổng đoạn đường
           </div>
-        ))}
+          <div className="text-2xl font-heading font-bold text-blue-400">
+            {stats.total.toLocaleString()}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 px-5 py-3.5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-lg group hover:border-slate-600 transition-colors">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-medium uppercase tracking-wider">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400" /> Tắc nghẽn
+          </div>
+          <div className="text-2xl font-heading font-bold text-red-500 flex items-baseline gap-2">
+            {stats.congested}
+            {stats.total > 0 && (
+              <span className="text-sm font-body font-medium text-slate-500">
+                ({Math.round((stats.congested / stats.total) * 100)}%)
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 px-5 py-3.5 rounded-2xl bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 shadow-lg group hover:border-slate-600 transition-colors">
+          <div className="flex items-center gap-2 text-slate-400 text-xs font-medium uppercase tracking-wider">
+            <TrendingUp className="w-3.5 h-3.5 text-orange-400" /> Mật độ TB
+          </div>
+          <div className="text-2xl font-heading font-bold text-orange-400 line-clamp-1">
+            {stats.avgDensity}%
+          </div>
+        </div>
       </div>
 
-      {/* Legend + Refresh */}
-      <div className="absolute bottom-6 left-4 z-10 flex gap-3">
-        <div className="px-4 py-3 rounded-xl backdrop-blur-md"
-          style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Layers className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-            <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Mức tắc nghẽn</span>
+      {/* Legend & Controls - Bottom Left */}
+      <div className="absolute bottom-6 left-4 z-10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        {/* Legend */}
+        <div className="px-5 py-4 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <Layers className="w-4 h-4 text-slate-400" />
+            <span className="text-[13px] font-semibold text-slate-200 tracking-wide uppercase">Mức độ lưu thông</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap gap-x-4 gap-y-2">
             {Object.entries(CONGESTION_COLORS).map(([level, color]) => (
-              <div key={level} className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full" style={{ background: color }} />
-                <span className="text-xs capitalize" style={{ color: 'var(--text-muted)' }}>{level}</span>
+              <div key={level} className="flex items-center gap-2">
+                <div 
+                  className="w-3.5 h-3.5 rounded-full ring-2 ring-slate-800 shadow-sm" 
+                  style={{ background: color, boxShadow: `0 0 8px ${color}80` }} 
+                />
+                <span className="text-xs font-medium text-slate-300 capitalize tracking-wide">{level}</span>
               </div>
             ))}
           </div>
         </div>
 
+        {/* Refresh Button */}
         <button
           onClick={() => { setLoading(true); loadGeoJSON(); }}
           disabled={loading}
-          className="p-3 rounded-xl backdrop-blur-md transition-colors hover:bg-[var(--bg-hover)]"
-          style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid var(--border)' }}
-          title="Refresh"
+          className="p-4 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 shadow-xl hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer"
+          title="Làm mới dữ liệu"
         >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}
-            style={{ color: 'var(--text-secondary)' }} />
+          <RefreshCw className={`w-5 h-5 text-slate-300 group-hover:text-white transition-colors ${loading ? 'animate-spin text-blue-400' : ''}`} />
         </button>
       </div>
     </div>

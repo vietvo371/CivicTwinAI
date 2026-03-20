@@ -26,15 +26,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      api.get('/auth/me')
-        .then((res) => setUser(res.data.user))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-    } else {
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const res = await api.get('/auth/me');
+          setUser(res.data.user);
+        } catch {
+          localStorage.removeItem('token');
+        }
+      }
       setLoading(false);
-    }
+    };
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
