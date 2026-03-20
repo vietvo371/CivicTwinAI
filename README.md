@@ -1,14 +1,23 @@
-# CivicTwinAI
+# CivicTwin AI
 
-> 🏙️ Digital Twin — Nền tảng quản lý giao thông đô thị thông minh
+> 🏙️ Digital Twin — Chuyển đổi quản lý giao thông đô thị từ **phản ứng** sang **dự đoán & chủ động**
 
 ## Tổng quan
 
-CivicTwinAI là nền tảng Digital Twin cho quản lý giao thông đô thị thông minh:
-- **Giám sát realtime** mạng giao thông qua IoT/sensor
-- **Dự đoán** tắc nghẽn lan rộng trước khi xảy ra (LSTM/GNN)
-- **Đề xuất hành động** cụ thể cho operator (reroute, priority route, alert)
-- **Mô phỏng** tác động quy hoạch dài hạn
+CivicTwin AI là nền tảng Digital Twin quản lý giao thông đô thị thông minh — chuyển đổi từ mô hình quản lý **"phản ứng" (reactive)** truyền thống sang mô hình **"dự đoán và chủ động" (predictive & proactive)**.
+
+### Vấn đề hiện tại (Reactive)
+
+Hệ thống quản lý giao thông truyền thống chỉ **phản ứng sau khi sự cố đã xảy ra**: ùn tắc lan rộng rồi mới biết, tai nạn rồi mới xử lý, quy hoạch dựa trên cảm tính — gây lãng phí thời gian, tài nguyên và tăng rủi ro.
+
+### Giải pháp CivicTwin AI (Predictive & Proactive)
+
+| Giá trị | Reactive (Cũ) | Proactive (CivicTwin AI) |
+|---------|---------------|--------------------------|
+| 🚦 **Giảm ùn tắc** | Phát hiện ùn tắc khi đã xảy ra | Dự đoán ùn tắc 15–60 phút trước, đề xuất chuyển hướng sớm |
+| 🚑 **Xử lý khẩn cấp nhanh** | Tìm đường cứu hộ bằng kinh nghiệm | Tính tuyến ưu tiên tối ưu tránh tắc bằng AI |
+| 📊 **Ra quyết định dữ liệu** | Dựa trên cảm tính, báo cáo cũ | Dựa trên dữ liệu realtime + mô phỏng tác động |
+| 💰 **Tiết kiệm chi phí** | Phản ứng chậm → tắc lan rộng → thiệt hại lớn | Can thiệp sớm → ngăn lan rộng → giảm thiệt hại |
 
 ## Tech Stack
 

@@ -1,18 +1,51 @@
-# Kiến trúc Hệ thống CivicTwinAI
+# Kiến trúc Hệ thống CivicTwin AI
 
-> Digital Twin — Nền tảng quản lý giao thông đô thị thông minh
+> Chuyển đổi quản lý giao thông đô thị từ **phản ứng (reactive)** sang **dự đoán & chủ động (predictive & proactive)**
 
 ---
 
 ## 1. Tổng quan
 
-CivicTwinAI là hệ thống Digital Twin xây dựng **bản sao số** của mạng giao thông đô thị, cho phép:
+### Tầm nhìn
 
-- **Giám sát realtime**: Theo dõi mật độ, tốc độ, lưu lượng xe trên từng đoạn đường
-- **Phát hiện sự cố**: Tự động phát hiện ùn tắc bất thường, tai nạn
-- **Dự đoán thông minh**: Dùng AI (LSTM/GNN) dự đoán tắc nghẽn lan rộng 15–60 phút tới
-- **Đề xuất hành động**: Gợi ý chuyển hướng, tuyến ưu tiên cứu hộ
-- **Mô phỏng quy hoạch**: So sánh trước/sau khi thay đổi hạ tầng giao thông
+CivicTwin AI là hệ thống Digital Twin xây dựng **bản sao số** của mạng giao thông đô thị, chuyển đổi cách vận hành từ mô hình **"phản ứng"** truyền thống sang mô hình **"dự đoán và chủ động"**:
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║                    MÔ HÌNH CHUYỂN ĐỔI                           ║
+╠════════════════════════════╦═════════════════════════════════════╣
+║   REACTIVE (Truyền thống)  ║   PROACTIVE (CivicTwin AI)         ║
+╠════════════════════════════╬═════════════════════════════════════╣
+║ Phát hiện ùn tắc khi      ║ Dự đoán ùn tắc 15–60 phút trước   ║
+║ đã xảy ra                 ║ → đề xuất chuyển hướng sớm         ║
+╠════════════════════════════╬═════════════════════════════════════╣
+║ Tìm đường cứu hộ          ║ AI tính tuyến ưu tiên tối ưu       ║
+║ bằng kinh nghiệm          ║ → tránh tắc, nhanh nhất            ║
+╠════════════════════════════╬═════════════════════════════════════╣
+║ Quyết định dựa trên       ║ Quyết định dựa trên dữ liệu       ║
+║ cảm tính, báo cáo cũ      ║ realtime + mô phỏng tác động       ║
+╠════════════════════════════╬═════════════════════════════════════╣
+║ Phản ứng chậm → tắc lan   ║ Can thiệp sớm → ngăn lan rộng     ║
+║ rộng → thiệt hại lớn      ║ → tiết kiệm thời gian & chi phí   ║
+╚════════════════════════════╩═════════════════════════════════════╝
+```
+
+### 4 Giá trị Cốt lõi
+
+| # | Giá trị | Cách đạt được |
+|---|---------|---------------|
+| 🚦 | **Giảm ùn tắc giao thông** | AI dự đoán tắc nghẽn lan rộng → đề xuất chuyển hướng TRƯỚC KHI tắc |
+| 🚑 | **Tăng tốc xử lý khẩn cấp** | Tuyến ưu tiên tối ưu cho cứu hộ, tránh đoạn tắc bằng graph algorithm |
+| 📊 | **Ra quyết định dựa trên dữ liệu** | Dashboard realtime + prediction + simulation → không còn cảm tính |
+| 💰 | **Tiết kiệm thời gian & chi phí** | Phát hiện sớm, can thiệp nhanh → giảm thiệt hại do tắc nghẽn |
+
+### Hệ thống bao gồm
+
+- **Giám sát realtime**: Mật độ, tốc độ, lưu lượng xe trên từng đoạn đường qua IoT/sensor
+- **Phát hiện sự cố chủ động**: Tự động phát hiện ùn tắc bất thường, tai nạn bằng anomaly detection
+- **Dự đoán thông minh**: AI (LSTM/GNN) dự đoán tắc nghẽn lan rộng 15–60 phút tới
+- **Đề xuất hành động**: Gợi ý chuyển hướng, tuyến ưu tiên cứu hộ, cảnh báo người dân
+- **Mô phỏng quy hoạch**: So sánh trước/sau khi thay đổi hạ tầng → ra quyết định dựa trên dữ liệu
 
 ---
 

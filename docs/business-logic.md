@@ -1,8 +1,50 @@
-# Business Logic — CivicTwinAI
+# Business Logic — CivicTwin AI
 
-> Tài liệu nghiệp vụ cốt lõi: 5 luồng chính, quy tắc domain, công thức tính toán, và logic xử lý.
+> Nghiệp vụ cốt lõi: chuyển đổi từ **phản ứng (reactive)** sang **dự đoán & chủ động (predictive & proactive)**
 
 ---
+
+## 0. Tầm nhìn: Reactive → Proactive
+
+### Mô hình truyền thống (Reactive)
+
+```
+Sự cố xảy ra → Phát hiện (chậm) → Phản ứng (muộn) → Thiệt hại đã lan rộng
+```
+
+Vấn đề: Chỉ hành động **SAU KHI** vấn đề xảy ra. Ùn tắc đã lan rộng, cứu hộ bị kẹt, thiệt hại lớn.
+
+### Mô hình CivicTwin AI (Predictive & Proactive)
+
+```
+Dữ liệu realtime → AI dự đoán → Đề xuất chủ động → Can thiệp SỚM → Ngăn thiệt hại
+```
+
+### Chuỗi Proactive Pipeline
+
+```
+┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
+│  MONITOR    │───▶│   DETECT     │───▶│   PREDICT    │───▶│  RECOMMEND   │───▶│   ACT       │
+│ Giám sát    │    │ Phát hiện    │    │ Dự đoán      │    │ Đề xuất      │    │ Hành động   │
+│ realtime    │    │ chủ động     │    │ tương lai    │    │ tối ưu       │    │ sớm         │
+│             │    │              │    │              │    │              │    │             │
+│ IoT/Sensor  │    │ Auto-detect  │    │ LSTM/GNN     │    │ Reroute      │    │ Broadcast   │
+│ → density   │    │ anomaly      │    │ 15/30/60min  │    │ Priority     │    │ Push alert  │
+│ → speed     │    │ density spike│    │ confidence%  │    │ Alert        │    │ Execute     │
+└─────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └─────────────┘
+     │                   │                    │                   │                   │
+     ▼                   ▼                    ▼                   ▼                   ▼
+ 🟢 Luồng 1         🟡 Luồng 2          🔵 Luồng 3         🟠 Luồng 4         🔴 Luồng 5
+```
+
+### 4 Giá trị so với Reactive
+
+| Giá trị | Reactive (Cũ) | Proactive (CivicTwin AI) |
+|---------|---------------|--------------------------|
+| 🚦 **Giảm ùn tắc** | Biết tắc khi đã tắc | Dự đoán trước 15–60 phút, can thiệp sớm |
+| 🚑 **Khẩn cấp nhanh** | Tìm đường bằng kinh nghiệm | AI tính tuyến tối ưu tránh tắc |
+| 📊 **Quyết định data-driven** | Cảm tính, báo cáo cũ | Realtime data + AI prediction + simulation |
+| 💰 **Tiết kiệm chi phí** | Phản ứng chậm → thiệt hại lớn | Can thiệp sớm → ngăn lan rộng |
 
 ## 1. Mô hình Mạng Giao thông (Graph Network)
 
