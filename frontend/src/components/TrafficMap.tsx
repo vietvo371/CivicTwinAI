@@ -215,7 +215,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-blue-500" /> TOTAL SEGMENTS
           </div>
-          <div className="text-3xl font-heading font-black">{totalEdges}</div>
+          <div className="text-3xl font-heading font-black text-blue-500">{totalEdges}</div>
         </div>
 
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">

@@ -2,8 +2,10 @@
 
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowRightIcon, ZapIcon, RadarIcon } from '../icons/TheSvgIcons';
+import { ArrowRightIcon, ActivityIcon, ZapIcon, ScanTextIcon, LayersIcon } from 'lucide-react';
+import { RadarIcon } from '../icons/TheSvgIcons';
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,13 +79,12 @@ export default function HeroSection() {
           transition={{ duration: 0.5, delay: 0.7 }}
           className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <Link href="/login" className="group relative w-full sm:w-auto">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"></div>
-            <button className="relative w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-slate-950 rounded-xl font-bold text-white tracking-wide transition-transform hover:scale-[1.02]">
-              Access Command Center
-              <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </Link>
+            {/* Primary CTA */}
+            <Link href="/map">
+              <Button size="lg" className="h-14 px-8 text-base font-semibold bg-white text-slate-900 border-none hover:bg-slate-200 transition-all rounded-full shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_-5px_rgba(255,255,255,0.4)]">
+                View Live Map
+              </Button>
+            </Link>
           
           <button onClick={() => {
             document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
