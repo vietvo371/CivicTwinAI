@@ -46,9 +46,9 @@ const notifications = [
 ];
 
 const sevIcon = {
-  critical: <ShieldAlert className="w-4 h-4 text-rose-400" />,
-  warning: <AlertTriangle className="w-4 h-4 text-amber-400" />,
-  info: <Info className="w-4 h-4 text-blue-400" />,
+  critical: <ShieldAlert className="w-4 h-4 !text-rose-500" />,
+  warning: <AlertTriangle className="w-4 h-4 !text-amber-500" />,
+  info: <Info className="w-4 h-4 !text-blue-500" />,
 };
 
 const sevDot = {
@@ -87,6 +87,7 @@ export default function Navbar() {
               height={56}
               className="object-contain w-14 h-14 drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
               unoptimized
+              priority
             />
           </div>
           <span className="text-3xl font-bold tracking-tight text-white font-heading">
@@ -108,7 +109,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* 🔔 Notification Bell Dropdown */}
+        {/* ─── 🔔 Notification Bell Dropdown ─── */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger className="relative p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer">
@@ -121,63 +122,64 @@ export default function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-80 bg-slate-900/95 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-xl p-0 overflow-hidden"
+              className="relative w-80 !bg-[#0f172a] !border-slate-800 shadow-2xl shadow-black/80 rounded-xl p-0 overflow-hidden"
             >
               <DropdownMenuGroup>
-                <DropdownMenuLabel className="px-4 py-3 flex items-center justify-between">
-                  <span className="text-sm font-bold">Notifications</span>
+                <DropdownMenuLabel className="px-4 py-3 flex items-center justify-between !text-slate-100">
+                  <span className="text-sm font-bold !text-white">Notifications</span>
                   {unreadCount > 0 && (
-                    <span className="text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full !bg-rose-500/10 !text-rose-400 !border !border-rose-500/20">
                       {unreadCount} new
                     </span>
                   )}
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-white/5 m-0" />
+              <DropdownMenuSeparator className="!bg-slate-800 m-0" />
 
-              <div className="max-h-[320px] overflow-y-auto">
-                {notifications.map((n) => (
+              <div className="relative max-h-[320px] overflow-y-auto">
+                {notifications.map((n, i) => (
                   <DropdownMenuGroup key={n.id}>
                     <DropdownMenuItem
                       onClick={() => router.push("/alerts")}
-                      className={`px-4 py-3 gap-3 rounded-none cursor-pointer transition-colors focus:bg-white/5 ${
-                        n.read ? "opacity-60" : "bg-white/[0.02]"
-                      }`}
+                      className={`px-4 py-3.5 gap-3 rounded-none cursor-pointer focus:!bg-slate-800/80 hover:!bg-slate-800/80 transition-colors ${n.read ? "!opacity-60" : ""}`}
                     >
                       <div className="shrink-0 mt-0.5">{sevIcon[n.severity]}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-semibold truncate">{n.title}</p>
-                          {!n.read && <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${sevDot[n.severity]}`} />}
+                          <p className={`text-sm font-semibold truncate ${n.read ? "!text-slate-300" : "!text-white"}`}>{n.title}</p>
+                          {!n.read && <div className={`w-2 h-2 rounded-full shrink-0 ${sevDot[n.severity]}`} />}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] text-slate-500 flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />{n.area}
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] flex items-center gap-1 !text-slate-400">
+                            <MapPin className="w-3 h-3 !text-slate-400" />{n.area}
                           </span>
-                          <span className="text-[11px] text-slate-600">·</span>
-                          <span className="text-[11px] text-slate-600">{n.time}</span>
+                          <span className="text-[11px] !text-slate-500">·</span>
+                          <span className="text-[11px] !text-slate-400">{n.time}</span>
                         </div>
                       </div>
                     </DropdownMenuItem>
+                    {i < notifications.length - 1 && (
+                      <DropdownMenuSeparator className="!bg-slate-800 m-0" />
+                    )}
                   </DropdownMenuGroup>
                 ))}
               </div>
 
-              <DropdownMenuSeparator className="bg-white/5 m-0" />
+              <DropdownMenuSeparator className="!bg-slate-800 m-0" />
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onClick={() => router.push("/alerts")}
-                  className="px-4 py-2.5 text-blue-400 hover:text-blue-300 rounded-none cursor-pointer justify-center gap-1.5 text-xs font-semibold focus:bg-white/5 focus:text-blue-300"
+                  className="px-4 py-2.5 rounded-none cursor-pointer justify-center gap-1.5 text-xs font-semibold !text-blue-400 focus:!bg-slate-800/80 hover:!bg-slate-800/80"
                 >
                   View All Alerts
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <ChevronRight className="w-3.5 h-3.5 !text-blue-400" />
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
 
-        {/* 👤 Avatar Dropdown */}
+        {/* ─── 👤 Avatar Dropdown ─── */}
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-1.5 pr-3.5 py-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer group">
@@ -195,62 +197,53 @@ export default function Navbar() {
 
             <DropdownMenuContent
               align="end"
-              className="w-56 bg-slate-900/95 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-xl p-1"
+              className="relative w-56 !bg-[#0f172a] !border-slate-800 shadow-2xl shadow-black/80 rounded-xl p-1.5"
             >
               <DropdownMenuGroup>
-                <DropdownMenuLabel className="px-3 py-2">
-                  <p className="text-sm font-bold truncate">{user.name}</p>
-                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                <DropdownMenuLabel className="px-3 py-2.5 !text-slate-100">
+                  <p className="text-sm font-bold truncate !text-white">{user.name}</p>
+                  <p className="text-xs truncate !text-slate-400">{user.email}</p>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
-              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuSeparator className="!bg-slate-800" />
 
               <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => router.push("/map")}
-                  className="px-3 py-2.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer gap-3 focus:bg-white/10 focus:text-white"
-                >
-                  <Map className="w-4 h-4 text-blue-400" />
-                  Live Map
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() => router.push("/my-reports")}
-                  className="px-3 py-2.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer gap-3 focus:bg-white/10 focus:text-white"
-                >
-                  <FileText className="w-4 h-4 text-emerald-400" />
-                  My Reports
-                </DropdownMenuItem>
-
-                <DropdownMenuItem
-                  onClick={() => router.push("/profile")}
-                  className="px-3 py-2.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer gap-3 focus:bg-white/10 focus:text-white"
-                >
-                  <UserCircle className="w-4 h-4 text-indigo-400" />
-                  Profile
-                </DropdownMenuItem>
+                {[
+                  { icon: <Map className="w-4 h-4 !text-blue-400" />, label: "Live Map", href: "/map" },
+                  { icon: <FileText className="w-4 h-4 !text-emerald-400" />, label: "My Reports", href: "/my-reports" },
+                  { icon: <UserCircle className="w-4 h-4 !text-indigo-400" />, label: "Profile", href: "/profile" },
+                ].map((item) => (
+                  <DropdownMenuItem
+                    key={item.href}
+                    onClick={() => router.push(item.href)}
+                    className="px-3 py-2.5 rounded-lg cursor-pointer gap-3 focus:!bg-slate-800/80 hover:!bg-slate-800/80 !text-slate-200 transition-colors"
+                  >
+                    {item.icon}
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuGroup>
 
               {isOperatorOrAdmin && (
                 <>
-                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuSeparator className="!bg-slate-800" />
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       onClick={() => router.push("/dashboard")}
-                      className="px-3 py-2.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer gap-3 focus:bg-white/10 focus:text-white"
+                      className="px-3 py-2.5 rounded-lg cursor-pointer gap-3 focus:!bg-slate-800/80 hover:!bg-slate-800/80 !text-slate-200 transition-colors"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-cyan-400" />
+                      <LayoutDashboard className="w-4 h-4 !text-cyan-400" />
                       Operator Dashboard
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </>
               )}
 
-              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuSeparator className="!bg-slate-800" />
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="px-3 py-2.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg cursor-pointer gap-3 focus:bg-rose-500/10 focus:text-rose-300"
+                  className="px-3 py-2.5 rounded-lg cursor-pointer gap-3 focus:!bg-rose-500/10 hover:!bg-rose-500/10 !text-rose-400 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
@@ -265,4 +258,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
