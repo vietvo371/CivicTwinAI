@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from '@/lib/i18n';
 import { BarChart3, TrendingUp, AlertOctagon, Clock, ActivitySquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -23,6 +24,8 @@ const mockSeverityData = [
 ];
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Header section */}
@@ -32,9 +35,9 @@ export default function AnalyticsPage() {
             <BarChart3 className="w-6 h-6 text-indigo-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Traffic Analytics</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('op.trafficAnalytics')}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Multi-dimensional reporting from historical data & Edge AI telemetry
+              {t('op.analyticsSubtitle')}
             </p>
           </div>
         </div>
@@ -44,13 +47,13 @@ export default function AnalyticsPage() {
         <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
-              <AlertOctagon className="w-3.5 h-3.5 text-rose-500" /> Total Bottlenecks
+              <AlertOctagon className="w-3.5 h-3.5 text-rose-500" /> {t('op.totalBottlenecks')}
             </CardDescription>
-            <CardTitle className="text-4xl font-heading text-rose-500">24<span className="text-lg text-muted-foreground font-normal ml-2">nodes</span></CardTitle>
+            <CardTitle className="text-4xl font-heading text-rose-500">24<span className="text-lg text-muted-foreground font-normal ml-2">{t('op.nodes')}</span></CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs font-medium text-muted-foreground">
-              <span className="text-rose-500 font-bold">+12%</span> vs last week
+              <span className="text-rose-500 font-bold">+12%</span> {t('op.vsLastWeek')}
             </p>
           </CardContent>
         </Card>
@@ -58,13 +61,13 @@ export default function AnalyticsPage() {
         <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-amber-500" /> Avg. Delay Time
+              <Clock className="w-3.5 h-3.5 text-amber-500" /> {t('op.avgDelayTime')}
             </CardDescription>
-            <CardTitle className="text-4xl font-heading text-amber-500">18<span className="text-lg text-muted-foreground font-normal ml-2">mins</span></CardTitle>
+            <CardTitle className="text-4xl font-heading text-amber-500">18<span className="text-lg text-muted-foreground font-normal ml-2">{t('op.mins')}</span></CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs font-medium text-muted-foreground">
-              <span className="text-emerald-500 font-bold">-2.5 mins</span> vs yesterday
+              <span className="text-emerald-500 font-bold">-2.5 {t('op.mins')}</span> {t('op.vsYesterday')}
             </p>
           </CardContent>
         </Card>
@@ -72,13 +75,13 @@ export default function AnalyticsPage() {
         <Card className="bg-card/40 backdrop-blur-md shadow-lg border-border/80">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs uppercase tracking-widest font-semibold flex items-center gap-2">
-              <ActivitySquare className="w-3.5 h-3.5 text-emerald-500" /> Resolution Rate
+              <ActivitySquare className="w-3.5 h-3.5 text-emerald-500" /> {t('op.resolutionRate')}
             </CardDescription>
             <CardTitle className="text-4xl font-heading text-emerald-500">92<span className="text-lg text-muted-foreground font-normal ml-2">%</span></CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Optimal performance
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> {t('op.optimalPerformance')}
             </p>
           </CardContent>
         </Card>
@@ -87,8 +90,8 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-card/50 backdrop-blur-xl border-border shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-lg font-heading">12-Hour Density Forecast</CardTitle>
-            <CardDescription>Predicted traffic pattern curve</CardDescription>
+            <CardTitle className="text-lg font-heading">{t('op.densityForecast')}</CardTitle>
+            <CardDescription>{t('op.predictedPattern')}</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -114,8 +117,8 @@ export default function AnalyticsPage() {
 
         <Card className="bg-card/50 backdrop-blur-xl border-border shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-lg font-heading">Incidents by Severity</CardTitle>
-            <CardDescription>Weekly aggregated metrics</CardDescription>
+            <CardTitle className="text-lg font-heading">{t('op.incidentsBySeverity')}</CardTitle>
+            <CardDescription>{t('op.weeklyMetrics')}</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">

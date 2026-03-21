@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import {
   Camera, Maximize2, Minimize2, Wifi, WifiOff,
   MapPin, Clock, Shield
@@ -30,6 +31,7 @@ const DEMO_FEEDS: CCTVFeed[] = [
 ];
 
 export default function CCTVPage() {
+  const { t, locale } = useTranslation();
   const [expanded, setExpanded] = useState<number | null>(null);
   const onlineCount = DEMO_FEEDS.filter(f => f.status === 'online').length;
 
@@ -42,20 +44,20 @@ export default function CCTVPage() {
             <Camera className="w-6 h-6 text-cyan-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">CCTV Monitoring</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('op.cctvMonitoring')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              {onlineCount}/{DEMO_FEEDS.length} cameras online
+              {t('op.camerasOnline', { online: String(onlineCount), total: String(DEMO_FEEDS.length) })}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-[10px] uppercase tracking-wider gap-1.5 text-emerald-500 border-emerald-500/20">
-            <Wifi className="w-3 h-3" /> {onlineCount} Online
+            <Wifi className="w-3 h-3" /> {onlineCount} {t('op.online')}
           </Badge>
           <Badge variant="outline" className="text-[10px] uppercase tracking-wider gap-1.5 text-rose-500 border-rose-500/20">
-            <WifiOff className="w-3 h-3" /> {DEMO_FEEDS.length - onlineCount} Offline
+            <WifiOff className="w-3 h-3" /> {DEMO_FEEDS.length - onlineCount} {t('op.offline')}
           </Badge>
         </div>
       </div>
@@ -65,7 +67,6 @@ export default function CCTVPage() {
         <Card className="bg-card/50 backdrop-blur-xl shadow-2xl border-border/80 overflow-hidden animate-in zoom-in-95 duration-300">
           <CardContent className="p-0 relative">
             <div className="aspect-video bg-slate-950 flex items-center justify-center relative">
-              {/* Simulated camera feed */}
               <div className="text-center space-y-4">
                 <Camera className="w-16 h-16 text-muted-foreground/30 mx-auto" />
                 <div>
@@ -74,13 +75,12 @@ export default function CCTVPage() {
                     <MapPin className="w-3.5 h-3.5" /> {DEMO_FEEDS.find(f => f.id === expanded)?.location}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground/50 uppercase tracking-widest">Live Feed Placeholder</p>
+                <p className="text-xs text-muted-foreground/50 uppercase tracking-widest">{t('op.liveFeedPlaceholder')}</p>
               </div>
 
-              {/* Overlay controls */}
               <div className="absolute top-4 left-4 flex items-center gap-2">
                 <Badge className="bg-rose-500/80 text-white border-0 text-[10px] uppercase tracking-wider gap-1 animate-pulse">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" /> LIVE
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" /> {t('op.live')}
                 </Badge>
               </div>
               <div className="absolute top-4 right-4">
@@ -92,7 +92,7 @@ export default function CCTVPage() {
                 </button>
               </div>
               <div className="absolute bottom-4 left-4 text-xs text-white/60 font-mono flex items-center gap-2">
-                <Clock className="w-3 h-3" /> {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                <Clock className="w-3 h-3" /> {new Date().toLocaleTimeString(locale === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </div>
             </div>
           </CardContent>
@@ -110,24 +110,21 @@ export default function CCTVPage() {
             onClick={() => feed.status === 'online' && setExpanded(feed.id)}
           >
             <CardContent className="p-0">
-              {/* Camera Feed Placeholder */}
               <div className="aspect-video bg-slate-950/80 flex items-center justify-center relative overflow-hidden">
                 <Camera className="w-10 h-10 text-muted-foreground/20" />
 
-                {/* Status Indicator */}
                 <div className="absolute top-3 left-3">
                   {feed.status === 'online' ? (
                     <Badge className="bg-emerald-500/80 text-white border-0 text-[9px] uppercase tracking-wider gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Live
+                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> {t('op.live')}
                     </Badge>
                   ) : (
                     <Badge className="bg-rose-500/60 text-white border-0 text-[9px] uppercase tracking-wider gap-1">
-                      <WifiOff className="w-2.5 h-2.5" /> Offline
+                      <WifiOff className="w-2.5 h-2.5" /> {t('op.offline')}
                     </Badge>
                   )}
                 </div>
 
-                {/* Expand button */}
                 {feed.status === 'online' && (
                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button className="p-1.5 bg-black/50 hover:bg-black/70 rounded-lg transition-colors">
@@ -136,13 +133,11 @@ export default function CCTVPage() {
                   </div>
                 )}
 
-                {/* Timestamp */}
                 <div className="absolute bottom-2 right-3 text-[10px] text-white/40 font-mono">
                   {feed.lastUpdate}
                 </div>
               </div>
 
-              {/* Info Bar */}
               <div className="p-3 border-t border-border/50">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0">

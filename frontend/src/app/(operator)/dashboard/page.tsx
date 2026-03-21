@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import {
   Activity, AlertTriangle, Clock, Brain, TrendingUp,
   ShieldAlert, CheckCircle2, ArrowUpRight, ChevronRight,
@@ -13,8 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false });
-
-
 
 const severityStyle: Record<string, string> = {
   low: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
@@ -68,6 +67,7 @@ type Incident = Record<string, any>;
 type AIJob = Record<string, any>;
 
 export default function DashboardPage() {
+  const { t, locale } = useTranslation();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [aiFeed, setAiFeed] = useState<AIJob[]>([]);
   const [pendingRecs, setPendingRecs] = useState(0);
@@ -100,7 +100,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000); // refresh every 30s
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -115,48 +115,48 @@ export default function DashboardPage() {
             <Activity className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Command Center</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('op.commandCenter')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              All systems operational — Real-time monitoring active
+              {t('op.systemsOnline')}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
           <Clock className="w-3.5 h-3.5" />
-          Last sync: {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          {t('op.lastSync')}: {new Date().toLocaleTimeString(locale === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          title="Active Incidents"
+          title={t('op.activeIncidents')}
           value={openCount}
-          subtitle={`${incidents.length} total this period`}
+          subtitle={t('op.totalThisPeriod', { n: String(incidents.length) })}
           icon={<AlertTriangle className="w-5 h-5 text-orange-500" />}
           trend={{ value: '+2', up: true }}
           accentColor="from-orange-500 to-amber-500"
         />
         <KPICard
-          title="AI Predictions"
+          title={t('op.aiPredictions')}
           value={aiFeed.filter(a => a.status === 'completed').length}
-          subtitle={`${aiFeed.length} sessions total`}
+          subtitle={t('op.sessionsTotal', { n: String(aiFeed.length) })}
           icon={<Brain className="w-5 h-5 text-violet-500" />}
           trend={{ value: '98.2%', up: false }}
           accentColor="from-violet-500 to-purple-500"
         />
         <KPICard
-          title="Pending Actions"
+          title={t('op.pendingActions')}
           value={pendingRecs}
-          subtitle="AI recommendations awaiting review"
+          subtitle={t('op.awaitingReview')}
           icon={<Timer className="w-5 h-5 text-blue-500" />}
           accentColor="from-blue-500 to-cyan-500"
         />
         <KPICard
-          title="Resolution Rate"
+          title={t('op.resolutionRate')}
           value={incidents.length > 0 ? `${Math.round((incidents.filter(i => i.status === 'resolved').length / incidents.length) * 100)}%` : '0%'}
-          subtitle={`${incidents.filter(i => i.status === 'resolved').length}/${incidents.length} incidents resolved`}
+          subtitle={t('op.incidentsResolved', { resolved: String(incidents.filter(i => i.status === 'resolved').length), total: String(incidents.length) })}
           icon={<Users className="w-5 h-5 text-emerald-500" />}
           accentColor="from-emerald-500 to-teal-500"
         />
@@ -170,10 +170,10 @@ export default function DashboardPage() {
             <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Activity className="w-4 h-4 text-blue-500" />
-                Live Traffic Grid
+                {t('op.liveTrafficGrid')}
               </CardTitle>
               <Link href="/dashboard" className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                Full Screen <ArrowUpRight className="w-3.5 h-3.5" />
+                {t('op.fullScreen')} <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </CardHeader>
             <CardContent className="p-3 pt-2">
@@ -184,17 +184,17 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Right Sidebar: Recent + AI Feed */}
+        {/* Right Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           {/* Recent Incidents */}
           <Card className="bg-card/40 backdrop-blur-xl shadow-2xl border-border/80">
             <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-orange-500" />
-                Recent Incidents
+                {t('op.recentIncidents')}
               </CardTitle>
               <Link href="/dashboard/incidents" className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                View All <ChevronRight className="w-3.5 h-3.5" />
+                {t('op.viewAll')} <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </CardHeader>
             <CardContent className="p-3 pt-0">
@@ -215,11 +215,11 @@ export default function DashboardPage() {
                         <p className="text-sm font-semibold truncate group-hover/item:text-primary transition-colors">{inc.title}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <Badge className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0 h-5 border ${sev}`}>
-                            {inc.severity}
+                            {t(`enums.incidentSeverity.${inc.severity}`)}
                           </Badge>
                           <span className={`text-[11px] font-medium flex items-center gap-1 ${stat.color}`}>
                             {stat.icon}
-                            {inc.status}
+                            {t(`enums.incidentStatus.${inc.status}`)}
                           </span>
                         </div>
                       </div>
@@ -235,10 +235,10 @@ export default function DashboardPage() {
             <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Brain className="w-4 h-4 text-violet-500" />
-                AI Activity
+                {t('op.aiActivity')}
               </CardTitle>
               <Link href="/dashboard/predictions" className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
-                Details <ChevronRight className="w-3.5 h-3.5" />
+                {t('op.details')} <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </CardHeader>
             <CardContent className="p-3 pt-0">
@@ -257,11 +257,11 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold">Job #{ai.id}</p>
                         <Badge variant={ai.status === 'completed' ? 'outline' : 'destructive'} className="text-[9px] uppercase tracking-wider h-5">
-                          {ai.status}
+                          {t(`enums.predictionStatus.${ai.status}`)}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground font-medium">
-                        <span>Incident #{ai.incident_id}</span>
+                        <span>{t('op.incidentRef', { id: String(ai.incident_id) })}</span>
                         <span className="text-border">|</span>
                         <span>{ai.model_version}</span>
                         <span className="text-border">|</span>
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                       </div>
                       {(ai.prediction_edges?.length || ai.edges_affected || 0) > 0 && (
                          <p className="text-[11px] text-primary/80 font-semibold mt-1">
-                           {ai.prediction_edges?.length || ai.edges_affected} road segments analyzed
+                           {t('op.segmentsAnalyzed', { n: String(ai.prediction_edges?.length || ai.edges_affected) })}
                          </p>
                       )}
                     </div>

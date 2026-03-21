@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import { Brain, CheckCircle, XCircle, Clock, Activity, ChevronRight, BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,7 @@ const severityBarColors: Record<string, string> = {
 };
 
 export default function PredictionsPage() {
+  const { t } = useTranslation();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Prediction | null>(null);
@@ -61,10 +63,10 @@ export default function PredictionsPage() {
             <Brain className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">AI Predictions</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('op.aiPredictionsTitle')}</h1>
             <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Machine Learning Traffic Forecast & Spread Simulation
+              {t('op.aiSubtitle')}
             </p>
           </div>
         </div>
@@ -74,8 +76,8 @@ export default function PredictionsPage() {
         {/* List (Left Panel) */}
         <div className="lg:col-span-5 space-y-3 flex flex-col h-[calc(100vh-220px)]">
           <div className="flex items-center justify-between px-2 mb-2">
-            <h3 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs">AI Execution History</h3>
-            <span className="text-xs font-medium text-muted-foreground">{predictions.length} sessions</span>
+            <h3 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs">{t('op.executionHistory')}</h3>
+            <span className="text-xs font-medium text-muted-foreground">{t('op.sessions', { n: String(predictions.length) })}</span>
           </div>
           
           <ScrollArea className="h-full pr-4 pb-6">
@@ -83,11 +85,11 @@ export default function PredictionsPage() {
               {loading ? (
                 <Card className="p-12 bg-card/30 flex flex-col items-center justify-center gap-3 border-dashed">
                   <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
-                  <span className="text-sm text-muted-foreground font-medium">Loading history...</span>
+                  <span className="text-sm text-muted-foreground font-medium">{t('op.loadingHistory')}</span>
                 </Card>
               ) : predictions.length === 0 ? (
                 <Card className="p-10 text-center bg-card/30 border-dashed text-muted-foreground font-medium">
-                  No prediction sessions recorded yet.
+                  {t('op.noPredictions')}
                 </Card>
               ) : predictions.map((pred) => {
                 const isSelected = selected?.id === pred.id;
@@ -111,25 +113,25 @@ export default function PredictionsPage() {
                         </div>
                         <Badge variant={pred.status === 'completed' ? 'outline' : 'destructive'} className="text-[10px] uppercase tracking-wider gap-1">
                           {pred.status === 'completed' ? <CheckCircle className="w-3 h-3 text-emerald-500" /> : <XCircle className="w-3 h-3" />}
-                          {pred.status}
+                          {t(`enums.predictionStatus.${pred.status}`)}
                         </Badge>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Reference Source</span>
-                          <span className="text-xs font-medium">Incident #{pred.incident_id}</span>
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">{t('op.referenceSource')}</span>
+                          <span className="text-xs font-medium">{t('op.incidentRef', { id: String(pred.incident_id) })}</span>
                         </div>
                         
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">Model Engine</span>
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">{t('op.modelEngine')}</span>
                           <span className="text-xs font-medium truncate">{pred.model_version}</span>
                         </div>
 
                         <div className="col-span-2 flex items-center justify-between mt-1 pt-2 border-t border-border/50">
                           <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                             <Clock className="w-3.5 h-3.5" /> 
-                            {pred.processing_time_ms}ms runtime
+                            {t('op.runtime', { ms: String(pred.processing_time_ms) })}
                           </span>
                           
                           <div className={`p-1 rounded-full transition-transform ${isSelected ? 'translate-x-1 text-primary' : 'text-muted-foreground group-hover:translate-x-1 group-hover:text-foreground'}`}>
@@ -148,7 +150,7 @@ export default function PredictionsPage() {
         {/* Detail (Right Panel) */}
         <div className="lg:col-span-7 h-[calc(100vh-220px)] flex flex-col">
           <div className="flex items-center justify-between px-2 mb-2">
-            <h3 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs">Model Output Telemetry</h3>
+            <h3 className="font-semibold text-muted-foreground uppercase tracking-widest text-xs">{t('op.modelOutput')}</h3>
           </div>
 
           <Card className="flex-1 bg-card/40 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col">
@@ -158,10 +160,10 @@ export default function PredictionsPage() {
                 <CardHeader className="p-6 border-b border-border/50 bg-card/80">
                   <div className="flex items-center gap-3 mb-2">
                     <BarChart2 className="w-5 h-5 text-primary" />
-                    <CardTitle className="font-heading font-bold text-lg">Forecast Detail #{selected.id}</CardTitle>
+                    <CardTitle className="font-heading font-bold text-lg">{t('op.forecastDetail', { id: String(selected.id) })}</CardTitle>
                   </div>
                   <p className="text-sm text-muted-foreground font-medium">
-                    The spatial engine has analyzed the spread impact on <span className="text-primary">{selected.prediction_edges?.length || 0}</span> adjacent road segments.
+                    {t('op.forecastDesc', { n: String(selected.prediction_edges?.length || 0) })}
                   </p>
                 </CardHeader>
 
@@ -169,32 +171,32 @@ export default function PredictionsPage() {
                 <ScrollArea className="flex-1 p-6">
                   <div className="space-y-4 pr-4">
                     {selected.prediction_edges?.length === 0 ? (
-                      <div className="text-center py-10 text-muted-foreground font-medium">No granular telemetry data generated for this session.</div>
+                      <div className="text-center py-10 text-muted-foreground font-medium">{t('op.noTelemetry')}</div>
                     ) : selected.prediction_edges?.map((pe, i) => (
                       <Card key={i} className="p-5 bg-card/50 hover:border-muted-foreground/50 transition-colors">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex flex-col gap-1">
                             <span className="text-sm font-heading font-bold">Node #{pe.edge_id}</span>
-                            <span className="text-xs text-muted-foreground font-medium">{pe.edge?.name || 'Adjacent location'}</span>
+                            <span className="text-xs text-muted-foreground font-medium">{pe.edge?.name || t('op.adjacentLocation')}</span>
                           </div>
                           <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${severityColors[pe.severity] || 'text-muted-foreground bg-muted border-muted'}`}>
-                            {pe.severity}
+                            {t(`enums.incidentSeverity.${pe.severity}`)}
                           </span>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-4 mb-4">
                           <div className="bg-background/50 p-3 rounded-lg border border-border/50">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Time Horizon</div>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t('op.timeHorizon')}</div>
                             <div className="font-heading font-bold text-foreground">+{pe.time_horizon_minutes} <span className="text-xs text-muted-foreground font-body">min</span></div>
                           </div>
                           
                           <div className="bg-background/50 p-3 rounded-lg border border-border/50">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Projected Load</div>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t('op.projectedLoad')}</div>
                             <div className="font-heading font-bold text-foreground">{(pe.predicted_density * 100).toFixed(1)}<span className="text-xs text-muted-foreground font-body">%</span></div>
                           </div>
                           
                           <div className="bg-background/50 p-3 rounded-lg border border-border/50">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">AI Confidence</div>
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t('op.aiConfidence')}</div>
                             <div className="font-heading font-bold text-foreground">{(pe.confidence * 100).toFixed(0)}<span className="text-xs text-muted-foreground font-body">%</span></div>
                           </div>
                         </div>
@@ -202,7 +204,7 @@ export default function PredictionsPage() {
                         {/* Density bar visualization */}
                         <div className="relative pt-1">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-semibold text-muted-foreground uppercase">Congestion Trajectory</span>
+                            <span className="text-[10px] font-semibold text-muted-foreground uppercase">{t('op.congestionTrajectory')}</span>
                           </div>
                           <div className="h-2 rounded-full bg-secondary border border-border overflow-hidden">
                             <div 
@@ -222,8 +224,8 @@ export default function PredictionsPage() {
                   <BarChart2 className="w-6 h-6 opacity-50" />
                 </div>
                 <div className="space-y-1">
-                  <p className="font-semibold text-foreground">No Session Selected</p>
-                  <p className="text-sm">Please select an AI session from the left menu to inspect granular metadata and load distributions.</p>
+                  <p className="font-semibold text-foreground">{t('op.noSessionSelected')}</p>
+                  <p className="text-sm">{t('op.selectSessionHint')}</p>
                 </div>
               </div>
             )}

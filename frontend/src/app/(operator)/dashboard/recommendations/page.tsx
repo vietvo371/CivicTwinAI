@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import { Lightbulb, Check, X, Clock, Shield, Route, Bell } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,14 +24,12 @@ const typeIcons: Record<string, typeof Shield> = {
   alert: Bell,
 };
 
-const statusMap: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  pending: { label: 'Pending Review', variant: 'outline' },
-  approved: { label: 'Approved', variant: 'default' },
-  rejected: { label: 'Rejected', variant: 'destructive' },
-  executed: { label: 'Executed', variant: 'secondary' },
+const statusVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  pending: 'outline', approved: 'default', rejected: 'destructive', executed: 'secondary',
 };
 
 export default function RecommendationsPage() {
+  const { t, locale } = useTranslation();
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [rejectId, setRejectId] = useState<number | null>(null);
@@ -72,8 +71,8 @@ export default function RecommendationsPage() {
             <Lightbulb className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Operational Decisions</h1>
-            <p className="text-sm text-muted-foreground mt-1">AI-generated mitigation strategies pending operator approval</p>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('op.opDecisions')}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t('op.opDecisionsDesc')}</p>
           </div>
         </div>
       </div>
@@ -82,7 +81,7 @@ export default function RecommendationsPage() {
         <Card className="p-16 text-center border-dashed">
           <div className="flex flex-col items-center gap-4">
             <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin" />
-            <span className="font-medium text-muted-foreground animate-pulse">Fetching smart recommendations...</span>
+            <span className="font-medium text-muted-foreground animate-pulse">{t('op.fetchingRecs')}</span>
           </div>
         </Card>
       ) : recs.length === 0 ? (
@@ -91,15 +90,14 @@ export default function RecommendationsPage() {
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-2">
               <Check className="w-6 h-6 text-emerald-500 opacity-50" />
             </div>
-            <p className="font-medium text-lg">All caught up!</p>
-            <p className="text-sm text-muted-foreground">No operational decisions are pending your review.</p>
+            <p className="font-medium text-lg">{t('op.allCaughtUp')}</p>
+            <p className="text-sm text-muted-foreground">{t('op.noPendingRecs')}</p>
           </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {recs.map((rec) => {
             const Icon = typeIcons[rec.type] || Lightbulb;
-            const statusInfo = statusMap[rec.status] || { label: rec.status, variant: 'outline' };
 
             return (
               <Card key={rec.id} className="flex flex-col overflow-hidden hover:border-primary/50 transition-colors group bg-card/60 backdrop-blur-xl">
@@ -108,14 +106,14 @@ export default function RecommendationsPage() {
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center border bg-secondary/50 text-primary">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <Badge variant={statusInfo.variant} className="uppercase tracking-wider text-[10px]">
-                      {statusInfo.label}
+                    <Badge variant={statusVariants[rec.status] || 'outline'} className="uppercase tracking-wider text-[10px]">
+                      {t(`enums.recommendationStatus.${rec.status}`)}
                     </Badge>
                   </div>
                   <div className="space-y-1">
-                    <CardTitle className="uppercase tracking-wide text-sm">{rec.type.replace('_', ' ')}</CardTitle>
+                    <CardTitle className="uppercase tracking-wide text-sm">{t(`enums.recommendationType.${rec.type}`)}</CardTitle>
                     <p className="text-[11px] font-semibold text-muted-foreground">
-                      CORRELATED INCIDENT: <span className="text-primary/80">#{rec.incident_id}</span>
+                      {t('op.correlatedIncident')}: <span className="text-primary/80">#{rec.incident_id}</span>
                     </p>
                   </div>
                 </CardHeader>
@@ -126,7 +124,7 @@ export default function RecommendationsPage() {
                   </p>
                   <div className="flex items-center gap-1.5 mt-5 pt-4 border-t border-border/50 text-xs font-medium text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
-                    {new Date(rec.created_at).toLocaleString('en-US', {
+                    {new Date(rec.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
                       day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
                     })}
                   </div>
@@ -139,14 +137,14 @@ export default function RecommendationsPage() {
                       className="rounded-none h-12 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       onClick={() => setRejectId(rec.id)}
                     >
-                      <X className="w-4 h-4 mr-2" /> Decline
+                      <X className="w-4 h-4 mr-2" /> {t('op.decline')}
                     </Button>
                     <Button 
                       variant="ghost" 
                       className="rounded-none h-12 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
                       onClick={() => handleApprove(rec.id)}
                     >
-                      <Check className="w-4 h-4 mr-2" /> Approve
+                      <Check className="w-4 h-4 mr-2" /> {t('op.approve')}
                     </Button>
                   </CardFooter>
                 )}
@@ -162,10 +160,10 @@ export default function RecommendationsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <X className="w-5 h-5 text-destructive" />
-              Decline Recommendation
+              {t('op.declineRec')}
             </DialogTitle>
             <DialogDescription>
-              Please provide a reason for declining. This feedback helps train the AI model for future accuracy.
+              {t('op.declineRecDesc')}
             </DialogDescription>
           </DialogHeader>
           
@@ -174,17 +172,17 @@ export default function RecommendationsPage() {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
-              placeholder="State your reason clearly..."
+              placeholder={t('op.reasonPlaceholder')}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             />
           </div>
 
           <DialogFooter className="sm:justify-end gap-2">
             <Button variant="secondary" onClick={() => { setRejectId(null); setReason(''); }}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={!reason}>
-              Confirm Decline
+              {t('op.confirmDecline')}
             </Button>
           </DialogFooter>
         </DialogContent>
