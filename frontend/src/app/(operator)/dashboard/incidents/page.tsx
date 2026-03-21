@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { AlertTriangle, Plus, Eye, Clock, Filter, AlertCircle } from 'lucide-react';
+import { AlertTriangle, Plus, Eye, Clock, Filter, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -185,7 +185,7 @@ export default function IncidentsPage() {
         ) : incidents.length === 0 ? (
           <div className="p-16 text-center flex flex-col items-center gap-3">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-2">
-              <span className="text-2xl opacity-50">🎉</span>
+              <span className="text-2xl opacity-50"><CheckCircle2 className="w-6 h-6 text-emerald-500" /></span>
             </div>
             <p className="font-medium text-muted-foreground">No incidents match the applied filters.</p>
           </div>

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Map, AlertTriangle, Brain, Lightbulb, BarChart3,
-  LogOut, Menu, X, Activity,
+  LogOut, Menu, X, Activity, FlaskConical, Camera,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
@@ -16,7 +16,9 @@ const navItems = [
   { href: '/dashboard', icon: Map, label: 'Traffic Map' },
   { href: '/dashboard/incidents', icon: AlertTriangle, label: 'Incidents' },
   { href: '/dashboard/predictions', icon: Brain, label: 'Predictions' },
+  { href: '/dashboard/simulation', icon: FlaskConical, label: 'Simulation' },
   { href: '/dashboard/recommendations', icon: Lightbulb, label: 'Recommendations' },
+  { href: '/dashboard/cctv', icon: Camera, label: 'CCTV Monitor' },
   { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
 ];
 
