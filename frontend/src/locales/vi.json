@@ -689,7 +689,8 @@
       "signal_change": "Thay đổi đèn tín hiệu",
       "speed_limit": "Giới hạn tốc độ",
       "lane_control": "Kiểm soát làn đường",
-      "advisory": "Khuyến cáo"
+      "advisory": "Khuyến cáo",
+      "priority_route": "Tuyến ưu tiên"
     },
     "recommendationStatus": {
       "pending": "Chờ duyệt",

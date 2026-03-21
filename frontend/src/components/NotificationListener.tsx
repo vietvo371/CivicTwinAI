@@ -40,7 +40,7 @@ export function NotificationListener() {
         
         const translatedType = currentT(`enums.incidentType.${rawType}`);
         const translatedSeverity = currentT(`enums.incidentSeverity.${rawSeverity}`);
-        const link = `/dashboard/incidents`;
+        const link = `/dashboard/incidents/${data.id || ''}`;
 
         addNotification({
           title,
@@ -57,17 +57,18 @@ export function NotificationListener() {
           : rawSeverity === 'high' ? toast.warning
           : toast.info;
 
-        toastFn(title, {
-          description: currentT('notifications.incidentMessage', {
-            type: translatedType,
-            severity: translatedSeverity,
-          }),
-          duration: 6000,
-          action: {
-            label: currentT('common.viewDetails') || 'Xem',
-            onClick: () => router.push(link),
-          },
-        });
+        toastFn(
+          <div className="cursor-pointer w-full flex flex-col gap-1" onClick={() => router.push(link)}>
+            <span className="font-medium">{title}</span>
+            <span className="text-sm opacity-90">
+              {currentT('notifications.incidentMessage', {
+                type: translatedType,
+                severity: translatedSeverity,
+              })}
+            </span>
+          </div>,
+          { duration: 6000 }
+        );
       });
 
       channel.listen('.App\\Events\\PredictionReceived', (data: any) => {
@@ -86,16 +87,17 @@ export function NotificationListener() {
           link,
         });
 
-        toast.info(title, {
-          description: currentT('notifications.predictionMessage', {
-            edgeCount: String(data.edges?.length || 0),
-          }),
-          duration: 5000,
-          action: {
-            label: currentT('common.viewDetails') || 'Xem',
-            onClick: () => router.push(link),
-          },
-        });
+        toast.info(
+          <div className="cursor-pointer w-full flex flex-col gap-1" onClick={() => router.push(link)}>
+            <span className="font-medium">{title}</span>
+            <span className="text-sm opacity-90">
+              {currentT('notifications.predictionMessage', {
+                edgeCount: String(data.edges?.length || 0),
+              })}
+            </span>
+          </div>,
+          { duration: 5000 }
+        );
       });
 
       // Debug: listen to ALL events on channel

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, Plus, Eye, Clock, Filter, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ const statusVariants: Record<string, "default" | "secondary" | "destructive" | "
 
 export default function IncidentsPage() {
   const { t, locale } = useTranslation();
+  const router = useRouter();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: 'all', severity: 'all' });
@@ -200,7 +202,11 @@ export default function IncidentsPage() {
               </TableHeader>
               <TableBody>
                 {incidents.map((inc) => (
-                  <TableRow key={inc.id} className="group">
+                  <TableRow 
+                    key={inc.id} 
+                    className="group cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => router.push(`/dashboard/incidents/${inc.id}`)}
+                  >
                     <TableCell className="font-heading text-xs text-muted-foreground">#{inc.id}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">

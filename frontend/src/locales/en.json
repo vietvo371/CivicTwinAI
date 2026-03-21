@@ -689,7 +689,8 @@
       "signal_change": "Signal Change",
       "speed_limit": "Speed Limit",
       "lane_control": "Lane Control",
-      "advisory": "Advisory"
+      "advisory": "Advisory",
+      "priority_route": "Priority Route"
     },
     "recommendationStatus": {
       "pending": "Pending",
