@@ -6,6 +6,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { useEcho } from '@/hooks/useEcho';
 import { AlertTriangle, AlertCircle, RefreshCw, Activity, Menu, X, Search, Navigation, Construction, CarFront, Gauge, MapPin } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -50,6 +51,13 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
     };
     fetchIncidents();
   }, [isPublic]);
+
+  // Real-time: new incidents appear on map immediately
+  useEcho<any>('traffic', 'IncidentCreated', (data) => {
+    if (data.latitude && data.longitude) {
+      setMapIncidents(prev => [data, ...prev]);
+    }
+  });
 
   const handleMyLocation = () => {
     if ('geolocation' in navigator) {

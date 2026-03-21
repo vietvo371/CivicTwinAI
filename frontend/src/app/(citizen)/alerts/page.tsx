@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
+import { useEcho } from "@/hooks/useEcho";
 import { Bell, AlertTriangle, Info, ShieldAlert, MapPin, Clock, Filter } from "lucide-react";
 
 interface Alert {
@@ -56,7 +57,24 @@ const demoAlerts: Alert[] = [
 export default function AlertsPage() {
   const { t, locale } = useTranslation();
   const [filter, setFilter] = useState<"all" | "info" | "warning" | "critical">("all");
-  const filteredAlerts = filter === "all" ? demoAlerts : demoAlerts.filter((a) => a.severity === filter);
+  const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
+
+  // Real-time: new incidents appear as alerts
+  useEcho<any>('traffic', 'IncidentCreated', (data) => {
+    const newAlert: Alert = {
+      id: data.id || Date.now(),
+      title: data.title || 'New Incident',
+      description: data.description || '',
+      severity: data.severity === 'critical' ? 'critical' : data.severity === 'high' ? 'warning' : 'info',
+      area: data.location_name || '',
+      created_at: data.created_at || new Date().toISOString(),
+      active: true,
+    };
+    setLiveAlerts(prev => [newAlert, ...prev]);
+  });
+
+  const allAlerts = [...liveAlerts, ...demoAlerts];
+  const filteredAlerts = filter === "all" ? allAlerts : allAlerts.filter((a) => a.severity === filter);
 
   const severityConfig = {
     info: { icon: <Info className="w-4 h-4" />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t('citizen.info') },

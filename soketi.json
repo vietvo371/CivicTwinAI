@@ -1,0 +1,14 @@
+{
+  "debug": true,
+  "port": 6001,
+  "appManager.array.apps": [
+    {
+      "id": "civictwin",
+      "key": "civictwin-key",
+      "secret": "civictwin-secret",
+      "maxConnections": -1,
+      "enableClientMessages": true,
+      "maxBackendEventsPerSecond": -1
+    }
+  ]
+}

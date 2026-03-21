@@ -1,9 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
+import { useEchoMulti } from '@/hooks/useEcho';
 import {
   Activity, AlertTriangle, Clock, Brain, TrendingUp,
   ShieldAlert, CheckCircle2, ArrowUpRight, ChevronRight,
@@ -100,9 +101,19 @@ export default function DashboardPage() {
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // Real-time WebSocket listeners
+  useEchoMulti('traffic', {
+    IncidentCreated: (data: any) => {
+      setIncidents(prev => [data, ...prev.slice(0, 9)]);
+    },
+    PredictionReceived: (data: any) => {
+      setAiFeed(prev => [data, ...prev.slice(0, 4)]);
+    },
+  });
 
   const openCount = incidents.filter(i => i.status === 'open' || i.status === 'investigating').length;
 
