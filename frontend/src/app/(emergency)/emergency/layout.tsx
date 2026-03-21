@@ -23,7 +23,7 @@ function EmergencyGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login');
+        router.push('/');
       } else {
         const hasAccess = user.roles?.includes('emergency') || user.roles?.includes('super_admin') || user.roles?.includes('city_admin');
         if (!hasAccess) {

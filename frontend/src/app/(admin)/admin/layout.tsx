@@ -12,7 +12,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login');
+        router.push('/');
       } else {
         const hasAccess = user.roles?.includes('city_admin') || user.roles?.includes('super_admin');
         if (!hasAccess) {

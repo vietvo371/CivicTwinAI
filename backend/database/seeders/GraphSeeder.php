@@ -85,19 +85,19 @@ class GraphSeeder extends Seeder
         // SENSORS — 12 IoT sensors tại các điểm quan trọng
         // ==========================================
         DB::statement("
-            INSERT INTO sensors (name, type, node_id, status, metadata, created_at, updated_at) VALUES
-            ('SENSOR-CR-001', 'traffic_counter', 3, 'active', '{\"manufacturer\": \"Hikvision\", \"model\": \"DS-2CD2T45\"}', NOW(), NOW()),
-            ('SENSOR-CR-002', 'camera_feed', 3, 'active', '{\"manufacturer\": \"Hikvision\", \"resolution\": \"4K\"}', NOW(), NOW()),
-            ('SENSOR-CSH-001', 'traffic_counter', 8, 'active', '{\"manufacturer\": \"Axis\", \"model\": \"P1445-LE\"}', NOW(), NOW()),
-            ('SENSOR-HX-001', 'traffic_counter', 1, 'active', '{\"manufacturer\": \"Hikvision\", \"model\": \"DS-2CD2T45\"}', NOW(), NOW()),
-            ('SENSOR-NVL-001', 'camera_feed', 2, 'active', '{\"manufacturer\": \"Dahua\", \"resolution\": \"2K\"}', NOW(), NOW()),
-            ('SENSOR-MK-001', 'weather_station', 12, 'active', '{\"manufacturer\": \"Davis\", \"model\": \"Vantage Pro2\"}', NOW(), NOW()),
-            ('SENSOR-SB-001', 'traffic_counter', 15, 'active', '{\"manufacturer\": \"Hikvision\", \"model\": \"DS-2CD2T45\"}', NOW(), NOW()),
-            ('SENSOR-TP-001', 'camera_feed', 13, 'active', '{\"manufacturer\": \"Axis\", \"model\": \"P1445-LE\"}', NOW(), NOW()),
-            ('SENSOR-NTP-001', 'traffic_counter', 6, 'active', '{\"manufacturer\": \"Hikvision\", \"model\": \"DS-2CD2T45\"}', NOW(), NOW()),
-            ('SENSOR-NHS-001', 'weather_station', 11, 'active', '{\"manufacturer\": \"Davis\", \"model\": \"Vantage Pro2\"}', NOW(), NOW()),
-            ('SENSOR-PVD-001', 'traffic_counter', 10, 'offline', '{\"manufacturer\": \"Axis\", \"error\": \"Connection timeout\"}', NOW(), NOW()),
-            ('SENSOR-NBH-001', 'traffic_counter', 16, 'active', '{\"manufacturer\": \"Hikvision\", \"model\": \"DS-2CD2T45\"}', NOW(), NOW())
+            INSERT INTO sensors (sensor_code, edge_id, type, model, status, metadata, created_at, updated_at) VALUES
+            ('SENSOR-CR-001', 3, 'traffic_counter', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\"}', NOW(), NOW()),
+            ('SENSOR-CR-002', 3, 'camera_feed', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\", \"resolution\": \"4K\"}', NOW(), NOW()),
+            ('SENSOR-CSH-001', 8, 'traffic_counter', 'P1445-LE', 'online', '{\"manufacturer\": \"Axis\"}', NOW(), NOW()),
+            ('SENSOR-DBP-001', 2, 'traffic_counter', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\"}', NOW(), NOW()),
+            ('SENSOR-NVL-001', 12, 'camera_feed', 'IPC-HFW2431T', 'online', '{\"manufacturer\": \"Dahua\", \"resolution\": \"2K\"}', NOW(), NOW()),
+            ('SENSOR-MK-001', 17, 'weather_station', 'Vantage Pro2', 'online', '{\"manufacturer\": \"Davis\"}', NOW(), NOW()),
+            ('SENSOR-SB-001', 14, 'traffic_counter', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\"}', NOW(), NOW()),
+            ('SENSOR-TP-001', 11, 'camera_feed', 'P1445-LE', 'online', '{\"manufacturer\": \"Axis\"}', NOW(), NOW()),
+            ('SENSOR-NTP-001', 9, 'traffic_counter', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\"}', NOW(), NOW()),
+            ('SENSOR-NHS-001', 15, 'weather_station', 'Vantage Pro2', 'online', '{\"manufacturer\": \"Davis\"}', NOW(), NOW()),
+            ('SENSOR-PVD-001', 10, 'traffic_counter', 'P1445-LE', 'offline', '{\"manufacturer\": \"Axis\", \"error\": \"Connection timeout\"}', NOW(), NOW()),
+            ('SENSOR-NBH-001', 19, 'traffic_counter', 'DS-2CD2T45', 'online', '{\"manufacturer\": \"Hikvision\"}', NOW(), NOW())
         ");
     }
 }
