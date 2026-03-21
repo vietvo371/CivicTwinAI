@@ -1,17 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 import {
   AlertTriangle, Clock, MapPin, ChevronRight, Siren,
-  Phone, Shield
+  Phone, Shield, Loader2
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const DEMO_INCIDENTS = [
-  { id: 1, title: 'Va cham Container tren Cau Rong', location: 'Cau Rong, Q. Son Tra', severity: 'critical', status: 'active', time: '08:15', casualties: 2, vehicles: 4, responders: 3 },
-  { id: 2, title: 'Ngap nuoc duong Nguyen Huu Tho', location: 'Nguyen Huu Tho, Q. Cam Le', severity: 'high', status: 'active', time: '07:30', casualties: 0, vehicles: 0, responders: 2 },
-  { id: 3, title: 'Chay nha gan cho Han', location: 'Tran Phu, Q. Hai Chau', severity: 'critical', status: 'responding', time: '08:40', casualties: 0, vehicles: 0, responders: 5 },
-];
 
 const severityStyle: Record<string, string> = {
   low: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
@@ -20,7 +16,41 @@ const severityStyle: Record<string, string> = {
   critical: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Incident = Record<string, any>;
+
 export default function EmergencyIncidentsPage() {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get('/incidents?per_page=20');
+        if (res.data?.data) {
+          // Filter only critical/high severity or non-resolved
+          const filtered = res.data.data.filter(
+            (i: Incident) => ['critical', 'high'].includes(i.severity) || ['open', 'investigating'].includes(i.status)
+          );
+          setIncidents(filtered);
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 15000); // refresh every 15s
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -32,16 +62,35 @@ export default function EmergencyIncidentsPage() {
           <div>
             <h1 className="text-2xl font-heading font-bold tracking-tight">Active Incidents</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {DEMO_INCIDENTS.length} incidents requiring emergency response
+              {loading ? 'Loading...' : `${incidents.length} incidents requiring emergency response`}
             </p>
           </div>
         </div>
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-rose-500 animate-spin" />
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && incidents.length === 0 && (
+        <Card className="bg-card/50 backdrop-blur-xl border-border/80">
+          <CardContent className="p-12 text-center">
+            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-30" />
+            <p className="text-lg font-semibold text-muted-foreground">No active incidents</p>
+            <p className="text-sm text-muted-foreground mt-1">All clear — no critical incidents at this time.</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Incident Cards */}
       <div className="space-y-4">
-        {DEMO_INCIDENTS.map((inc) => {
+        {incidents.map((inc) => {
           const sev = severityStyle[inc.severity] || severityStyle.medium;
+          const status = inc.status || 'open';
           return (
             <Card key={inc.id} className={`bg-card/50 backdrop-blur-xl border-border/80 hover:border-rose-500/30 transition-all ${inc.severity === 'critical' ? 'border-l-4 border-l-rose-500' : ''}`}>
               <CardContent className="p-5">
@@ -53,34 +102,36 @@ export default function EmergencyIncidentsPage() {
                         {inc.severity}
                       </Badge>
                       <Badge variant="outline" className="text-[10px] uppercase tracking-wider gap-1 text-blue-400">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {inc.status}
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {status}
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                        {inc.type}
                       </Badge>
                     </div>
                     <h3 className="text-lg font-heading font-bold">{inc.title}</h3>
+                    {inc.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{inc.description}</p>
+                    )}
                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {inc.location}</span>
-                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {inc.time}</span>
+                      {inc.source && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {inc.source}</span>}
+                      <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {formatTime(inc.created_at)}</span>
                     </div>
                   </div>
 
-                  {/* Stats */}
+                  {/* Reporter & Assignee */}
                   <div className="flex gap-3 shrink-0">
-                    {inc.casualties > 0 && (
-                      <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-center min-w-[80px]">
-                        <p className="text-xl font-heading font-black text-rose-500">{inc.casualties}</p>
-                        <p className="text-[9px] font-bold text-rose-500 uppercase tracking-widest">Casualties</p>
+                    {inc.reporter && (
+                      <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-3 text-center min-w-[100px]">
+                        <p className="text-xs font-bold text-violet-400 truncate">{inc.reporter.name}</p>
+                        <p className="text-[9px] font-bold text-violet-500 uppercase tracking-widest mt-1">Reporter</p>
                       </div>
                     )}
-                    {inc.vehicles > 0 && (
-                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-center min-w-[80px]">
-                        <p className="text-xl font-heading font-black text-amber-500">{inc.vehicles}</p>
-                        <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">Vehicles</p>
+                    {inc.assignee && (
+                      <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center min-w-[100px]">
+                        <p className="text-xs font-bold text-blue-400 truncate">{inc.assignee.name}</p>
+                        <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-1">Assigned</p>
                       </div>
                     )}
-                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center min-w-[80px]">
-                      <p className="text-xl font-heading font-black text-blue-500">{inc.responders}</p>
-                      <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Responders</p>
-                    </div>
                   </div>
                 </div>
 

@@ -26,11 +26,28 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const DEMO_INCIDENTS = [
-    { id: 1, title: 'Thi cong Dien Bien Phu', lat: 16.0680, lng: 108.2122, type: 'construction', severity: 'medium', time: '10 mins ago' },
-    { id: 2, title: 'Tai nan tren Cau Rong', lat: 16.0625, lng: 108.2295, type: 'accident', severity: 'critical', time: 'Just now' },
-    { id: 3, title: 'Ket xe Cau Song Han', lat: 16.0710, lng: 108.2240, type: 'congestion', severity: 'high', time: '5 mins ago' },
-  ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [mapIncidents, setMapIncidents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const endpoint = isPublic ? '/public/incidents' : '/incidents';
+        const res = await api.get(`${endpoint}?per_page=20`);
+        if (res.data?.data?.length > 0) {
+          setMapIncidents(res.data.data);
+        }
+      } catch {
+        // API unavailable - use fallback
+        setMapIncidents([
+          { id: 1, title: 'Thi cong Dien Bien Phu', lat: 16.0680, lng: 108.2122, type: 'construction', severity: 'medium' },
+          { id: 2, title: 'Tai nan tren Cau Rong', lat: 16.0625, lng: 108.2295, type: 'accident', severity: 'critical' },
+          { id: 3, title: 'Ket xe Cau Song Han', lat: 16.0710, lng: 108.2240, type: 'congestion', severity: 'high' },
+        ]);
+      }
+    };
+    fetchIncidents();
+  }, [isPublic]);
 
   const handleMyLocation = () => {
     if ('geolocation' in navigator) {
@@ -59,8 +76,8 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   const [avgDensity, setAvgDensity] = useState(0);
 
   const getMapStyleUrl = () => {
-    return resolvedTheme === 'dark' 
-      ? 'mapbox://styles/mapbox/dark-v11' 
+    return resolvedTheme === 'dark'
+      ? 'mapbox://styles/mapbox/dark-v11'
       : 'mapbox://styles/mapbox/standard';
   };
 
@@ -71,7 +88,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       const data = res.data;
 
       setTotalEdges(data.features.length);
-      
+
       let congested = 0;
       let totalDensity = 0;
       data.features.forEach((f: any) => {
@@ -237,7 +254,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           </div>
         </div>
       )}
-      
+
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* --- UI Controls Layer --- */}
@@ -246,9 +263,9 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-md z-20 px-4">
         <div className="relative bg-card/90 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex items-center pr-2 pl-4 py-2 hover:border-primary/30 transition-colors focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
           <Search className="w-5 h-5 text-muted-foreground mr-3" />
-          <input 
-            type="text" 
-            placeholder="Search for an area or address..." 
+          <input
+            type="text"
+            placeholder="Search for an area or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/70 font-medium py-1 text-foreground"
@@ -258,7 +275,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
       {/* Sidebar Toggle Button (if sidebar closed) */}
       {!isSidebarOpen && (
-        <button 
+        <button
           onClick={() => setIsSidebarOpen(true)}
           className="absolute top-6 left-6 z-20 p-3 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg hover:bg-accent focus:outline-none transition-transform hover:scale-105 active:scale-95"
         >
@@ -267,10 +284,9 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       )}
 
       {/* Collapsible Sidebar */}
-      <div 
-        className={`absolute top-0 left-0 h-full w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl z-30 transform transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+      <div
+        className={`absolute top-0 left-0 h-full w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl z-30 transform transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="p-6 border-b border-border flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
@@ -279,19 +295,22 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
             </div>
             <h2 className="text-xl font-bold font-heading">Nearby Incidents</h2>
           </div>
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(false)}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-          {DEMO_INCIDENTS.map((inc) => (
-            <div 
+          {mapIncidents.map((inc: any) => {
+            const incLat = inc.lat || inc.location?.lat;
+            const incLng = inc.lng || inc.location?.lng;
+            return (
+            <div
               key={inc.id}
-              onClick={() => flyToIncident(inc.lng, inc.lat)}
+              onClick={() => incLng && incLat && flyToIncident(incLng, incLat)}
               className="p-4 bg-background/50 hover:bg-accent/50 border border-border rounded-xl cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 group"
             >
               <div className="flex gap-3">
@@ -299,18 +318,21 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
                   {inc.type === 'construction' && <Construction className="w-5 h-5 text-amber-500" />}
                   {inc.type === 'accident' && <CarFront className="w-5 h-5 text-rose-500" />}
                   {inc.type === 'congestion' && <Gauge className="w-5 h-5 text-orange-500" />}
+                  {inc.type === 'weather' && <AlertTriangle className="w-5 h-5 text-blue-500" />}
+                  {!['construction','accident','congestion','weather'].includes(inc.type) && <AlertTriangle className="w-5 h-5 text-slate-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{inc.title}</h4>
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-medium">
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {inc.lat.toFixed(3)}, {inc.lng.toFixed(3)}</span>
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {inc.severity || 'unknown'}</span>
                     <span className="text-border">•</span>
-                    <span>{inc.time}</span>
+                    <span>{inc.created_at ? new Date(inc.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : inc.time || ''}</span>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
           <div className="pt-4 text-center">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">End of nearby incidents</p>
           </div>
@@ -318,7 +340,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       </div>
 
       {/* GPS / My Location Button */}
-      <button 
+      <button
         onClick={handleMyLocation}
         className="absolute bottom-[104px] right-6 z-20 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl hover:shadow-blue-500/25 transition-all outline-none hover:scale-110 active:scale-95 border-2 border-white/10"
         title="My Location"
@@ -356,23 +378,23 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
       {/* Legend & Controls Overlay */}
       <div className="absolute bottom-6 left-6 flex items-end gap-4 z-10 pointer-events-none">
-        
+
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
             <Activity className="w-3.5 h-3.5" /> FLOW INTENSITY
           </div>
           <div className="flex items-center gap-4">
             {[
-              { level: 'none', color: '#10b981' }, 
-              { level: 'light', color: '#eab308' }, 
-              { level: 'moderate', color: '#f97316' }, 
-              { level: 'heavy', color: '#ef4444' }, 
+              { level: 'none', color: '#10b981' },
+              { level: 'light', color: '#eab308' },
+              { level: 'moderate', color: '#f97316' },
+              { level: 'heavy', color: '#ef4444' },
               { level: 'gridlock', color: '#881337' }
             ].map(({ level, color }) => (
               <div key={level} className="flex items-center gap-2">
-                <div 
-                  className="w-3.5 h-3.5 rounded-full shadow-sm" 
-                  style={{ background: color, boxShadow: `0 0 8px ${color}80` }} 
+                <div
+                  className="w-3.5 h-3.5 rounded-full shadow-sm"
+                  style={{ background: color, boxShadow: `0 0 8px ${color}80` }}
                 />
                 <span className="text-xs font-medium text-muted-foreground capitalize tracking-wide">{level}</span>
               </div>

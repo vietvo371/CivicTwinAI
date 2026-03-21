@@ -14,20 +14,7 @@ import Link from 'next/link';
 
 const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false });
 
-// Demo data fallback
-const DEMO_INCIDENTS = [
-  { id: 1, title: 'Va cham Container tren Cau Rong', type: 'accident', severity: 'critical', status: 'investigating', created_at: '2026-03-21T08:15:00Z' },
-  { id: 2, title: 'Ngap nuoc duong Nguyen Huu Tho (Cam Le)', type: 'weather', severity: 'critical', status: 'open', created_at: '2026-03-21T07:30:00Z' },
-  { id: 3, title: 'Thi cong mat duong Dien Bien Phu', type: 'construction', severity: 'medium', status: 'open', created_at: '2026-03-21T06:00:00Z' },
-  { id: 4, title: 'Den tin hieu hu tai Nga tu Le Duan - DBP', type: 'other', severity: 'high', status: 'open', created_at: '2026-03-21T05:45:00Z' },
-  { id: 5, title: 'Un tac gio cao diem Cau Song Han', type: 'congestion', severity: 'high', status: 'investigating', created_at: '2026-03-20T17:00:00Z' },
-];
 
-const DEMO_AI_FEED = [
-  { id: 1, incident_id: 1, model_version: 'GNN-v2.1', status: 'completed', processing_time_ms: 342, edges_affected: 12, created_at: '2026-03-21T08:16:00Z' },
-  { id: 2, incident_id: 2, model_version: 'LSTM-v1.4', status: 'completed', processing_time_ms: 189, edges_affected: 8, created_at: '2026-03-21T07:31:00Z' },
-  { id: 3, incident_id: 4, model_version: 'GNN-v2.1', status: 'failed', processing_time_ms: 1200, edges_affected: 0, created_at: '2026-03-21T05:46:00Z' },
-];
 
 const severityStyle: Record<string, string> = {
   low: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
@@ -75,16 +62,46 @@ function KPICard({ title, value, subtitle, icon, trend, accentColor }: KPICardPr
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Incident = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AIJob = Record<string, any>;
+
 export default function DashboardPage() {
-  const [incidents, setIncidents] = useState(DEMO_INCIDENTS);
-  const [aiFeed] = useState(DEMO_AI_FEED);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [aiFeed, setAiFeed] = useState<AIJob[]>([]);
+  const [pendingRecs, setPendingRecs] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/incidents?per_page=5')
-      .then((res) => {
-        if (res.data.data?.length > 0) setIncidents(res.data.data);
-      })
-      .catch(() => { /* fallback to demo data */ });
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [incRes, predRes, recRes] = await Promise.allSettled([
+          api.get('/incidents?per_page=10'),
+          api.get('/predictions?per_page=5'),
+          api.get('/recommendations?status=pending&per_page=100'),
+        ]);
+
+        if (incRes.status === 'fulfilled' && incRes.value.data?.data?.length > 0) {
+          setIncidents(incRes.value.data.data);
+        }
+        if (predRes.status === 'fulfilled' && predRes.value.data?.data) {
+          setAiFeed(predRes.value.data.data);
+        }
+        if (recRes.status === 'fulfilled' && recRes.value.data?.data) {
+          setPendingRecs(recRes.value.data.data.length);
+        }
+      } catch {
+        // fallback: keep empty arrays
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // refresh every 30s
+    return () => clearInterval(interval);
   }, []);
 
   const openCount = incidents.filter(i => i.status === 'open' || i.status === 'investigating').length;
@@ -130,17 +147,16 @@ export default function DashboardPage() {
           accentColor="from-violet-500 to-purple-500"
         />
         <KPICard
-          title="Avg. Response"
-          value="4.2m"
-          subtitle="Mean time to first response"
+          title="Pending Actions"
+          value={pendingRecs}
+          subtitle="AI recommendations awaiting review"
           icon={<Timer className="w-5 h-5 text-blue-500" />}
-          trend={{ value: '-0.8m', up: false }}
           accentColor="from-blue-500 to-cyan-500"
         />
         <KPICard
-          title="Operators Online"
-          value={3}
-          subtitle="Across 2 districts"
+          title="Resolution Rate"
+          value={incidents.length > 0 ? `${Math.round((incidents.filter(i => i.status === 'resolved').length / incidents.length) * 100)}%` : '0%'}
+          subtitle={`${incidents.filter(i => i.status === 'resolved').length}/${incidents.length} incidents resolved`}
           icon={<Users className="w-5 h-5 text-emerald-500" />}
           accentColor="from-emerald-500 to-teal-500"
         />
@@ -251,10 +267,10 @@ export default function DashboardPage() {
                         <span className="text-border">|</span>
                         <span>{ai.processing_time_ms}ms</span>
                       </div>
-                      {ai.edges_affected > 0 && (
-                        <p className="text-[11px] text-primary/80 font-semibold mt-1">
-                          {ai.edges_affected} road segments analyzed
-                        </p>
+                      {(ai.prediction_edges?.length || ai.edges_affected || 0) > 0 && (
+                         <p className="text-[11px] text-primary/80 font-semibold mt-1">
+                           {ai.prediction_edges?.length || ai.edges_affected} road segments analyzed
+                         </p>
                       )}
                     </div>
                   </div>

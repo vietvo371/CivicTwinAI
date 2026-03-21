@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import api from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +35,12 @@ export default function LoginDialog() {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const getRedirectByRoles = (roles: string[]) => {
+    if (roles.includes('super_admin') || roles.includes('city_admin')) return '/admin';
+    if (roles.includes('traffic_operator')) return '/dashboard';
+    if (roles.includes('emergency')) return '/emergency';
+    return '/map';
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +49,10 @@ export default function LoginDialog() {
 
     try {
       await login(email, password);
+      const res = await api.get('/auth/me');
+      const roles: string[] = res.data?.data?.user?.roles || [];
       setOpen(false);
-      router.push('/dashboard');
+      router.push(getRedirectByRoles(roles));
     } catch {
       setError('Invalid email or password.');
     } finally {
@@ -65,7 +74,7 @@ export default function LoginDialog() {
     try {
       await register(regName, regEmail, regPassword, regConfirmPassword);
       setOpen(false);
-      router.push('/dashboard');
+      router.push('/map'); // new accounts default to citizen → /map
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to register account.');
     } finally {

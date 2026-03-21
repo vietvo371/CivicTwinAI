@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\NodeController;
 use App\Http\Controllers\Api\PredictionController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\SensorDataController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,7 +48,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('edges', [EdgeController::class, 'index']);
     Route::get('edges/geojson', [EdgeController::class, 'geojson']);
     Route::get('edges/{edge}', [EdgeController::class, 'show']);
-    
+    // Sensors listing
+    Route::get('sensors', function (Request $request) {
+        $query = \App\Models\Sensor::with('edge');
+        if ($request->has('status')) $query->where('status', $request->status);
+        return \App\Helpers\ApiResponse::success($query->get(), 'Sensors retrieved');
+    });
+
     // ==========================================
     // ==========================================
     // 3. OPERATOR ROUTES (traffic_operator | city_admin | super_admin)
@@ -78,7 +85,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // 4. ADMIN ROUTES (city_admin | super_admin)
     // ==========================================
     Route::prefix('admin')->middleware('role:city_admin|super_admin')->group(function () {
-        // Admin specific APIs will go here (e.g. User Management, System Settings)
-        // Route::apiResource('users', UserController::class);
+        // User Management
+        Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
+        Route::post('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'store']);
+        Route::put('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'update']);
+        Route::delete('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'destroy']);
+
+        // System Stats & Logs
+        Route::get('stats', [\App\Http\Controllers\Api\Admin\SystemController::class, 'stats']);
+        Route::get('logs', [\App\Http\Controllers\Api\Admin\SystemController::class, 'logs']);
     });
 });

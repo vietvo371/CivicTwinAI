@@ -1,22 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import api from '@/lib/api';
 import {
   ShieldCheck, Users, Database, Settings, ActivitySquare,
-  TrendingUp, Clock, Shield, ChevronRight, Zap
+  TrendingUp, Clock, Shield, ChevronRight, Zap, AlertTriangle, Loader2, Brain
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const DEMO_STATS = {
-  totalUsers: 156,
-  activeOperators: 8,
-  totalNodes: 1247,
-  totalEdges: 3891,
-  systemUptime: '99.97%',
-  lastBackup: '2 hours ago',
-};
 
 const QUICK_LINKS = [
   { href: '/admin/users', icon: Users, label: 'User Management', description: 'Manage accounts, roles & permissions', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' },
@@ -25,15 +17,46 @@ const QUICK_LINKS = [
   { href: '/admin/logs', icon: ActivitySquare, label: 'System Logs', description: 'Audit trails & activity logs', color: 'text-violet-500 bg-violet-500/10 border-violet-500/20' },
 ];
 
-const RECENT_ACTIVITIES = [
-  { id: 1, action: 'User "operator_hcm_01" role updated to traffic_operator', time: '5 mins ago', type: 'user' },
-  { id: 2, action: 'System backup completed successfully', time: '2 hours ago', type: 'system' },
-  { id: 3, action: '12 new sensor nodes added to District 7 topology', time: '4 hours ago', type: 'data' },
-  { id: 4, action: 'AI Model GNN-v2.1 deployed to production', time: '6 hours ago', type: 'system' },
-  { id: 5, action: 'User "planner_q1" account created', time: '1 day ago', type: 'user' },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Stats = Record<string, any>;
 
 export default function AdminPage() {
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, logsRes] = await Promise.allSettled([
+          api.get('/admin/stats'),
+          api.get('/admin/logs?per_page=5'),
+        ]);
+
+        if (statsRes.status === 'fulfilled' && statsRes.value.data?.data) {
+          setStats(statsRes.value.data.data);
+        }
+        if (logsRes.status === 'fulfilled' && logsRes.value.data?.data) {
+          setLogs(logsRes.value.data.data);
+        }
+      } catch {
+        // keep defaults
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const kpis = stats ? [
+    { label: 'Total Users', value: stats.total_users, icon: <Users className="w-4 h-4 text-blue-500" /> },
+    { label: 'Active Incidents', value: stats.active_incidents, icon: <AlertTriangle className="w-4 h-4 text-rose-500" /> },
+    { label: 'Map Nodes', value: stats.total_nodes, icon: <Database className="w-4 h-4 text-cyan-500" /> },
+    { label: 'Map Edges', value: stats.total_edges, icon: <Zap className="w-4 h-4 text-amber-500" /> },
+    { label: 'AI Success', value: stats.total_predictions > 0 ? `${Math.round((stats.completed_predictions / stats.total_predictions) * 100)}%` : 'N/A', icon: <Brain className="w-4 h-4 text-violet-500" /> },
+    { label: 'Pending Actions', value: stats.pending_recommendations, icon: <Clock className="w-4 h-4 text-orange-500" /> },
+  ] : [];
+
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-6 animate-in fade-in duration-500">
       {/* Header */}
@@ -57,24 +80,23 @@ export default function AdminPage() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: 'Total Users', value: DEMO_STATS.totalUsers, icon: <Users className="w-4 h-4 text-blue-500" /> },
-          { label: 'Active Ops', value: DEMO_STATS.activeOperators, icon: <Shield className="w-4 h-4 text-emerald-500" /> },
-          { label: 'Map Nodes', value: DEMO_STATS.totalNodes, icon: <Database className="w-4 h-4 text-cyan-500" /> },
-          { label: 'Map Edges', value: DEMO_STATS.totalEdges, icon: <Zap className="w-4 h-4 text-amber-500" /> },
-          { label: 'Uptime', value: DEMO_STATS.systemUptime, icon: <TrendingUp className="w-4 h-4 text-violet-500" /> },
-          { label: 'Last Backup', value: DEMO_STATS.lastBackup, icon: <Clock className="w-4 h-4 text-orange-500" /> },
-        ].map((stat, i) => (
-          <Card key={i} className="bg-card/50 backdrop-blur-xl border-border/80">
-            <CardContent className="p-4 text-center">
-              <div className="flex justify-center mb-2">{stat.icon}</div>
-              <p className="text-xl font-heading font-black">{stat.value}</p>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {kpis.map((stat, i) => (
+            <Card key={i} className="bg-card/50 backdrop-blur-xl border-border/80">
+              <CardContent className="p-4 text-center">
+                <div className="flex justify-center mb-2">{stat.icon}</div>
+                <p className="text-xl font-heading font-black">{stat.value}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Quick Links Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -96,33 +118,90 @@ export default function AdminPage() {
         ))}
       </div>
 
+      {/* Stats breakdown */}
+      {stats && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Incidents by Type */}
+          <Card className="bg-card/40 backdrop-blur-xl shadow-2xl border-border/80">
+            <CardHeader className="p-4 pb-3">
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                Incidents by Type
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="space-y-2">
+                {Object.entries(stats.incidents_by_type || {}).map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between p-2.5 rounded-lg bg-background/50 border border-transparent hover:border-border transition-all">
+                    <span className="text-sm font-medium capitalize">{type}</span>
+                    <Badge variant="outline" className="font-heading font-bold">{String(count)}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Users by Role */}
+          <Card className="bg-card/40 backdrop-blur-xl shadow-2xl border-border/80">
+            <CardHeader className="p-4 pb-3">
+              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-500" />
+                Users by Role
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              <div className="space-y-2">
+                {Object.entries(stats.users_by_role || {}).map(([role, count]) => (
+                  <div key={role} className="flex items-center justify-between p-2.5 rounded-lg bg-background/50 border border-transparent hover:border-border transition-all">
+                    <span className="text-sm font-medium">{role.replace('_', ' ')}</span>
+                    <Badge variant="outline" className="font-heading font-bold">{String(count)}</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Recent Activity */}
       <Card className="bg-card/40 backdrop-blur-xl shadow-2xl border-border/80">
-        <CardHeader className="p-4 pb-3">
+        <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
             <ActivitySquare className="w-4 h-4 text-violet-500" />
             Recent System Activity
           </CardTitle>
+          <Link href="/admin/logs" className="text-xs font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors">
+            View All <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="space-y-2">
-            {RECENT_ACTIVITIES.map((act) => (
-              <div key={act.id} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-transparent hover:border-border transition-all">
-                <div className="mt-0.5 shrink-0">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 ${act.type === 'user' ? 'bg-blue-500' : act.type === 'system' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          {logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No activity logs yet</p>
+          ) : (
+            <div className="space-y-2">
+              {logs.map((log: any) => (
+                <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl bg-background/50 border border-transparent hover:border-border transition-all">
+                  <div className="mt-0.5 shrink-0">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 ${log.event === 'created' ? 'bg-emerald-500' : log.event === 'updated' ? 'bg-blue-500' : 'bg-amber-500'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{log.description}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {new Date(log.created_at).toLocaleString('vi-VN')}
+                      </p>
+                      {log.causer && (
+                        <span className="text-[11px] text-muted-foreground">by {log.causer.name}</span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[9px] uppercase tracking-wider shrink-0">
+                    {log.event || log.log_name}
+                  </Badge>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{act.action}</p>
-                  <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-1">
-                    <Clock className="w-3 h-3" /> {act.time}
-                  </p>
-                </div>
-                <Badge variant="outline" className="text-[9px] uppercase tracking-wider shrink-0">
-                  {act.type}
-                </Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
