@@ -237,8 +237,7 @@ export default function LoginDialog() {
             variant="outline"
             className="w-full text-base font-medium h-12 bg-white/5 border-white/10 hover:bg-white/10 text-white flex items-center justify-center gap-3 transition-colors"
             onClick={() => {
-              // Redirect to Laravel Socialite / Google endpoint
-              window.location.href = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/auth/google/redirect`;
+              window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/redirect`;
             }}
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">

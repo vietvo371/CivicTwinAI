@@ -25,11 +25,27 @@ function CallbackHandler() {
       }
 
       if (token) {
-        // Lưu token vào localStorage
         localStorage.setItem('token', token);
         
-        // Buộc reload trang dashboard để trigger `initAuth` trong useAuth hoặc redirect thẳng
-        window.location.href = '/dashboard';
+        // Fetch user profile to determine redirect based on role
+        try {
+          const res = await api.get('/auth/me');
+          const roles: string[] = res.data?.data?.user?.roles || [];
+          
+          if (roles.includes('super_admin') || roles.includes('city_admin')) {
+            window.location.href = '/admin';
+          } else if (roles.includes('traffic_operator')) {
+            window.location.href = '/dashboard';
+          } else if (roles.includes('emergency')) {
+            window.location.href = '/emergency';
+          } else {
+            // citizen, urban_planner, etc.
+            window.location.href = '/map';
+          }
+        } catch {
+          // Fallback if profile fetch fails
+          window.location.href = '/map';
+        }
       } else {
         setError('Không nhận được token xác thực.');
         setTimeout(() => {

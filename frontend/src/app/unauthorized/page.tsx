@@ -11,14 +11,14 @@ export default function UnauthorizedPage() {
             <ShieldAlert className="w-8 h-8 animate-pulse" />
           </div>
         </div>
-        
+
         <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">Access Denied</h1>
         <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
           Sorry, your account does not have the necessary privileges to view this control board.
         </p>
-        
+
         <div className="w-full space-y-3">
-          <Link href="/login" className="w-full inline-block">
+          <Link href="/" className="w-full inline-block">
             <Button className="w-full" size="lg">Return to Home</Button>
           </Link>
         </div>
