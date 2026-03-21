@@ -2,17 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslatedEnums;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Recommendation extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasTranslatedEnums;
 
     protected $fillable = [
         'prediction_id', 'incident_id', 'type', 'description', 'details',
         'status', 'approved_by', 'approved_at', 'rejected_reason', 'executed_at',
+    ];
+
+    protected static array $translatedEnums = [
+        'type'   => 'recommendation_type',
+        'status' => 'recommendation_status',
     ];
 
     protected function casts(): array

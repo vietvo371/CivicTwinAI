@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslatedEnums;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,10 +11,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Node extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasTranslatedEnums;
 
     protected $fillable = [
         'name', 'type', 'zone_id', 'has_traffic_light', 'metadata', 'status',
+    ];
+
+    protected static array $translatedEnums = [
+        'type'   => 'node_type',
+        'status' => 'node_status',
     ];
 
     protected function casts(): array

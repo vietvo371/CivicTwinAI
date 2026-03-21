@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslatedEnums;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,11 +11,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Incident extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasTranslatedEnums;
 
     protected $fillable = [
         'title', 'description', 'type', 'severity', 'status', 'source',
         'reported_by', 'assigned_to', 'resolved_at', 'metadata',
+    ];
+
+    protected static array $translatedEnums = [
+        'type'     => 'incident_type',
+        'severity' => 'incident_severity',
+        'status'   => 'incident_status',
+        'source'   => 'incident_source',
     ];
 
     protected function casts(): array

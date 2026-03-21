@@ -1,31 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  ShieldCheck, 
-  Users, 
-  Database,
-  LogOut,
-  Settings,
-  ActivitySquare
+  ShieldCheck, Users, Database, LogOut, Settings, ActivitySquare
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import { ThemeToggle } from './ThemeToggle';
-
-const ADMIN_NAVIGATION = [
-  { name: 'Dashboard', href: '/admin', icon: ShieldCheck },
-  { name: 'Users', href: '/admin/users', icon: Users },
-  { name: 'Master Data', href: '/admin/master', icon: Database },
-  { name: 'System Settings', href: '/admin/settings', icon: Settings },
-  { name: 'System Logs', href: '/admin/logs', icon: ActivitySquare },
-];
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
+  const { t } = useTranslation();
+
+  const ADMIN_NAVIGATION = [
+    { name: t('nav.dashboard'), href: '/admin', icon: ShieldCheck },
+    { name: t('nav.users'), href: '/admin/users', icon: Users },
+    { name: t('nav.masterData'), href: '/admin/master', icon: Database },
+    { name: t('nav.settings'), href: '/admin/settings', icon: Settings },
+    { name: t('nav.logs'), href: '/admin/logs', icon: ActivitySquare },
+  ];
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 w-[72px] lg:w-[260px] bg-card/95 backdrop-blur-3xl border-r border-border transition-all duration-300 flex flex-col items-center lg:items-stretch shadow-2xl">
@@ -43,11 +40,11 @@ export default function AdminSidebar() {
       {/* Navigation */}
       <nav className="flex-1 w-full py-6 flex flex-col gap-2 px-3 overflow-y-auto no-scrollbar">
         {ADMIN_NAVIGATION.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'));
           
           return (
             <Link
-              key={item.name}
+              key={item.href}
               href={item.href}
               className={`group flex items-center justify-center lg:justify-start gap-3 p-3 lg:px-4 lg:py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden ${
                 isActive 
@@ -69,9 +66,15 @@ export default function AdminSidebar() {
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{user?.roles?.[0] || 'admin'}</span>
         </div>
         
-        <div className="flex items-center justify-center lg:justify-between px-2 pt-1 pb-2">
-          <span className="hidden lg:block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Theme</span>
-          <ThemeToggle collapsed={false} />
+        <div className="flex items-center justify-center lg:justify-between px-2 pt-1 pb-2 gap-2">
+          <div className="hidden lg:flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle collapsed={false} />
+          </div>
+          <div className="flex lg:hidden flex-col items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle collapsed={false} />
+          </div>
         </div>
 
         <button
@@ -79,7 +82,7 @@ export default function AdminSidebar() {
           className="w-full flex items-center justify-center lg:justify-start gap-3 p-3 lg:px-4 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive transition-colors border border-transparent hover:border-destructive/20"
         >
           <LogOut className="w-5 h-5 flex-shrink-0" />
-          <span className="hidden lg:block text-sm font-bold tracking-wide">Logout</span>
+          <span className="hidden lg:block text-sm font-bold tracking-wide">{t('auth.logout')}</span>
         </button>
       </div>
     </aside>

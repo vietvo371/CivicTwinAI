@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 const navItems = [
   { href: '/dashboard', icon: Map, label: 'Traffic Map' },
@@ -120,10 +121,13 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Theme Toggle */}
-        <div className={`flex items-center ${collapsed ? 'justify-center' : 'justify-between px-2'} pt-1`}>
+        {/* Language & Theme Toggle */}
+        <div className={`flex items-center ${collapsed ? 'justify-center flex-col gap-2' : 'justify-between px-2'} pt-1`}>
           {!collapsed && <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Theme</span>}
-          <ThemeToggle collapsed={collapsed} />
+          <div className="flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle collapsed={collapsed} />
+          </div>
         </div>
       </div>
     </aside>

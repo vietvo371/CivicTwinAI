@@ -24,13 +24,13 @@ class AuthController extends Controller
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Thông tin đăng nhập không chính xác.'],
+                'email' => [__('api.invalid_credentials')],
             ]);
         }
 
         if (! $user->is_active) {
             throw ValidationException::withMessages([
-                'email' => ['Tài khoản đã bị vô hiệu hóa.'],
+                'email' => [__('api.account_deactivated')],
             ]);
         }
 
@@ -41,7 +41,7 @@ class AuthController extends Controller
         return ApiResponse::success([
             'user' => $this->formatUser($user),
             'token' => $token,
-        ], 'Login successful');
+        ], 'api.login_success');
     }
 
     public function register(Request $request): JsonResponse
@@ -67,21 +67,21 @@ class AuthController extends Controller
         return ApiResponse::created([
             'user' => $this->formatUser($user),
             'token' => $token,
-        ], 'Registration successful');
+        ], 'api.register_success');
     }
 
     public function me(Request $request): JsonResponse
     {
         return ApiResponse::success([
             'user' => $this->formatUser($request->user()),
-        ], 'User profile retrieved');
+        ], 'api.profile_retrieved');
     }
 
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
-        return ApiResponse::success(null, 'Logged out successfully');
+        return ApiResponse::success(null, 'api.logout_success');
     }
 
     private function formatUser(User $user): array

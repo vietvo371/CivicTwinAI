@@ -46,7 +46,7 @@ class UserController extends Controller
             ];
         });
 
-        return ApiResponse::paginate($users, 'Users retrieved');
+        return ApiResponse::paginate($users, 'api.users_retrieved');
     }
 
     public function store(Request $request): JsonResponse
@@ -73,7 +73,7 @@ class UserController extends Controller
         return ApiResponse::created([
             ...$user->toArray(),
             'roles' => $user->getRoleNames(),
-        ], 'User created successfully');
+        ], 'api.user_created');
     }
 
     public function update(Request $request, User $user): JsonResponse
@@ -103,7 +103,7 @@ class UserController extends Controller
         return ApiResponse::success([
             ...$user->fresh()->toArray(),
             'roles' => $user->getRoleNames(),
-        ], 'User updated successfully');
+        ], 'api.user_updated');
     }
 
     public function destroy(User $user): JsonResponse
@@ -111,6 +111,6 @@ class UserController extends Controller
         $user->update(['is_active' => false]);
         $user->tokens()->delete();
 
-        return ApiResponse::success(null, 'User deactivated successfully');
+        return ApiResponse::success(null, 'api.user_deactivated');
     }
 }

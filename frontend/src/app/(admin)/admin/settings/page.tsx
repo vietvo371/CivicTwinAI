@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from '@/lib/i18n';
 import {
   Settings, Globe, Bell, Shield, Clock, Save,
   Database, Cpu, MapPin, Zap
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
@@ -28,15 +30,15 @@ export default function SettingsPage() {
             <Settings className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">System Settings</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Configure global parameters for CivicTwin AI</p>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('settings.title')}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{t('settings.subtitle')}</p>
           </div>
         </div>
         <Button onClick={handleSave} className="shadow-lg shadow-primary/20">
           {saved ? (
-            <span className="flex items-center gap-2 text-emerald-300"><Zap className="w-4 h-4" /> Saved</span>
+            <span className="flex items-center gap-2 text-emerald-300"><Zap className="w-4 h-4" /> {t('settings.saved')}</span>
           ) : (
-            <span className="flex items-center gap-2"><Save className="w-4 h-4" /> Save Changes</span>
+            <span className="flex items-center gap-2"><Save className="w-4 h-4" /> {t('settings.saveChanges')}</span>
           )}
         </Button>
       </div>
@@ -45,22 +47,22 @@ export default function SettingsPage() {
       <Card className="bg-card/50 backdrop-blur-xl border-border/80">
         <CardHeader>
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Globe className="w-4 h-4 text-blue-500" /> General
+            <Globe className="w-4 h-4 text-blue-500" /> {t('settings.general')}
           </CardTitle>
-          <CardDescription>Basic system configuration</CardDescription>
+          <CardDescription>{t('settings.generalDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">System Name</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.systemName')}</label>
               <Input defaultValue="CivicTwin AI - Da Nang" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Language</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.defaultLanguage')}</label>
               <Select defaultValue="vi">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="vi">Tieng Viet</SelectItem>
+                  <SelectItem value="vi">Tiếng Việt</SelectItem>
                   <SelectItem value="en">English</SelectItem>
                 </SelectContent>
               </Select>
@@ -68,11 +70,11 @@ export default function SettingsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Map Center (Lat)</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.mapCenterLat')}</label>
               <Input type="number" defaultValue="16.0544" step="0.0001" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Map Center (Lng)</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.mapCenterLng')}</label>
               <Input type="number" defaultValue="108.2022" step="0.0001" />
             </div>
           </div>
@@ -83,14 +85,14 @@ export default function SettingsPage() {
       <Card className="bg-card/50 backdrop-blur-xl border-border/80">
         <CardHeader>
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-violet-500" /> AI Engine
+            <Cpu className="w-4 h-4 text-violet-500" /> {t('settings.aiEngine')}
           </CardTitle>
-          <CardDescription>Machine learning model parameters</CardDescription>
+          <CardDescription>{t('settings.aiEngineDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Active Model</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.activeModel')}</label>
               <Select defaultValue="gnn-v2.1">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -101,22 +103,22 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Prediction Horizon (mins)</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.predictionHorizon')}</label>
               <Input type="number" defaultValue="30" min="5" max="120" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Confidence Threshold</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.confidenceThreshold')}</label>
               <Input type="number" defaultValue="0.75" step="0.05" min="0" max="1" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Auto-trigger on Incident</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.autoTrigger')}</label>
               <Select defaultValue="yes">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yes">Enabled</SelectItem>
-                  <SelectItem value="no">Disabled</SelectItem>
+                  <SelectItem value="yes">{t('settings.enabled')}</SelectItem>
+                  <SelectItem value="no">{t('settings.disabled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -128,25 +130,25 @@ export default function SettingsPage() {
       <Card className="bg-card/50 backdrop-blur-xl border-border/80">
         <CardHeader>
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Bell className="w-4 h-4 text-orange-500" /> Notifications
+            <Bell className="w-4 h-4 text-orange-500" /> {t('settings.notifications')}
           </CardTitle>
-          <CardDescription>Alert and push notification settings</CardDescription>
+          <CardDescription>{t('settings.notificationsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Citizen Alert Radius (km)</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.citizenAlertRadius')}</label>
               <Input type="number" defaultValue="5" min="1" max="50" />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Critical Alert Channel</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.criticalAlertChannel')}</label>
               <Select defaultValue="push_email">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="push">Push Notification Only</SelectItem>
-                  <SelectItem value="email">Email Only</SelectItem>
-                  <SelectItem value="push_email">Push + Email</SelectItem>
-                  <SelectItem value="sms">SMS (Premium)</SelectItem>
+                  <SelectItem value="push">{t('settings.pushOnly')}</SelectItem>
+                  <SelectItem value="email">{t('settings.emailOnly')}</SelectItem>
+                  <SelectItem value="push_email">{t('settings.pushEmail')}</SelectItem>
+                  <SelectItem value="sms">{t('settings.smsPremium')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -158,44 +160,44 @@ export default function SettingsPage() {
       <Card className="bg-card/50 backdrop-blur-xl border-border/80">
         <CardHeader>
           <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-            <Database className="w-4 h-4 text-emerald-500" /> Data Retention
+            <Database className="w-4 h-4 text-emerald-500" /> {t('settings.dataRetention')}
           </CardTitle>
-          <CardDescription>Automated data lifecycle policies</CardDescription>
+          <CardDescription>{t('settings.dataRetentionDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sensor Data</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.sensorData')}</label>
               <Select defaultValue="90">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="90">90 days</SelectItem>
-                  <SelectItem value="180">180 days</SelectItem>
-                  <SelectItem value="365">1 year</SelectItem>
+                  <SelectItem value="30">{t('settings.days', { n: '30' })}</SelectItem>
+                  <SelectItem value="90">{t('settings.days', { n: '90' })}</SelectItem>
+                  <SelectItem value="180">{t('settings.days', { n: '180' })}</SelectItem>
+                  <SelectItem value="365">{t('settings.year')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Incident Logs</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.incidentLogs')}</label>
               <Select defaultValue="365">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="90">90 days</SelectItem>
-                  <SelectItem value="180">180 days</SelectItem>
-                  <SelectItem value="365">1 year</SelectItem>
-                  <SelectItem value="forever">Forever</SelectItem>
+                  <SelectItem value="90">{t('settings.days', { n: '90' })}</SelectItem>
+                  <SelectItem value="180">{t('settings.days', { n: '180' })}</SelectItem>
+                  <SelectItem value="365">{t('settings.year')}</SelectItem>
+                  <SelectItem value="forever">{t('settings.forever')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">System Logs</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('settings.systemLogs')}</label>
               <Select defaultValue="30">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">7 days</SelectItem>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="90">90 days</SelectItem>
+                  <SelectItem value="7">{t('settings.days', { n: '7' })}</SelectItem>
+                  <SelectItem value="30">{t('settings.days', { n: '30' })}</SelectItem>
+                  <SelectItem value="90">{t('settings.days', { n: '90' })}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

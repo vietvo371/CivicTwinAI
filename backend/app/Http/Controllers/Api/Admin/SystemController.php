@@ -46,7 +46,7 @@ class SystemController extends Controller
                 ->pluck('count', 'severity'),
         ];
 
-        return ApiResponse::success($stats, 'System statistics retrieved');
+        return ApiResponse::success($stats, 'api.stats_retrieved');
     }
 
     public function logs(Request $request): JsonResponse
@@ -64,6 +64,6 @@ class SystemController extends Controller
 
         $logs = $query->paginate($request->get('per_page', 20));
 
-        return ApiResponse::paginate($logs, 'Activity logs retrieved');
+        return ApiResponse::paginate($logs, 'api.logs_retrieved');
     }
 }

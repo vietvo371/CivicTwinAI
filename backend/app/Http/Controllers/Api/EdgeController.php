@@ -37,7 +37,7 @@ class EdgeController extends Controller
             'status' => $edge->status,
             'metrics_updated_at' => $edge->metrics_updated_at,
         ]);
-        return ApiResponse::success($edges, 'Traffic edges retrieved');
+        return ApiResponse::success($edges, 'api.edges_retrieved');
     }
 
     public function geojson(Request $request): JsonResponse
@@ -108,6 +108,6 @@ class EdgeController extends Controller
             'status' => $edge->status,
             'metrics_updated_at' => $edge->metrics_updated_at,
             'sensors_count' => $edge->sensors->count(),
-        ], 'Edge details retrieved');
+        ], 'api.edge_details');
     }
 }

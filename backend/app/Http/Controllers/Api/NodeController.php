@@ -40,7 +40,7 @@ class NodeController extends Controller
             ),
         ]);
 
-        return ApiResponse::success($nodes, 'Nodes retrieved');
+        return ApiResponse::success($nodes, 'api.nodes_retrieved');
     }
 
     public function show(Node $node): JsonResponse
@@ -63,6 +63,6 @@ class NodeController extends Controller
             'location' => $coords,
             'outgoing_edges_count' => $node->outgoingEdges()->count(),
             'incoming_edges_count' => $node->incomingEdges()->count(),
-        ], 'Node details retrieved');
+        ], 'api.node_details');
     }
 }

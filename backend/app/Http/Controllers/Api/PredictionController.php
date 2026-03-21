@@ -24,13 +24,13 @@ class PredictionController extends Controller
 
         $predictions = $query->latest()->paginate($request->get('per_page', 15));
 
-        return ApiResponse::paginate($predictions, 'Predictions retrieved');
+        return ApiResponse::paginate($predictions, 'api.predictions_retrieved');
     }
 
     public function show(Prediction $prediction): JsonResponse
     {
         $prediction->load(['incident', 'predictionEdges.edge', 'recommendations']);
 
-        return ApiResponse::success($prediction, 'Prediction details retrieved');
+        return ApiResponse::success($prediction, 'api.prediction_details');
     }
 }

@@ -32,7 +32,7 @@ class SensorDataController extends Controller
             $validated
         );
 
-        return ApiResponse::success(null, 'Sensor data processed.');
+        return ApiResponse::success(null, 'api.sensor_data_processed');
     }
 
     /**
@@ -59,6 +59,6 @@ class SensorDataController extends Controller
 
         return ApiResponse::success([
             'count' => $processed,
-        ], "{$processed} readings processed.");
+        ], 'api.sensor_data_processed');
     }
 }

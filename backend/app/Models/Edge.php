@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslatedEnums;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,13 +11,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Edge extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasTranslatedEnums;
 
     protected $fillable = [
         'name', 'source_node_id', 'target_node_id', 'length_m', 'lanes',
         'speed_limit_kmh', 'direction', 'road_type',
         'current_density', 'current_speed_kmh', 'current_flow',
         'congestion_level', 'status', 'metrics_updated_at',
+    ];
+
+    protected static array $translatedEnums = [
+        'congestion_level' => 'congestion_level',
+        'direction'        => 'direction',
+        'road_type'        => 'road_type',
+        'status'           => 'status',
     ];
 
     protected function casts(): array

@@ -7,6 +7,8 @@ import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 
+import { I18nProvider } from '@/lib/i18n';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,18 +28,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={cn(geistSans.variable, geistMono.variable, "font-sans")} suppressHydrationWarning>
+    <html lang="vi" className={cn(geistSans.variable, geistMono.variable, "font-sans")} suppressHydrationWarning>
       <head>
         <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
       </head>
       <body className="antialiased min-h-screen bg-background text-foreground font-body">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster position="top-center" richColors />
-            </TooltipProvider>
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster position="top-center" richColors />
+              </TooltipProvider>
+            </AuthProvider>
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -24,20 +24,20 @@ class RecommendationController extends Controller
 
         $recommendations = $query->latest()->paginate($request->get('per_page', 15));
 
-        return ApiResponse::paginate($recommendations, 'Recommendations retrieved');
+        return ApiResponse::paginate($recommendations, 'api.recommendations_retrieved');
     }
 
     public function show(Recommendation $recommendation): JsonResponse
     {
         $recommendation->load(['incident', 'prediction.predictionEdges', 'approver']);
 
-        return ApiResponse::success($recommendation, 'Recommendation details retrieved');
+        return ApiResponse::success($recommendation, 'api.recommendation_details');
     }
 
     public function approve(Request $request, Recommendation $recommendation): JsonResponse
     {
         if ($recommendation->status !== 'pending') {
-            return ApiResponse::validationError(null, 'Chỉ có thể duyệt đề xuất đang ở trạng thái pending.');
+            return ApiResponse::validationError(null, 'api.only_pending');
         }
 
         $recommendation->update([
@@ -46,7 +46,7 @@ class RecommendationController extends Controller
             'approved_at' => now(),
         ]);
 
-        return ApiResponse::success($recommendation->fresh(['approver']), 'Đề xuất đã được phê duyệt.');
+        return ApiResponse::success($recommendation->fresh(['approver']), 'api.recommendation_approved');
     }
 
     public function reject(Request $request, Recommendation $recommendation): JsonResponse
@@ -56,7 +56,7 @@ class RecommendationController extends Controller
         ]);
 
         if ($recommendation->status !== 'pending') {
-            return ApiResponse::validationError(null, 'Chỉ có thể từ chối đề xuất đang ở trạng thái pending.');
+            return ApiResponse::validationError(null, 'api.only_pending');
         }
 
         $recommendation->update([
@@ -64,6 +64,6 @@ class RecommendationController extends Controller
             'rejected_reason' => $request->reason,
         ]);
 
-        return ApiResponse::success($recommendation, 'Đề xuất đã bị từ chối.');
+        return ApiResponse::success($recommendation, 'api.recommendation_rejected');
     }
 }

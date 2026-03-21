@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import {
   ActivitySquare, Search, Filter, Clock, User,
   Database, Loader2
@@ -22,6 +23,7 @@ const eventStyle: Record<string, { color: string; bg: string }> = {
 };
 
 export default function LogsPage() {
+  const { t, locale } = useTranslation();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,9 +61,9 @@ export default function LogsPage() {
             <ActivitySquare className="w-6 h-6 text-violet-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">System Logs</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('logs.title')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {loading ? 'Loading...' : `${logs.length} activity log entries`}
+              {loading ? t('common.loading') : t('logs.entriesCount', { count: logs.length })}
             </p>
           </div>
         </div>
@@ -83,7 +85,7 @@ export default function LogsPage() {
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search by description or actor..."
+            placeholder={t('logs.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-card/80 backdrop-blur-md"
@@ -113,9 +115,9 @@ export default function LogsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-sm">{log.description || 'Activity'}</p>
+                          <p className="font-semibold text-sm">{log.description || t('logs.activity')}</p>
                           <Badge variant="outline" className={`text-[9px] font-bold uppercase tracking-wider ${style.color}`}>
-                            {log.event || log.log_name}
+                            {t(`logs.${log.event}`) || log.event || log.log_name}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 mt-1.5 text-[11px] text-muted-foreground font-medium flex-wrap">
@@ -130,7 +132,7 @@ export default function LogsPage() {
                             </span>
                           )}
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {new Date(log.created_at).toLocaleString('vi-VN')}
+                            <Clock className="w-3 h-3" /> {new Date(log.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US')}
                           </span>
                         </div>
                       </div>
@@ -142,7 +144,7 @@ export default function LogsPage() {
               {filtered.length === 0 && (
                 <div className="p-16 text-center text-muted-foreground">
                   <ActivitySquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">No log entries found.</p>
+                  <p className="font-medium">{t('logs.noEntries')}</p>
                 </div>
               )}
             </div>

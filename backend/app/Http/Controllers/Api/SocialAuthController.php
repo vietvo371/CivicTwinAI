@@ -72,7 +72,7 @@ class SocialAuthController extends Controller
         } catch (\Exception $e) {
             Log::error("Google Login Error: " . $e->getMessage());
             $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-            return redirect($frontendUrl . '/login?error=' . urlencode('Không thể đăng nhập bằng Google. Vui lòng thử lại.'));
+            return redirect($frontendUrl . '/login?error=' . urlencode(__('api.google_login_failed')));
         }
     }
 }

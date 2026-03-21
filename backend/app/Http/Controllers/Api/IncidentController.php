@@ -27,7 +27,7 @@ class IncidentController extends Controller
 
         $incidents = $query->paginate($request->get('per_page', 15));
 
-        return ApiResponse::paginate($incidents, 'Incidents retrieved');
+        return ApiResponse::paginate($incidents, 'api.incidents_retrieved');
     }
 
     public function store(Request $request): JsonResponse
@@ -78,7 +78,7 @@ class IncidentController extends Controller
             CallAIPrediction::dispatch($incident);
         }
 
-        return ApiResponse::created($incident->fresh(['reporter']), 'Incident reported successfully');
+        return ApiResponse::created($incident->fresh(['reporter']), 'api.incident_created');
     }
 
     public function show(Incident $incident): JsonResponse
@@ -95,7 +95,7 @@ class IncidentController extends Controller
 
         return ApiResponse::success(array_merge($incident->toArray(), [
             'location' => $coords,
-        ]), 'Incident details retrieved');
+        ]), 'api.incident_details');
     }
 
     public function update(Request $request, Incident $incident): JsonResponse
@@ -114,6 +114,6 @@ class IncidentController extends Controller
 
         $incident->update($validated);
 
-        return ApiResponse::success($incident->fresh(['reporter', 'assignee']), 'Incident updated successfully');
+        return ApiResponse::success($incident->fresh(['reporter', 'assignee']), 'api.incident_updated');
     }
 }
