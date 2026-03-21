@@ -2,12 +2,14 @@
 
 import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useTranslation } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRightIcon, ActivityIcon, ZapIcon, ScanTextIcon, LayersIcon } from 'lucide-react';
 import { RadarIcon } from '../icons/TheSvgIcons';
 
 export default function HeroSection() {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -43,7 +45,7 @@ export default function HeroSection() {
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8 uppercase tracking-widest backdrop-blur-md"
         >
           <ZapIcon className="w-4 h-4 text-emerald-400" />
-          <span>Smart City & Urban Sustainability — TechGuard ASEAN 2026</span>
+          <span>{t('landing.badgeText')}</span>
         </motion.div>
 
         {/* Big Bold Headline */}
@@ -51,14 +53,14 @@ export default function HeroSection() {
           style={{ opacity: opacityText, scale: scaleText }}
           className="text-5xl md:text-7xl lg:text-[84px] font-extrabold tracking-tight font-heading leading-tight md:leading-[1.1] text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-slate-500"
         >
-          Predict the Future.<br/>
+          {t('landing.heroLine1')}<br/>
           <motion.span 
             initial={{ opacity: 0, filter: "blur(10px)" }}
             animate={{ opacity: 1, filter: "blur(0px)" }}
             transition={{ duration: 1, delay: 0.3 }}
             className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"
           >
-            Command the Traffic.
+            {t('landing.heroLine2')}
           </motion.span>
         </motion.h1>
 
@@ -69,7 +71,7 @@ export default function HeroSection() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="mt-8 max-w-2xl mx-auto text-lg md:text-xl text-slate-400 font-medium leading-relaxed"
         >
-          Transform urban management entirely. Instead of reacting when congestion has already occurred, CivicTwin AI predicts and proactively reroutes traffic up to 60 minutes in advance.
+          {t('landing.heroSubtitle')}
         </motion.p>
 
         {/* Call To Actions */}
@@ -82,14 +84,14 @@ export default function HeroSection() {
             {/* Primary CTA */}
             <Link href="/map">
               <Button size="lg" className="h-14 px-8 text-base font-semibold bg-white text-slate-900 border-none hover:bg-slate-200 transition-all rounded-full shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)] hover:shadow-[0_0_40px_-5px_rgba(255,255,255,0.4)]">
-                View Live Map
+                {t('landing.viewLiveMap')}
               </Button>
             </Link>
           
           <button onClick={() => {
             document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
           }} className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 font-bold tracking-wide transition-all backdrop-blur-md flex items-center justify-center gap-2">
-            Explore Features
+            {t('landing.exploreFeatures')}
             <RadarIcon className="w-5 h-5" />
           </button>
         </motion.div>
@@ -102,10 +104,10 @@ export default function HeroSection() {
           className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto"
         >
           {[
-            { value: "60min", label: "Prediction Ahead", color: "text-blue-400" },
-            { value: "<1s", label: "Response Time", color: "text-emerald-400" },
-            { value: "100k+", label: "Events / Second", color: "text-purple-400" },
-            { value: "1:1", label: "Digital Twin Scale", color: "text-amber-400" },
+            { value: "60min", label: t('landing.predictionAhead'), color: "text-blue-400" },
+            { value: "<1s", label: t('landing.responseTime'), color: "text-emerald-400" },
+            { value: "100k+", label: t('landing.eventsPerSecond'), color: "text-purple-400" },
+            { value: "1:1", label: t('landing.digitalTwinScale'), color: "text-amber-400" },
           ].map((stat, i) => (
             <div key={i} className="text-center p-4 rounded-2xl bg-white/[0.03] border border-white/5">
               <div className={`text-3xl md:text-4xl font-black font-heading ${stat.color}`}>{stat.value}</div>

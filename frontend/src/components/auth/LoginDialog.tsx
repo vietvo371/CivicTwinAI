@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import api from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
 export default function LoginDialog() {
   const router = useRouter();
   const { login, register } = useAuth();
+  const { t } = useTranslation();
   
   // States
   const [open, setOpen] = useState(false);
@@ -54,7 +56,7 @@ export default function LoginDialog() {
       setOpen(false);
       router.push(getRedirectByRoles(roles));
     } catch {
-      setError('Invalid email or password.');
+      setError(t('auth.invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +68,7 @@ export default function LoginDialog() {
     setError('');
 
     if (regPassword !== regConfirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.passwordMismatch'));
       setLoading(false);
       return;
     }
@@ -74,9 +76,9 @@ export default function LoginDialog() {
     try {
       await register(regName, regEmail, regPassword, regConfirmPassword);
       setOpen(false);
-      router.push('/map'); // new accounts default to citizen → /map
+      router.push('/map');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to register account.');
+      setError(err?.response?.data?.message || t('auth.registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -85,7 +87,7 @@ export default function LoginDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-6 backdrop-blur-md rounded-full font-semibold transition-all shadow-[0_0_15px_-3px_rgba(255,255,255,0.1)] h-10 flex items-center justify-center text-sm">
-        Console Sign In
+        {t('loginDialog.consoleSignIn')}
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-md bg-slate-900/90 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-2xl p-0 overflow-hidden">
@@ -109,7 +111,7 @@ export default function LoginDialog() {
               CivicTwin AI
             </DialogTitle>
             <DialogDescription className="text-sm font-medium mt-1 text-slate-400">
-              Traffic Command Center
+              {t('loginDialog.commandCenter')}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -124,14 +126,14 @@ export default function LoginDialog() {
 
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-black/40 border border-white/5 rounded-xl p-1 mb-4">
-              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">Sign In</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">Sign Up</TabsTrigger>
+              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">{t('loginDialog.signIn')}</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">{t('loginDialog.signUp')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="mt-0 outline-none">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="login-email" className="text-sm font-semibold text-slate-300">Email Address</label>
+                  <label htmlFor="login-email" className="text-sm font-semibold text-slate-300">{t('loginDialog.emailAddress')}</label>
                   <Input
                     id="login-email"
                     type="email"
@@ -144,7 +146,7 @@ export default function LoginDialog() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="login-password" className="text-sm font-semibold text-slate-300">Password</label>
+                  <label htmlFor="login-password" className="text-sm font-semibold text-slate-300">{t('loginDialog.password')}</label>
                   <Input
                     id="login-password"
                     type="password"
@@ -161,7 +163,7 @@ export default function LoginDialog() {
                     className="w-full text-base font-bold h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-[1.02]" 
                     disabled={loading}
                   >
-                    {loading ? 'Authenticating...' : 'Sign In'}
+                    {loading ? t('loginDialog.authenticating') : t('loginDialog.signIn')}
                   </Button>
                 </div>
               </form>
@@ -170,7 +172,7 @@ export default function LoginDialog() {
             <TabsContent value="register" className="mt-0 outline-none">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="reg-name" className="text-sm font-semibold text-slate-300">Full Name</label>
+                  <label htmlFor="reg-name" className="text-sm font-semibold text-slate-300">{t('loginDialog.fullName')}</label>
                   <Input
                     id="reg-name"
                     type="text"
@@ -183,7 +185,7 @@ export default function LoginDialog() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="reg-email" className="text-sm font-semibold text-slate-300">Email Address</label>
+                  <label htmlFor="reg-email" className="text-sm font-semibold text-slate-300">{t('loginDialog.emailAddress')}</label>
                   <Input
                     id="reg-email"
                     type="email"
@@ -197,7 +199,7 @@ export default function LoginDialog() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-password" className="text-sm font-semibold text-slate-300">Password</label>
+                    <label htmlFor="reg-password" className="text-sm font-semibold text-slate-300">{t('loginDialog.password')}</label>
                     <Input
                       id="reg-password"
                       type="password"
@@ -208,7 +210,7 @@ export default function LoginDialog() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-confirm" className="text-sm font-semibold text-slate-300">Confirm</label>
+                    <label htmlFor="reg-confirm" className="text-sm font-semibold text-slate-300">{t('loginDialog.confirm')}</label>
                     <Input
                       id="reg-confirm"
                       type="password"
@@ -226,7 +228,7 @@ export default function LoginDialog() {
                     className="w-full text-base font-bold h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] transition-all transform hover:scale-[1.02]" 
                     disabled={loading}
                   >
-                    {loading ? 'Registering...' : 'Create Account'}
+                    {loading ? t('loginDialog.registering') : t('loginDialog.createAccount')}
                   </Button>
                 </div>
               </form>
@@ -236,7 +238,7 @@ export default function LoginDialog() {
           {/* Social Login Separator */}
           <div className="mt-6 mb-4 flex items-center gap-4">
             <div className="h-[1px] flex-1 bg-white/10"></div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or continue with</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{t('loginDialog.orContinueWith')}</span>
             <div className="h-[1px] flex-1 bg-white/10"></div>
           </div>
 
@@ -262,7 +264,7 @@ export default function LoginDialog() {
 
         <div className="flex justify-center py-4 border-t border-white/5 bg-black/20">
           <p className="text-xs font-medium text-slate-500">
-            Citizen / Operator Authentication
+            {t('loginDialog.citizenOperatorAuth')}
           </p>
         </div>
       </DialogContent>

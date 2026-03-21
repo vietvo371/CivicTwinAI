@@ -2,108 +2,114 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/lib/i18n";
 import { BrainIcon, RadarIcon, ShieldAlertIcon, MapIcon, ZapIcon, SearchCheckIcon, DatabaseIcon, BarChartIcon } from "../icons/TheSvgIcons";
 
-const steps = [
-  {
-    step: "01",
-    title: "Ingest Real-Time Data",
-    description: "Traffic cameras, flood sensors along the Han River, weather stations, and citizen reports are continuously streamed through Apache Kafka at 100k+ events per second.",
-    icon: <DatabaseIcon className="w-7 h-7" />,
-    color: "text-blue-400",
-    borderColor: "border-blue-500/30",
-    bgGlow: "bg-blue-500/10",
-    visual: (
-      <div className="grid grid-cols-3 gap-2 w-full">
-        {["Camera Feed", "Flood Sensor", "Weather API", "MQTT Stream", "Citizen App", "GPS Probe"].map((s, i) => (
-          <div key={i} className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[11px] font-mono text-center truncate">{s}</div>
-        ))}
-      </div>
-    ),
-  },
-  {
-    step: "02",
-    title: "AI Predicts the Future",
-    description: "LSTM neural networks analyze temporal patterns while Graph Neural Networks model how congestion propagates through the city's road graph — predicting bottlenecks 60 minutes ahead.",
-    icon: <BrainIcon className="w-7 h-7" />,
-    color: "text-purple-400",
-    borderColor: "border-purple-500/30",
-    bgGlow: "bg-purple-500/10",
-    visual: (
-      <div className="flex items-center justify-between w-full gap-3">
-        <div className="flex-1 space-y-2">
-          {[85, 62, 94, 45].map((v, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="h-2 rounded-full bg-purple-500/20 flex-1">
-                <motion.div
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${v}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: i * 0.15 }}
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                />
-              </div>
-              <span className="text-[10px] font-mono text-purple-300 w-8">{v}%</span>
-            </div>
+export default function HowItWorks() {
+  const { t } = useTranslation();
+
+  const steps = [
+    {
+      step: "01",
+      title: t('landing.step01Title'),
+      description: t('landing.step01Desc'),
+      icon: <DatabaseIcon className="w-7 h-7" />,
+      color: "text-blue-400",
+      borderColor: "border-blue-500/30",
+      bgGlow: "bg-blue-500/10",
+      visual: (
+        <div className="grid grid-cols-3 gap-2 w-full">
+          {[
+            t('landing.cameraFeed'), t('landing.floodSensor'), t('landing.weatherAPI'),
+            t('landing.mqttStream'), t('landing.citizenApp'), t('landing.gpsProbe')
+          ].map((s, i) => (
+            <div key={i} className="px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[11px] font-mono text-center truncate">{s}</div>
           ))}
         </div>
-      </div>
-    ),
-  },
-  {
-    step: "03",
-    title: "Simulate & Decide",
-    description: "The Digital Twin runs 'what-if' scenarios in milliseconds — testing road closures, signal timing changes, and evacuation routes before any real-world action is taken.",
-    icon: <MapIcon className="w-7 h-7" />,
-    color: "text-emerald-400",
-    borderColor: "border-emerald-500/30",
-    bgGlow: "bg-emerald-500/10",
-    visual: (
-      <div className="relative w-full h-16">
-        <svg viewBox="0 0 300 60" className="w-full h-full">
-          <path d="M0,40 Q50,10 100,30 T200,20 T300,35" fill="none" stroke="#10b981" strokeWidth="2" strokeDasharray="6"/>
-          <path d="M0,45 Q50,50 100,42 T200,48 T300,40" fill="none" stroke="#6366f1" strokeWidth="1.5" opacity="0.5"/>
-          <circle cx="100" cy="30" r="4" fill="#10b981" className="animate-pulse"/>
-          <circle cx="200" cy="20" r="3" fill="#f59e0b"/>
-          <text x="105" y="25" fill="#10b981" fontSize="8" fontFamily="monospace">Optimal</text>
-        </svg>
-      </div>
-    ),
-  },
-  {
-    step: "04",
-    title: "Respond Proactively",
-    description: "Automatic signal optimization, Green Wave corridors for emergency vehicles, push notifications to citizens, and real-time rerouting recommendations to operators.",
-    icon: <ZapIcon className="w-7 h-7" />,
-    color: "text-amber-400",
-    borderColor: "border-amber-500/30",
-    bgGlow: "bg-amber-500/10",
-    visual: (
-      <div className="flex gap-2 w-full flex-wrap">
-        {[
-          { label: "Signal Optimized", dot: "bg-emerald-500" },
-          { label: "Green Wave Active", dot: "bg-blue-500" },
-          { label: "Citizens Notified", dot: "bg-amber-500" },
-          { label: "Routes Updated", dot: "bg-purple-500" },
-        ].map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-300"
-          >
-            <span className={`w-2 h-2 rounded-full ${item.dot} animate-pulse`}></span>
-            {item.label}
-          </motion.div>
-        ))}
-      </div>
-    ),
-  },
-];
+      ),
+    },
+    {
+      step: "02",
+      title: t('landing.step02Title'),
+      description: t('landing.step02Desc'),
+      icon: <BrainIcon className="w-7 h-7" />,
+      color: "text-purple-400",
+      borderColor: "border-purple-500/30",
+      bgGlow: "bg-purple-500/10",
+      visual: (
+        <div className="flex items-center justify-between w-full gap-3">
+          <div className="flex-1 space-y-2">
+            {[85, 62, 94, 45].map((v, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="h-2 rounded-full bg-purple-500/20 flex-1">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    whileInView={{ width: `${v}%` }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: i * 0.15 }}
+                    className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-purple-300 w-8">{v}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
+      step: "03",
+      title: t('landing.step03Title'),
+      description: t('landing.step03Desc'),
+      icon: <MapIcon className="w-7 h-7" />,
+      color: "text-emerald-400",
+      borderColor: "border-emerald-500/30",
+      bgGlow: "bg-emerald-500/10",
+      visual: (
+        <div className="relative w-full h-16">
+          <svg viewBox="0 0 300 60" className="w-full h-full">
+            <path d="M0,40 Q50,10 100,30 T200,20 T300,35" fill="none" stroke="#10b981" strokeWidth="2" strokeDasharray="6"/>
+            <path d="M0,45 Q50,50 100,42 T200,48 T300,40" fill="none" stroke="#6366f1" strokeWidth="1.5" opacity="0.5"/>
+            <circle cx="100" cy="30" r="4" fill="#10b981" className="animate-pulse"/>
+            <circle cx="200" cy="20" r="3" fill="#f59e0b"/>
+            <text x="105" y="25" fill="#10b981" fontSize="8" fontFamily="monospace">Optimal</text>
+          </svg>
+        </div>
+      ),
+    },
+    {
+      step: "04",
+      title: t('landing.step04Title'),
+      description: t('landing.step04Desc'),
+      icon: <ZapIcon className="w-7 h-7" />,
+      color: "text-amber-400",
+      borderColor: "border-amber-500/30",
+      bgGlow: "bg-amber-500/10",
+      visual: (
+        <div className="flex gap-2 w-full flex-wrap">
+          {[
+            { label: t('landing.signalOptimized'), dot: "bg-emerald-500" },
+            { label: t('landing.greenWaveActive'), dot: "bg-blue-500" },
+            { label: t('landing.citizensNotified'), dot: "bg-amber-500" },
+            { label: t('landing.routesUpdated'), dot: "bg-purple-500" },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-300"
+            >
+              <span className={`w-2 h-2 rounded-full ${item.dot} animate-pulse`}></span>
+              {item.label}
+            </motion.div>
+          ))}
+        </div>
+      ),
+    },
+  ];
 
-export default function HowItWorks() {
   return (
     <section className="relative py-32">
       <div className="container max-w-6xl mx-auto px-6">
@@ -115,9 +121,9 @@ export default function HowItWorks() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-bold font-heading mb-6 text-white"
           >
-            How It{" "}
+            {t('landing.howIt')}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              Works
+              {t('landing.works')}
             </span>
           </motion.h2>
           <motion.p
@@ -127,7 +133,7 @@ export default function HowItWorks() {
             transition={{ delay: 0.1 }}
             className="text-lg text-slate-400"
           >
-            From raw sensor data to proactive city-wide decisions — in under 60 seconds.
+            {t('landing.howItWorksSubtitle')}
           </motion.p>
         </div>
 
@@ -160,7 +166,7 @@ export default function HowItWorks() {
                   <div className={`rounded-2xl border ${step.borderColor} bg-slate-900/60 backdrop-blur-md p-6 hover:bg-slate-900/80 transition-all hover:shadow-xl group`}>
                     {/* Step Number */}
                     <div className={`text-xs font-bold ${step.color} uppercase tracking-[0.3em] mb-3`}>
-                      Step {step.step}
+                      {t('landing.step')} {step.step}
                     </div>
 
                     {/* Title */}

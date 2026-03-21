@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import { AlertTriangle, AlertCircle, RefreshCw, Activity, Menu, X, Search, Navigation, Construction, CarFront, Gauge, MapPin } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -18,6 +19,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const { theme, resolvedTheme } = useTheme();
+  const { t, locale } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       }
     } catch (err: any) {
       console.error('Failed to load map data:', err);
-      setError('Unable to load map data. Please try again.');
+      setError(t('trafficMap.unableToLoad'));
     } finally {
       setLoading(false);
     }
@@ -115,7 +117,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
     if (map.current || !mapContainer.current) return;
 
     if (!mapboxgl.accessToken) {
-      setError('Mapbox Access Token is missing.');
+      setError(t('trafficMap.mapboxMissing'));
       setLoading(false);
       return;
     }
@@ -140,7 +142,6 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           data: { type: 'FeatureCollection', features: [] }
         });
 
-        // Add line layer for edges with dynamic coloring based on density
         map.current.addLayer({
           id: 'traffic-lines',
           type: 'line',
@@ -159,16 +160,20 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
               'interpolate',
               ['linear'],
               ['get', 'current_density'],
-              0.0, '#10b981', // green / free flow
-              0.4, '#eab308', // yellow / light traffic
-              0.6, '#f97316', // orange / moderate traffic
-              0.8, '#ef4444', // red / heavy traffic
-              1.0, '#881337'  // dark red / jam
+              0.0, '#10b981',
+              0.4, '#eab308',
+              0.6, '#f97316',
+              0.8, '#ef4444',
+              1.0, '#881337'
             ]
           }
         });
 
-        // Setup popups on hover
+        // Setup popups on hover — use pre-translated labels
+        const speedLabel = t('trafficMap.speed');
+        const capacityLabel = t('trafficMap.capacity');
+        const unnamedLabel = t('trafficMap.unnamedStreet');
+
         const popup = new mapboxgl.Popup({
           closeButton: false,
           closeOnClick: false,
@@ -184,14 +189,14 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
           const html = `
             <div class="p-3 bg-popover text-popover-foreground rounded-lg shadow-xl border border-border min-w-[200px]">
-              <div class="font-bold text-sm mb-1">${name || 'Unnamed Street'}</div>
+              <div class="font-bold text-sm mb-1">${name || unnamedLabel}</div>
               <div class="text-xs text-muted-foreground mb-2">ID: ${id}</div>
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs font-semibold">Speed:</span>
+                <span class="text-xs font-semibold">${speedLabel}:</span>
                 <span class="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded">${(current_speed_kmh || 0).toFixed(1)} km/h</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-xs font-semibold">Capacity:</span>
+                <span class="text-xs font-semibold">${capacityLabel}:</span>
                 <span class="text-xs font-mono bg-secondary px-1.5 py-0.5 rounded">${((current_density || 0) * 100).toFixed(0)}%</span>
               </div>
             </div>
@@ -210,7 +215,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       });
     } catch (err: any) {
       console.error("Mapbox init error:", err);
-      setError(err.message || "Failed to initialize map");
+      setError(err.message || t('trafficMap.failedInit'));
       setLoading(false);
     }
   };
@@ -237,12 +242,20 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       <div className="w-full h-full min-h-[500px] flex items-center justify-center bg-card rounded-2xl border border-border">
         <div className="text-center p-6 bg-destructive/10 rounded-xl border border-destructive/20 max-w-md">
           <AlertCircle className="w-10 h-10 text-destructive mx-auto mb-3" />
-          <h3 className="font-bold text-lg mb-1">Connection Error</h3>
+          <h3 className="font-bold text-lg mb-1">{t('trafficMap.connectionError')}</h3>
           <p className="text-sm text-muted-foreground">{error}</p>
         </div>
       </div>
     );
   }
+
+  const flowLevels = [
+    { level: t('trafficMap.flowNone'), color: '#10b981' },
+    { level: t('trafficMap.flowLight'), color: '#eab308' },
+    { level: t('trafficMap.flowModerate'), color: '#f97316' },
+    { level: t('trafficMap.flowHeavy'), color: '#ef4444' },
+    { level: t('trafficMap.flowGridlock'), color: '#881337' },
+  ];
 
   return (
     <div className="w-full h-[calc(100vh-8rem)] min-h-[600px] rounded-2xl overflow-hidden relative shadow-2xl border border-border ring-1 ring-white/5">
@@ -250,7 +263,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
         <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-card p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 border border-border">
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-            <span className="font-semibold tracking-wide text-sm">Rendering Spatial Engine...</span>
+            <span className="font-semibold tracking-wide text-sm">{t('trafficMap.renderingEngine')}</span>
           </div>
         </div>
       )}
@@ -265,7 +278,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           <Search className="w-5 h-5 text-muted-foreground mr-3" />
           <input
             type="text"
-            placeholder="Search for an area or address..."
+            placeholder={t('trafficMap.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/70 font-medium py-1 text-foreground"
@@ -293,7 +306,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
             <div className="p-2 bg-rose-500/10 rounded-lg">
               <AlertTriangle className="w-5 h-5 text-rose-500" />
             </div>
-            <h2 className="text-xl font-bold font-heading">Nearby Incidents</h2>
+            <h2 className="text-xl font-bold font-heading">{t('trafficMap.nearbyIncidents')}</h2>
           </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
@@ -326,7 +339,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
                   <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-medium">
                     <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {inc.severity || 'unknown'}</span>
                     <span className="text-border">•</span>
-                    <span>{inc.created_at ? new Date(inc.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : inc.time || ''}</span>
+                    <span>{inc.created_at ? new Date(inc.created_at).toLocaleTimeString(locale === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : inc.time || ''}</span>
                   </div>
                 </div>
               </div>
@@ -334,7 +347,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
             );
           })}
           <div className="pt-4 text-center">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">End of nearby incidents</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('trafficMap.endOfIncidents')}</p>
           </div>
         </div>
       </div>
@@ -343,7 +356,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       <button
         onClick={handleMyLocation}
         className="absolute bottom-[104px] right-6 z-20 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl hover:shadow-blue-500/25 transition-all outline-none hover:scale-110 active:scale-95 border-2 border-white/10"
-        title="My Location"
+        title={t('trafficMap.myLocation')}
       >
         <Navigation className="w-6 h-6" />
       </button>
@@ -352,14 +365,14 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       <div className={`absolute top-24 left-6 flex flex-col gap-4 z-10 pointer-events-none transition-opacity duration-300 ${isSidebarOpen ? 'opacity-0' : 'opacity-100'}`}>
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-blue-500" /> TOTAL SEGMENTS
+            <Activity className="w-3.5 h-3.5 text-blue-500" /> {t('trafficMap.totalSegments')}
           </div>
           <div className="text-3xl font-heading font-black text-blue-500">{totalEdges}</div>
         </div>
 
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> CONGESTION
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" /> {t('trafficMap.congestion')}
           </div>
           <div className="text-3xl font-heading font-black text-rose-500">
             {congestedCount} <span className="text-sm font-medium text-muted-foreground ml-1">({totalEdges ? Math.round((congestedCount / totalEdges) * 100) : 0}%)</span>
@@ -368,7 +381,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-amber-500" /> AVG. DENSITY
+            <Activity className="w-3.5 h-3.5 text-amber-500" /> {t('trafficMap.avgDensity')}
           </div>
           <div className="text-3xl font-heading font-black text-amber-500">
             {(avgDensity * 100).toFixed(0)}%
@@ -381,16 +394,10 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-            <Activity className="w-3.5 h-3.5" /> FLOW INTENSITY
+            <Activity className="w-3.5 h-3.5" /> {t('trafficMap.flowIntensity')}
           </div>
           <div className="flex items-center gap-4">
-            {[
-              { level: 'none', color: '#10b981' },
-              { level: 'light', color: '#eab308' },
-              { level: 'moderate', color: '#f97316' },
-              { level: 'heavy', color: '#ef4444' },
-              { level: 'gridlock', color: '#881337' }
-            ].map(({ level, color }) => (
+            {flowLevels.map(({ level, color }) => (
               <div key={level} className="flex items-center gap-2">
                 <div
                   className="w-3.5 h-3.5 rounded-full shadow-sm"
@@ -406,7 +413,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           onClick={() => { setLoading(true); loadGeoJSON(); }}
           disabled={loading}
           className="p-4 rounded-2xl bg-card/90 backdrop-blur-xl border border-border shadow-lg hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring transition-all disabled:opacity-50 disabled:cursor-not-allowed group cursor-pointer text-muted-foreground hover:text-foreground pointer-events-auto"
-          title="Refresh Data"
+          title={t('trafficMap.refreshData')}
         >
           <RefreshCw className={`w-5 h-5 transition-colors ${loading ? 'animate-spin text-primary' : ''}`} />
         </button>

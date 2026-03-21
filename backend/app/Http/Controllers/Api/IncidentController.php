@@ -12,6 +12,26 @@ use App\Helpers\ApiResponse;
 
 class IncidentController extends Controller
 {
+    public function publicList(Request $request): JsonResponse
+    {
+        $query = Incident::select([
+                'id', 'title', 'type', 'severity', 'status', 'created_at',
+                DB::raw('ST_X(location::geometry) as longitude'),
+                DB::raw('ST_Y(location::geometry) as latitude'),
+            ])
+            ->whereNotNull('location')
+            ->where('status', '!=', 'resolved')
+            ->latest();
+
+        if ($request->has('severity')) {
+            $query->where('severity', $request->severity);
+        }
+
+        $incidents = $query->paginate($request->get('per_page', 50));
+
+        return ApiResponse::paginate($incidents, 'api.incidents_retrieved');
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Incident::with(['reporter', 'assignee'])

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/lib/i18n";
 import LoginDialog from "@/components/auth/LoginDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Map, FileText, Bell, UserCircle, LayoutDashboard, LogOut, ChevronDown, AlertTriangle, ShieldAlert, Info, ChevronRight, MapPin } from "lucide-react";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // Demo notifications data
 const notifications = [
@@ -59,6 +61,7 @@ const sevDot = {
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -102,14 +105,17 @@ export default function Navbar() {
       <div className="flex items-center gap-3">
         <div className="hidden md:flex items-center gap-6 mr-3 text-sm font-medium text-slate-400">
           <Link href="/map" className="hover:text-blue-400 cursor-pointer transition-colors">
-            Live Map
+            {t('navbar.liveMap')}
           </Link>
           <Link href="/#features" className="hover:text-blue-400 cursor-pointer transition-colors">
-            Technology
+            {t('navbar.technology')}
           </Link>
         </div>
 
-        {/* ─── 🔔 Notification Bell Dropdown ─── */}
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
+        {/* 🔔 Notification Bell Dropdown */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger className="relative p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer">
@@ -126,10 +132,10 @@ export default function Navbar() {
             >
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="px-4 py-3 flex items-center justify-between !text-slate-100">
-                  <span className="text-sm font-bold !text-white">Notifications</span>
+                  <span className="text-sm font-bold !text-white">{t('navbar.notifications')}</span>
                   {unreadCount > 0 && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full !bg-rose-500/10 !text-rose-400 !border !border-rose-500/20">
-                      {unreadCount} new
+                      {t('navbar.newCount', { n: String(unreadCount) })}
                     </span>
                   )}
                 </DropdownMenuLabel>
@@ -171,7 +177,7 @@ export default function Navbar() {
                   onClick={() => router.push("/alerts")}
                   className="px-4 py-2.5 rounded-none cursor-pointer justify-center gap-1.5 text-xs font-semibold !text-blue-400 focus:!bg-slate-800/80 hover:!bg-slate-800/80"
                 >
-                  View All Alerts
+                  {t('navbar.viewAllAlerts')}
                   <ChevronRight className="w-3.5 h-3.5 !text-blue-400" />
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -179,7 +185,7 @@ export default function Navbar() {
           </DropdownMenu>
         )}
 
-        {/* ─── 👤 Avatar Dropdown ─── */}
+        {/* 👤 Avatar Dropdown */}
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full pl-1.5 pr-3.5 py-1.5 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer group">
@@ -209,9 +215,9 @@ export default function Navbar() {
 
               <DropdownMenuGroup>
                 {[
-                  { icon: <Map className="w-4 h-4 !text-blue-400" />, label: "Live Map", href: "/map" },
-                  { icon: <FileText className="w-4 h-4 !text-emerald-400" />, label: "My Reports", href: "/my-reports" },
-                  { icon: <UserCircle className="w-4 h-4 !text-indigo-400" />, label: "Profile", href: "/profile" },
+                  { icon: <Map className="w-4 h-4 !text-blue-400" />, label: t('navbar.liveMap'), href: "/map" },
+                  { icon: <FileText className="w-4 h-4 !text-emerald-400" />, label: t('navbar.myReports'), href: "/my-reports" },
+                  { icon: <UserCircle className="w-4 h-4 !text-indigo-400" />, label: t('navbar.profile'), href: "/profile" },
                 ].map((item) => (
                   <DropdownMenuItem
                     key={item.href}
@@ -233,7 +239,7 @@ export default function Navbar() {
                       className="px-3 py-2.5 rounded-lg cursor-pointer gap-3 focus:!bg-slate-800/80 hover:!bg-slate-800/80 !text-slate-200 transition-colors"
                     >
                       <LayoutDashboard className="w-4 h-4 !text-cyan-400" />
-                      Operator Dashboard
+                      {t('navbar.operatorDashboard')}
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </>
@@ -246,7 +252,7 @@ export default function Navbar() {
                   className="px-3 py-2.5 rounded-lg cursor-pointer gap-3 focus:!bg-rose-500/10 hover:!bg-rose-500/10 !text-rose-400 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
-                  Sign Out
+                  {t('navbar.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>

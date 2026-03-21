@@ -3,48 +3,51 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useTranslation } from '@/lib/i18n';
 import { BrainIcon, RadarIcon, ShieldAlertIcon, MapIcon } from '../icons/TheSvgIcons';
 
-const features = [
-  {
-    title: "Predict, Don't React",
-    description: "AI Neural Networks predict congestion & bottlenecks 60 minutes in advance, empowering Operators to intervene before incidents ripple across the transport network.",
-    icon: <BrainIcon className="w-7 h-7 text-blue-400" />,
-    className: "md:col-span-2 md:row-span-2",
-    gradient: "from-blue-500/10 to-transparent",
-    borderHover: "hover:border-blue-500/30",
-    image: "/bento-prediction.png",
-  },
-  {
-    title: "Absolute Real-time",
-    description: "Process millions of events via Apache Kafka. Sub-second latency updates across the entire network.",
-    icon: <RadarIcon className="w-7 h-7 text-emerald-400" />,
-    className: "md:col-span-1 md:row-span-1",
-    gradient: "from-emerald-500/10 to-transparent",
-    borderHover: "hover:border-emerald-500/30",
-    image: "/bento-realtime.png",
-  },
-  {
-    title: "Emergency Routing",
-    description: "Dedicated Green Wave corridors for ambulances & fire trucks with AI-optimized signal timing.",
-    icon: <ShieldAlertIcon className="w-7 h-7 text-rose-400" />,
-    className: "md:col-span-1 md:row-span-1",
-    gradient: "from-rose-500/10 to-transparent",
-    borderHover: "hover:border-rose-500/30",
-    image: "/bento-emergency.png",
-  },
-  {
-    title: "Full Digital Twin Simulation",
-    description: "1:1 clone of the city's road network in GIS space. Test any scenario—road closures, lane expansion, detours—before deploying to the real world.",
-    icon: <MapIcon className="w-7 h-7 text-purple-400" />,
-    className: "md:col-span-3 md:row-span-1",
-    gradient: "from-purple-500/10 to-transparent",
-    borderHover: "hover:border-purple-500/30",
-    image: "/bento-twin.png",
-  }
-];
-
 export default function BentoGrid() {
+  const { t } = useTranslation();
+
+  const features = [
+    {
+      title: t('landing.predictDontReact'),
+      description: t('landing.predictDesc'),
+      icon: <BrainIcon className="w-7 h-7 text-blue-400" />,
+      className: "md:col-span-2 md:row-span-2",
+      gradient: "from-blue-500/10 to-transparent",
+      borderHover: "hover:border-blue-500/30",
+      image: "/bento-prediction.png",
+    },
+    {
+      title: t('landing.absoluteRealtime'),
+      description: t('landing.realtimeDesc'),
+      icon: <RadarIcon className="w-7 h-7 text-emerald-400" />,
+      className: "md:col-span-1 md:row-span-1",
+      gradient: "from-emerald-500/10 to-transparent",
+      borderHover: "hover:border-emerald-500/30",
+      image: "/bento-realtime.png",
+    },
+    {
+      title: t('landing.emergencyRouting'),
+      description: t('landing.emergencyRoutingDesc'),
+      icon: <ShieldAlertIcon className="w-7 h-7 text-rose-400" />,
+      className: "md:col-span-1 md:row-span-1",
+      gradient: "from-rose-500/10 to-transparent",
+      borderHover: "hover:border-rose-500/30",
+      image: "/bento-emergency.png",
+    },
+    {
+      title: t('landing.fullDigitalTwin'),
+      description: t('landing.digitalTwinDesc'),
+      icon: <MapIcon className="w-7 h-7 text-purple-400" />,
+      className: "md:col-span-3 md:row-span-1",
+      gradient: "from-purple-500/10 to-transparent",
+      borderHover: "hover:border-purple-500/30",
+      image: "/bento-twin.png",
+    }
+  ];
+
   return (
     <section id="features" className="relative py-32">
       <div className="container max-w-7xl mx-auto px-6 relative z-10">
@@ -57,9 +60,9 @@ export default function BentoGrid() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-bold font-heading mb-6 text-white"
           >
-            The Power of{' '}
+            {t('landing.powerOfPrediction')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
-              Prediction
+              {t('landing.prediction')}
             </span>
           </motion.h2>
           <motion.p 
@@ -69,7 +72,7 @@ export default function BentoGrid() {
              transition={{ delay: 0.1 }}
              className="text-lg text-slate-400"
           >
-            Legacy systems force you to witness problems before solving them. CivicTwin AI redefines the standard: prevent before it begins.
+            {t('landing.bentoSubtitle')}
           </motion.p>
         </div>
 
