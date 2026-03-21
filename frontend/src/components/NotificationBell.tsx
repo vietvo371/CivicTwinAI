@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, CheckCheck, Trash2, AlertTriangle, Brain, Info } from 'lucide-react';
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { useTranslation } from '@/lib/i18n';
+import { useRouter } from 'next/navigation';
 
 const typeConfig: Record<string, { icon: typeof AlertTriangle; color: string }> = {
   incident: { icon: AlertTriangle, color: 'text-orange-500' },
@@ -25,12 +26,23 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ collapsed = false }: NotificationBellProps) {
-  const { notifications, unreadCount, markAllRead, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAllRead, clearAll, markAsRead } = useNotifications();
   const { t, locale } = useTranslation();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const [animate, setAnimate] = useState(false);
   const prevCount = useRef(unreadCount);
+
+  const handleNotificationClick = (notif: Notification) => {
+    if (!notif.read) {
+      markAsRead(notif.id);
+    }
+    if (notif.link) {
+      setOpen(false);
+      router.push(notif.link);
+    }
+  };
 
   // Animate bell when new notification arrives
   useEffect(() => {
@@ -113,11 +125,12 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
                 const config = typeConfig[notif.type] || typeConfig.system;
                 const Icon = config.icon;
                 return (
-                  <div
+                  <button
                     key={notif.id}
-                    className={`flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors ${
+                    onClick={() => handleNotificationClick(notif)}
+                    className={`w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors ${
                       !notif.read ? 'bg-primary/[0.03]' : ''
-                    }`}
+                    } ${notif.link ? 'cursor-pointer' : 'cursor-default'}`}
                   >
                     <div className={`p-1.5 rounded-lg bg-secondary/80 mt-0.5 ${config.color}`}>
                       <Icon className="w-3.5 h-3.5" />
@@ -136,7 +149,7 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
                         {timeAgo(notif.timestamp, locale)}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}

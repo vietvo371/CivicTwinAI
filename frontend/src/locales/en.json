@@ -25,7 +25,8 @@
     "viewOnMap": "View on map",
     "back": "Go back",
     "toggleTheme": "Toggle Dark Mode",
-    "severity": "Severity"
+    "severity": "Severity",
+    "viewDetails": "View Details"
   },
   "navbar": {
     "liveMap": "Live Map",
@@ -707,8 +708,8 @@
     "markAllRead": "Mark all as read",
     "clearAll": "Clear all",
     "newIncident": "New Incident",
-    "incidentMessage": "Detected {{type}} incident - Severity: {{severity}}",
+    "incidentMessage": "Detected {type} incident - Severity: {severity}",
     "newPrediction": "New AI Prediction",
-    "predictionMessage": "Prediction for {{edgeCount}} road segments"
+    "predictionMessage": "Prediction for {edgeCount} road segments"
   }
 }

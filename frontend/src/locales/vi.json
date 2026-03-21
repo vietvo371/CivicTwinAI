@@ -25,7 +25,8 @@
     "viewOnMap": "Xem trên bản đồ",
     "back": "Quay lại",
     "toggleTheme": "Bật/Tắt giao diện tối",
-    "severity": "Mức độ"
+    "severity": "Mức độ",
+    "viewDetails": "Xem chi tiết"
   },
   "navbar": {
     "liveMap": "Bản đồ trực tiếp",
@@ -707,8 +708,8 @@
     "markAllRead": "Đánh dấu đã đọc tất cả",
     "clearAll": "Xóa tất cả",
     "newIncident": "Sự cố mới",
-    "incidentMessage": "Phát hiện sự cố {{type}} - Mức độ {{severity}}",
+    "incidentMessage": "Phát hiện sự cố {type} - Mức độ {severity}",
     "newPrediction": "Dự đoán AI mới",
-    "predictionMessage": "Dự đoán cho {{edgeCount}} đoạn đường"
+    "predictionMessage": "Dự đoán cho {edgeCount} đoạn đường"
   }
 }

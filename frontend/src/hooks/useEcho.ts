@@ -50,8 +50,6 @@ export function useEcho<T = any>(
         if (echoChannel) {
           echoChannel.stopListening(`.${event}`);
         }
-        const echo = getEcho();
-        echo.leave(channel);
       } catch {
         // Ignore cleanup errors
       }
@@ -103,8 +101,6 @@ export function useEchoMulti(
             echoChannel.stopListening(`.${eventName}`);
           });
         }
-        const echo = getEcho();
-        echo.leave(channel);
       } catch {
         // Ignore cleanup errors
       }

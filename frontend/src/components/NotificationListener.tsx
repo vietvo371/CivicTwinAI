@@ -5,10 +5,18 @@ import { getEcho } from '@/lib/echo';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 
 export function NotificationListener() {
   const { addNotification } = useNotifications();
   const { t } = useTranslation();
+  const router = useRouter();
+  
+  // Use a ref so the WebSocket listener always has the latest translation function
+  // without needing to re-subscribe on language change.
+  const tRef = useRef(t);
+  tRef.current = t;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -21,54 +29,72 @@ export function NotificationListener() {
 
       console.log('[NotificationListener] ✅ Subscribed to channel: traffic');
 
-      // Dot prefix = exact match (Reverb sends App\Events\IncidentCreated)
-      channel.listen('.IncidentCreated', (data: any) => {
+      // Exact match for Laravel's fully qualified namespace
+      channel.listen('.App\\Events\\IncidentCreated', (data: any) => {
         console.log('[NotificationListener] 🔔 IncidentCreated received:', data);
 
-        const title = data.title || t('notifications.newIncident');
-        const severity = data.severity || 'medium';
+        const currentT = tRef.current;
+        const title = data.title || currentT('notifications.newIncident');
+        const rawSeverity = data.severity || 'medium';
+        const rawType = data.type || 'other';
+        
+        const translatedType = currentT(`enums.incidentType.${rawType}`);
+        const translatedSeverity = currentT(`enums.incidentSeverity.${rawSeverity}`);
+        const link = `/dashboard/incidents`;
 
         addNotification({
           title,
-          message: t('notifications.incidentMessage', {
-            type: data.type || 'incident',
-            severity,
+          message: currentT('notifications.incidentMessage', {
+            type: translatedType,
+            severity: translatedSeverity,
           }),
           type: 'incident',
-          severity,
+          severity: rawSeverity,
+          link,
         });
 
-        const toastFn = severity === 'critical' ? toast.error
-          : severity === 'high' ? toast.warning
+        const toastFn = rawSeverity === 'critical' ? toast.error
+          : rawSeverity === 'high' ? toast.warning
           : toast.info;
 
         toastFn(title, {
-          description: t('notifications.incidentMessage', {
-            type: data.type || 'incident',
-            severity,
+          description: currentT('notifications.incidentMessage', {
+            type: translatedType,
+            severity: translatedSeverity,
           }),
           duration: 6000,
+          action: {
+            label: currentT('common.viewDetails') || 'Xem',
+            onClick: () => router.push(link),
+          },
         });
       });
 
-      channel.listen('.PredictionReceived', (data: any) => {
+      channel.listen('.App\\Events\\PredictionReceived', (data: any) => {
         console.log('[NotificationListener] 🧠 PredictionReceived:', data);
 
-        const title = t('notifications.newPrediction');
+        const currentT = tRef.current;
+        const title = currentT('notifications.newPrediction');
+        const link = `/dashboard/predictions`;
 
         addNotification({
           title,
-          message: t('notifications.predictionMessage', {
+          message: currentT('notifications.predictionMessage', {
             edgeCount: String(data.edges?.length || 0),
           }),
           type: 'prediction',
+          link,
         });
 
         toast.info(title, {
-          description: t('notifications.predictionMessage', {
+          description: currentT('notifications.predictionMessage', {
             edgeCount: String(data.edges?.length || 0),
           }),
           duration: 5000,
+          action: {
+            label: currentT('common.viewDetails') || 'Xem',
+            onClick: () => router.push(link),
+          },
         });
       });
 
@@ -84,12 +110,10 @@ export function NotificationListener() {
     return () => {
       try {
         if (channel) {
-          channel.stopListening('.IncidentCreated');
-          channel.stopListening('.PredictionReceived');
+          channel.stopListening('.App\\Events\\IncidentCreated');
+          channel.stopListening('.App\\Events\\PredictionReceived');
         }
-        const echo = getEcho();
-        echo.leave('traffic');
-        console.log('[NotificationListener] 🔌 Disconnected from channel: traffic');
+        console.log('[NotificationListener] 🔌 Cleanup listeners');
       } catch {}
     };
   }, []);
