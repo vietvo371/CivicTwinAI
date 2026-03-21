@@ -52,7 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('sensors', function (Request $request) {
         $query = \App\Models\Sensor::with('edge');
         if ($request->has('status')) $query->where('status', $request->status);
-        return \App\Helpers\ApiResponse::success($query->get(), 'Sensors retrieved');
+        return \App\Helpers\ApiResponse::success($query->get(), 'api.sensors_retrieved');
     });
 
     // ==========================================
