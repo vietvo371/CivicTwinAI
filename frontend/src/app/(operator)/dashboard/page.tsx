@@ -16,11 +16,11 @@ const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false
 
 // Demo data fallback
 const DEMO_INCIDENTS = [
-  { id: 1, title: 'Multi-vehicle collision on Cau Sai Gon', type: 'accident', severity: 'critical', status: 'open', created_at: '2026-03-21T08:15:00Z' },
-  { id: 2, title: 'Severe flooding on Nguyen Huu Canh', type: 'weather', severity: 'high', status: 'investigating', created_at: '2026-03-21T07:30:00Z' },
-  { id: 3, title: 'Road construction on Le Loi', type: 'construction', severity: 'medium', status: 'open', created_at: '2026-03-21T06:00:00Z' },
-  { id: 4, title: 'Traffic signal malfunction Hang Xanh', type: 'other', severity: 'high', status: 'investigating', created_at: '2026-03-21T05:45:00Z' },
-  { id: 5, title: 'Congestion at Tan Son Nhat area', type: 'congestion', severity: 'medium', status: 'resolved', created_at: '2026-03-20T17:00:00Z' },
+  { id: 1, title: 'Va cham Container tren Cau Rong', type: 'accident', severity: 'critical', status: 'investigating', created_at: '2026-03-21T08:15:00Z' },
+  { id: 2, title: 'Ngap nuoc duong Nguyen Huu Tho (Cam Le)', type: 'weather', severity: 'critical', status: 'open', created_at: '2026-03-21T07:30:00Z' },
+  { id: 3, title: 'Thi cong mat duong Dien Bien Phu', type: 'construction', severity: 'medium', status: 'open', created_at: '2026-03-21T06:00:00Z' },
+  { id: 4, title: 'Den tin hieu hu tai Nga tu Le Duan - DBP', type: 'other', severity: 'high', status: 'open', created_at: '2026-03-21T05:45:00Z' },
+  { id: 5, title: 'Un tac gio cao diem Cau Song Han', type: 'congestion', severity: 'high', status: 'investigating', created_at: '2026-03-20T17:00:00Z' },
 ];
 
 const DEMO_AI_FEED = [

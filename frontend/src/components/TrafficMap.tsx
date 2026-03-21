@@ -27,9 +27,9 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const DEMO_INCIDENTS = [
-    { id: 1, title: 'Roadwork on Le Loi', lat: 10.7732, lng: 106.7001, type: 'construction', severity: 'medium', time: '10 mins ago' },
-    { id: 2, title: 'Accident at Ben Thanh', lat: 10.7716, lng: 106.6983, type: 'accident', severity: 'high', time: 'Just now' },
-    { id: 3, title: 'Heavy Traffic on Nguyen Hue', lat: 10.7738, lng: 106.7042, type: 'congestion', severity: 'critical', time: '5 mins ago' },
+    { id: 1, title: 'Thi cong Dien Bien Phu', lat: 16.0680, lng: 108.2122, type: 'construction', severity: 'medium', time: '10 mins ago' },
+    { id: 2, title: 'Tai nan tren Cau Rong', lat: 16.0625, lng: 108.2295, type: 'accident', severity: 'critical', time: 'Just now' },
+    { id: 3, title: 'Ket xe Cau Song Han', lat: 16.0710, lng: 108.2240, type: 'congestion', severity: 'high', time: '5 mins ago' },
   ];
 
   const handleMyLocation = () => {
@@ -107,7 +107,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: getMapStyleUrl(),
-        center: [106.6953, 10.7828], // Hochiminh City
+        center: [108.2122, 16.0680], // Da Nang City
         zoom: 14,
         pitch: 45,
         bearing: -17.6,

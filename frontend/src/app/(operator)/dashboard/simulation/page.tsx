@@ -32,11 +32,11 @@ const DEMO_RESULT: SimulationResult = {
   before_avg_density: 0.42,
   after_avg_density: 0.71,
   segments: [
-    { name: 'Cau Sai Gon', before: 0.35, after: 0.92, change: +163 },
-    { name: 'Nguyen Huu Canh', before: 0.48, after: 0.78, change: +62 },
-    { name: 'Ham Thu Thiem', before: 0.29, after: 0.65, change: +124 },
-    { name: 'Vo Van Kiet (Q.1)', before: 0.55, after: 0.68, change: +24 },
-    { name: 'Xa Lo Ha Noi', before: 0.41, after: 0.59, change: +44 },
+    { name: 'Cau Rong', before: 0.35, after: 0.92, change: +163 },
+    { name: 'Nguyen Van Linh', before: 0.48, after: 0.78, change: +62 },
+    { name: 'Cau Song Han', before: 0.29, after: 0.65, change: +124 },
+    { name: 'Dien Bien Phu (Q. Hai Chau)', before: 0.55, after: 0.68, change: +24 },
+    { name: 'Bach Dang Dong', before: 0.41, after: 0.59, change: +44 },
   ],
 };
 
@@ -136,7 +136,7 @@ export default function SimulationPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Location (Area)</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="e.g. Cau Sai Gon" className="pl-10 bg-background/50" defaultValue="Cau Sai Gon, Q.2" />
+                  <Input placeholder="e.g. Cau Rong" className="pl-10 bg-background/50" defaultValue="Cau Rong, Q. Son Tra" />
                 </div>
               </div>
 

@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const DEMO_INCIDENTS = [
-  { id: 1, title: 'Multi-vehicle collision on Cau Sai Gon', location: 'Cau Sai Gon, Q.2', severity: 'critical', status: 'active', time: '08:15', casualties: 2, vehicles: 4, responders: 3 },
-  { id: 2, title: 'Flooding on Nguyen Huu Canh', location: 'Nguyen Huu Canh, Binh Thanh', severity: 'high', status: 'active', time: '07:30', casualties: 0, vehicles: 0, responders: 2 },
-  { id: 3, title: 'Building fire near Cho Ben Thanh', location: 'Le Loi, Q.1', severity: 'critical', status: 'responding', time: '08:40', casualties: 0, vehicles: 0, responders: 5 },
+  { id: 1, title: 'Va cham Container tren Cau Rong', location: 'Cau Rong, Q. Son Tra', severity: 'critical', status: 'active', time: '08:15', casualties: 2, vehicles: 4, responders: 3 },
+  { id: 2, title: 'Ngap nuoc duong Nguyen Huu Tho', location: 'Nguyen Huu Tho, Q. Cam Le', severity: 'high', status: 'active', time: '07:30', casualties: 0, vehicles: 0, responders: 2 },
+  { id: 3, title: 'Chay nha gan cho Han', location: 'Tran Phu, Q. Hai Chau', severity: 'critical', status: 'responding', time: '08:40', casualties: 0, vehicles: 0, responders: 5 },
 ];
 
 const severityStyle: Record<string, string> = {

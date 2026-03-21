@@ -79,7 +79,7 @@ export default function PriorityRoutePage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Origin</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-                  <Input placeholder="Current location..." className="pl-10 bg-background/50" defaultValue="BV Cho Ray, Q.5" />
+                  <Input placeholder="Current location..." className="pl-10 bg-background/50" defaultValue="BV Da Nang, Q. Hai Chau" />
                 </div>
               </div>
 
@@ -87,7 +87,7 @@ export default function PriorityRoutePage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
-                  <Input placeholder="Incident location..." className="pl-10 bg-background/50" defaultValue="Cau Sai Gon, Q.2" />
+                  <Input placeholder="Incident location..." className="pl-10 bg-background/50" defaultValue="Cau Rong, Q. Son Tra" />
                 </div>
               </div>
 

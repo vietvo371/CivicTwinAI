@@ -53,7 +53,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">System Name</label>
-              <Input defaultValue="CivicTwin AI - Ho Chi Minh City" />
+              <Input defaultValue="CivicTwin AI - Da Nang" />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Language</label>
@@ -69,11 +69,11 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Map Center (Lat)</label>
-              <Input type="number" defaultValue="10.7769" step="0.0001" />
+              <Input type="number" defaultValue="16.0544" step="0.0001" />
             </div>
             <div className="space-y-2">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Default Map Center (Lng)</label>
-              <Input type="number" defaultValue="106.7009" step="0.0001" />
+              <Input type="number" defaultValue="108.2022" step="0.0001" />
             </div>
           </div>
         </CardContent>

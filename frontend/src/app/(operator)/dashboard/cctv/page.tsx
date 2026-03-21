@@ -18,15 +18,15 @@ interface CCTVFeed {
 }
 
 const DEMO_FEEDS: CCTVFeed[] = [
-  { id: 1, name: 'CAM-001', location: 'Nga tu Hang Xanh', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
-  { id: 2, name: 'CAM-002', location: 'Cau Sai Gon (Huong Q.2)', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
-  { id: 3, name: 'CAM-003', location: 'Vong xoay Dien Bien Phu', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
-  { id: 4, name: 'CAM-004', location: 'Duong Nguyen Huu Canh', status: 'offline', lastUpdate: '07:12', thumbnail: '/cctv-placeholder.svg' },
-  { id: 5, name: 'CAM-005', location: 'Cong vien 23/9', status: 'online', lastUpdate: '08:54', thumbnail: '/cctv-placeholder.svg' },
-  { id: 6, name: 'CAM-006', location: 'Xa Lo Ha Noi (Q.Thu Duc)', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
-  { id: 7, name: 'CAM-007', location: 'Cau Phu My', status: 'online', lastUpdate: '08:53', thumbnail: '/cctv-placeholder.svg' },
-  { id: 8, name: 'CAM-008', location: 'Duong Truong Son (San bay)', status: 'offline', lastUpdate: '06:30', thumbnail: '/cctv-placeholder.svg' },
-  { id: 9, name: 'CAM-009', location: 'Ham Thu Thiem', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
+  { id: 1, name: 'CAM-001', location: 'Cau Rong (dau Hai Chau)', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
+  { id: 2, name: 'CAM-002', location: 'Cau Song Han (dau Son Tra)', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
+  { id: 3, name: 'CAM-003', location: 'Nga tu Dien Bien Phu - Le Duan', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
+  { id: 4, name: 'CAM-004', location: 'Duong Nguyen Van Linh', status: 'offline', lastUpdate: '07:12', thumbnail: '/cctv-placeholder.svg' },
+  { id: 5, name: 'CAM-005', location: 'Bai bien My Khe', status: 'online', lastUpdate: '08:54', thumbnail: '/cctv-placeholder.svg' },
+  { id: 6, name: 'CAM-006', location: 'Cau Thuan Phuoc', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
+  { id: 7, name: 'CAM-007', location: 'Nga ba Hue', status: 'online', lastUpdate: '08:53', thumbnail: '/cctv-placeholder.svg' },
+  { id: 8, name: 'CAM-008', location: 'San bay Da Nang', status: 'offline', lastUpdate: '06:30', thumbnail: '/cctv-placeholder.svg' },
+  { id: 9, name: 'CAM-009', location: 'Cau Tran Thi Ly', status: 'online', lastUpdate: '08:55', thumbnail: '/cctv-placeholder.svg' },
 ];
 
 export default function CCTVPage() {

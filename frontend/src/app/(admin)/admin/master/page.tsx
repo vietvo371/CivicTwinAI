@@ -12,25 +12,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const DEMO_NODES = [
-  { id: 1, name: 'Nga tu Hang Xanh', lat: 10.8011, lng: 106.7135, type: 'intersection', edges: 6 },
-  { id: 2, name: 'Vong xoay Dien Bien Phu', lat: 10.7975, lng: 106.7099, type: 'roundabout', edges: 5 },
-  { id: 3, name: 'Cau Sai Gon (Q2 side)', lat: 10.7918, lng: 106.7257, type: 'bridge', edges: 2 },
-  { id: 4, name: 'Nga tu Phu Nhuan', lat: 10.7996, lng: 106.6812, type: 'intersection', edges: 4 },
-  { id: 5, name: 'Cong vien 23/9', lat: 10.7681, lng: 106.6944, type: 'landmark', edges: 3 },
+  { id: 1, name: 'Nga tu Dien Bien Phu - Le Duan', lat: 16.0680, lng: 108.2122, type: 'intersection', edges: 6 },
+  { id: 2, name: 'Nga tu Nguyen Van Linh - DBP', lat: 16.0650, lng: 108.2200, type: 'intersection', edges: 5 },
+  { id: 3, name: 'Cau Rong (dau Hai Chau)', lat: 16.0620, lng: 108.2270, type: 'bridge', edges: 2 },
+  { id: 4, name: 'Cau Rong (dau Son Tra)', lat: 16.0630, lng: 108.2320, type: 'bridge', edges: 3 },
+  { id: 5, name: 'Nga tu Tran Phu - Le Duan', lat: 16.0720, lng: 108.2100, type: 'intersection', edges: 4 },
+  { id: 6, name: 'Vong xoay Nguyen Tri Phuong', lat: 16.0720, lng: 108.1950, type: 'roundabout', edges: 5 },
+  { id: 12, name: 'Bai bien My Khe', lat: 16.0550, lng: 108.2480, type: 'landmark', edges: 2 },
+  { id: 15, name: 'San bay Da Nang', lat: 16.0559, lng: 108.1993, type: 'landmark', edges: 3 },
 ];
 
 const DEMO_EDGES = [
-  { id: 1, name: 'Hang Xanh → DBP', from_node: 1, to_node: 2, distance_km: 0.8, lanes: 3, speed_limit: 40 },
-  { id: 2, name: 'DBP → Cau SG', from_node: 2, to_node: 3, distance_km: 2.1, lanes: 4, speed_limit: 60 },
-  { id: 3, name: 'Hang Xanh → Phu Nhuan', from_node: 1, to_node: 4, distance_km: 1.5, lanes: 3, speed_limit: 40 },
-  { id: 4, name: 'Phu Nhuan → 23/9', from_node: 4, to_node: 5, distance_km: 3.2, lanes: 4, speed_limit: 50 },
+  { id: 1, name: 'Le Duan (TP → DBP)', from_node: 5, to_node: 1, distance_km: 0.5, lanes: 3, speed_limit: 50 },
+  { id: 2, name: 'Dien Bien Phu (DBP → NVL)', from_node: 1, to_node: 2, distance_km: 0.85, lanes: 3, speed_limit: 50 },
+  { id: 3, name: 'Nguyen Van Linh → Cau Rong', from_node: 2, to_node: 3, distance_km: 0.78, lanes: 4, speed_limit: 60 },
+  { id: 4, name: 'Cau Rong', from_node: 3, to_node: 4, distance_km: 0.67, lanes: 6, speed_limit: 60 },
+  { id: 8, name: 'Cau Song Han', from_node: 8, to_node: 9, distance_km: 0.49, lanes: 4, speed_limit: 50 },
+  { id: 11, name: 'Cau Thuan Phuoc', from_node: 13, to_node: 14, distance_km: 1.85, lanes: 4, speed_limit: 60 },
 ];
 
 const DEMO_SENSORS = [
-  { id: 1, name: 'SENSOR-HX-001', node_id: 1, type: 'traffic_counter', status: 'active', lastPing: '2s ago' },
-  { id: 2, name: 'SENSOR-DBP-001', node_id: 2, type: 'camera_feed', status: 'active', lastPing: '5s ago' },
-  { id: 3, name: 'SENSOR-CSG-001', node_id: 3, type: 'weather_station', status: 'active', lastPing: '10s ago' },
-  { id: 4, name: 'SENSOR-PN-001', node_id: 4, type: 'traffic_counter', status: 'offline', lastPing: '3 days ago' },
+  { id: 1, name: 'SENSOR-CR-001', node_id: 3, type: 'traffic_counter', status: 'active', lastPing: '2s ago' },
+  { id: 2, name: 'SENSOR-CR-002', node_id: 3, type: 'camera_feed', status: 'active', lastPing: '5s ago' },
+  { id: 3, name: 'SENSOR-MK-001', node_id: 12, type: 'weather_station', status: 'active', lastPing: '10s ago' },
+  { id: 4, name: 'SENSOR-PVD-001', node_id: 10, type: 'traffic_counter', status: 'offline', lastPing: '3 days ago' },
+  { id: 5, name: 'SENSOR-SB-001', node_id: 15, type: 'traffic_counter', status: 'active', lastPing: '1s ago' },
 ];
 
 export default function MasterDataPage() {
