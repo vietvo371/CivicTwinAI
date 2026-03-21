@@ -23,7 +23,8 @@
     "type": "Loại",
     "id": "ID",
     "viewOnMap": "Xem trên bản đồ",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "toggleTheme": "Bật/Tắt giao diện tối"
   },
   "navbar": {
     "liveMap": "Bản đồ trực tiếp",
@@ -82,7 +83,13 @@
     "routesUpdated": "Tuyến đã cập nhật",
     "privacyPolicy": "Chính sách bảo mật",
     "termsOfService": "Điều khoản dịch vụ",
-    "systemStatus": "Trạng thái hệ thống"
+    "systemStatus": "Trạng thái hệ thống",
+    "stickyTitle1": "1. Dự đoán Ùn tắc",
+    "stickyDesc1": "Được huấn luyện trên hàng terabyte dữ liệu lịch sử và thời gian thực qua Apache Kafka. Mô hình Deep Learning quét mọi mét vuông thành phố để phát hiện rủi ro tắc nghẽn trước khi bất kỳ ai nhận ra.",
+    "stickyTitle2": "2. Sóng Xanh Khẩn cấp",
+    "stickyDesc2": "Phát hiện tai nạn? Thuật toán định tuyến ngay lập tức tính toán đường ngắn nhất, phối hợp với đèn tín hiệu để mở hành lang 'Sóng Xanh' chuyên dụng để xe cứu thương không bao giờ bị kẹt.",
+    "stickyTitle3": "3. Digital Twin Toàn diện",
+    "stickyDesc3": "Sao chép mọi con đường, cầu vượt và phương tiện vào không gian GIS ảo qua WebGL. Mọi quyết định đóng đường hay mở rộng làn đều được mô phỏng trên màn hình trước khi triển khai thực tế."
   },
   "loginDialog": {
     "consoleSignIn": "Đăng nhập Console",
@@ -98,6 +105,13 @@
     "createAccount": "Tạo tài khoản",
     "orContinueWith": "Hoặc tiếp tục với",
     "citizenOperatorAuth": "Xác thực Công dân / Điều hành viên"
+  },
+  "authCallback": {
+    "loginFailed": "Đăng nhập thất bại",
+    "noToken": "Không nhận được token xác thực.",
+    "redirecting": "Sẽ tự động quay lại trang chủ...",
+    "authenticating": "Đang xác thực bảo mật...",
+    "pleaseWait": "Vui lòng đợi trong giây lát, đang thiết lập phiên làm việc của bạn."
   },
   "trafficMap": {
     "connectionError": "Lỗi kết nối",

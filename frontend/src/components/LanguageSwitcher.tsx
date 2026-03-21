@@ -53,17 +53,19 @@ export function LanguageSwitcher({ variant = 'icon' }: { variant?: 'icon' | 'ful
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        {variant === 'full' ? (
-          <button className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-accent/50 hover:bg-accent border border-border/50 hover:border-border transition-all duration-200 text-sm font-medium text-foreground group outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
-            <current.Flag className="w-5 h-5 rounded-full shadow-sm ring-1 ring-black/10" />
+      <DropdownMenuTrigger
+        className={
+          variant === 'full'
+            ? 'flex items-center gap-2.5 px-3 py-2 rounded-xl bg-accent/50 hover:bg-accent border border-border/50 hover:border-border transition-all duration-200 text-sm font-medium text-foreground group outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer'
+            : 'relative flex items-center justify-center w-9 h-9 rounded-xl bg-accent/50 hover:bg-accent border border-border/50 hover:border-border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group cursor-pointer'
+        }
+      >
+        <current.Flag className="w-5 h-5 rounded-full shadow-sm ring-1 ring-black/10" />
+        {variant === 'full' && (
+          <>
             <span className="hidden sm:inline">{current.label}</span>
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-          </button>
-        ) : (
-          <button className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-accent/50 hover:bg-accent border border-border/50 hover:border-border transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group">
-            <current.Flag className="w-5 h-5 rounded-full shadow-sm ring-1 ring-black/10" />
-          </button>
+          </>
         )}
       </DropdownMenuTrigger>
 
