@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useTranslation } from "@/lib/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserCircle, Mail, Phone, Shield, Camera, FileText, Bell, Loader2, Save, Check } from "lucide-react";
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
@@ -40,16 +42,15 @@ export default function ProfilePage() {
     n.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
   const handleSave = () => {
-    // Simulate save
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
   const providerLabel = user?.roles?.includes("citizen")
-    ? "Citizen"
+    ? t('citizen.citizenRole')
     : user?.roles?.includes("traffic_operator")
-    ? "Traffic Operator"
-    : "User";
+    ? t('citizen.operatorRole')
+    : t('citizen.userRole');
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -59,9 +60,9 @@ export default function ProfilePage() {
           <div className="p-2.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
             <UserCircle className="w-5 h-5 text-indigo-400" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('citizen.profile')}</h1>
         </div>
-        <p className="text-slate-400 text-sm ml-[52px]">Manage your personal information</p>
+        <p className="text-slate-400 text-sm ml-[52px]">{t('citizen.profileSubtitle')}</p>
       </div>
 
       {/* Avatar Section */}
@@ -93,13 +94,13 @@ export default function ProfilePage() {
       <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-2xl p-6 mb-6">
         <h3 className="text-lg font-bold mb-5 flex items-center gap-2">
           <UserCircle className="w-4.5 h-4.5 text-slate-400" />
-          Personal Information
+          {t('citizen.personalInfo')}
         </h3>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
               <UserCircle className="w-3.5 h-3.5 text-slate-500" />
-              Full Name
+              {t('citizen.fullName')}
             </label>
             <Input
               value={name}
@@ -111,20 +112,20 @@ export default function ProfilePage() {
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
               <Mail className="w-3.5 h-3.5 text-slate-500" />
-              Email Address
+              {t('citizen.emailAddress')}
             </label>
             <Input
               value={user.email}
               disabled
               className="bg-black/20 border-white/5 text-slate-500 h-11 font-medium cursor-not-allowed"
             />
-            <p className="text-[11px] text-slate-600">Email cannot be changed</p>
+            <p className="text-[11px] text-slate-600">{t('citizen.emailFixed')}</p>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-300 flex items-center gap-2">
               <Phone className="w-3.5 h-3.5 text-slate-500" />
-              Phone Number
+              {t('citizen.phoneNumber')}
             </label>
             <Input
               value={phone}
@@ -140,9 +141,9 @@ export default function ProfilePage() {
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-8 h-11 shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all"
             >
               {saved ? (
-                <span className="flex items-center gap-2"><Check className="w-4 h-4" /> Saved!</span>
+                <span className="flex items-center gap-2"><Check className="w-4 h-4" /> {t('citizen.saved')}</span>
               ) : (
-                <span className="flex items-center gap-2"><Save className="w-4 h-4" /> Save Changes</span>
+                <span className="flex items-center gap-2"><Save className="w-4 h-4" /> {t('citizen.saveChanges')}</span>
               )}
             </Button>
           </div>
@@ -151,17 +152,17 @@ export default function ProfilePage() {
 
       {/* Stats */}
       <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-2xl p-6">
-        <h3 className="text-lg font-bold mb-5">Activity Summary</h3>
+        <h3 className="text-lg font-bold mb-5">{t('citizen.activitySummary')}</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-black/30 rounded-xl p-5 border border-white/5 text-center">
             <FileText className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
             <p className="text-2xl font-bold text-emerald-400">3</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Reports Submitted</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">{t('citizen.reportsSubmitted')}</p>
           </div>
           <div className="bg-black/30 rounded-xl p-5 border border-white/5 text-center">
             <Bell className="w-6 h-6 text-amber-400 mx-auto mb-2" />
             <p className="text-2xl font-bold text-amber-400">4</p>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">Alerts Received</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">{t('citizen.alertsReceived')}</p>
           </div>
         </div>
       </div>

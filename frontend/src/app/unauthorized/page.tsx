@@ -1,8 +1,13 @@
+'use client';
+
 import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/lib/i18n';
 
 export default function UnauthorizedPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 flex-col gap-6 text-center">
       <div className="p-6 rounded-3xl bg-card/50 border border-border/50 flex flex-col items-center max-w-md w-full shadow-2xl backdrop-blur-xl">
@@ -12,14 +17,14 @@ export default function UnauthorizedPage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">Access Denied</h1>
+        <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">{t('auth.accessDenied')}</h1>
         <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
-          Sorry, your account does not have the necessary privileges to view this control board.
+          {t('auth.accessDeniedDesc')}
         </p>
 
         <div className="w-full space-y-3">
           <Link href="/" className="w-full inline-block">
-            <Button className="w-full" size="lg">Return to Home</Button>
+            <Button className="w-full" size="lg">{t('auth.returnHome')}</Button>
           </Link>
         </div>
       </div>

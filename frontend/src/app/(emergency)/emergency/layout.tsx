@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -8,17 +9,19 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Map, AlertTriangle, Route, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
-const EMERGENCY_NAV = [
-  { href: '/emergency', icon: Map, label: 'Situation Map' },
-  { href: '/emergency/incidents', icon: AlertTriangle, label: 'Active Incidents' },
-  { href: '/emergency/priority-route', icon: Route, label: 'Priority Route' },
-];
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 function EmergencyGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
+  const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
+
+  const EMERGENCY_NAV = [
+    { href: '/emergency', icon: Map, label: t('emergency.situationMap') },
+    { href: '/emergency/incidents', icon: AlertTriangle, label: t('emergency.activeIncidents') },
+    { href: '/emergency/priority-route', icon: Route, label: t('emergency.priorityRoute') },
+  ];
 
   useEffect(() => {
     if (!loading) {
@@ -53,8 +56,8 @@ function EmergencyGuard({ children }: { children: React.ReactNode }) {
             <Image src="/logo.png" alt="Logo" width={36} height={36} className="relative z-10 object-contain drop-shadow-[0_0_10px_rgba(244,63,94,0.3)]" unoptimized />
           </div>
           <div className="hidden lg:flex flex-col ml-3">
-            <span className="text-base font-bold font-heading tracking-wider">Emergency</span>
-            <span className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em] mt-0.5">Response Unit</span>
+            <span className="text-base font-bold font-heading tracking-wider">{t('emergencySidebar.title')}</span>
+            <span className="text-[10px] font-bold text-rose-500 uppercase tracking-[0.2em] mt-0.5">{t('emergencySidebar.responseUnit')}</span>
           </div>
         </div>
 
@@ -82,19 +85,24 @@ function EmergencyGuard({ children }: { children: React.ReactNode }) {
         {/* Footer */}
         <div className="p-4 border-t border-border flex flex-col gap-2 bg-muted/10">
           <div className="hidden lg:flex flex-col px-2 py-1 mb-2">
-            <span className="text-xs font-semibold text-foreground truncate">{user?.name || 'Emergency Unit'}</span>
-            <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">emergency</span>
+            <span className="text-xs font-semibold text-foreground truncate">{user?.name || t('emergencySidebar.emergencyUnit')}</span>
+            <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">
+              {user?.roles?.[0] ? t(`enums.roles.${user.roles[0]}`) : t('emergencySidebar.emergencyRole')}
+            </span>
           </div>
           <div className="flex items-center justify-center lg:justify-between px-2 pt-1 pb-2">
-            <span className="hidden lg:block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Theme</span>
-            <ThemeToggle collapsed={false} />
+            <span className="hidden lg:block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('sidebar.theme')}</span>
+            <div className="flex items-center gap-1">
+              <LanguageSwitcher />
+              <ThemeToggle collapsed={false} />
+            </div>
           </div>
           <button
             onClick={logout}
             className="w-full flex items-center justify-center lg:justify-start gap-3 p-3 lg:px-4 rounded-xl text-destructive hover:bg-destructive/10 transition-colors border border-transparent hover:border-destructive/20"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span className="hidden lg:block text-sm font-bold tracking-wide">Logout</span>
+            <span className="hidden lg:block text-sm font-bold tracking-wide">{t('auth.logout')}</span>
           </button>
         </div>
       </aside>

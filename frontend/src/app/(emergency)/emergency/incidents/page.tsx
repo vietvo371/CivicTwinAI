@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useTranslation } from '@/lib/i18n';
 import {
   AlertTriangle, Clock, MapPin, ChevronRight, Siren,
   Phone, Shield, Loader2
@@ -20,6 +21,7 @@ const severityStyle: Record<string, string> = {
 type Incident = Record<string, any>;
 
 export default function EmergencyIncidentsPage() {
+  const { t, locale } = useTranslation();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +30,6 @@ export default function EmergencyIncidentsPage() {
       try {
         const res = await api.get('/incidents?per_page=20');
         if (res.data?.data) {
-          // Filter only critical/high severity or non-resolved
           const filtered = res.data.data.filter(
             (i: Incident) => ['critical', 'high'].includes(i.severity) || ['open', 'investigating'].includes(i.status)
           );
@@ -41,14 +42,14 @@ export default function EmergencyIncidentsPage() {
       }
     };
     fetchData();
-    const interval = setInterval(fetchData, 15000); // refresh every 15s
+    const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
   }, []);
 
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString(locale === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -60,9 +61,9 @@ export default function EmergencyIncidentsPage() {
             <Siren className="w-6 h-6 text-rose-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Active Incidents</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('emergency.activeIncidents')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              {loading ? 'Loading...' : `${incidents.length} incidents requiring emergency response`}
+              {loading ? t('emergency.loadingIncidents') : t('emergency.incidentsCount', { n: String(incidents.length) })}
             </p>
           </div>
         </div>
@@ -80,8 +81,8 @@ export default function EmergencyIncidentsPage() {
         <Card className="bg-card/50 backdrop-blur-xl border-border/80">
           <CardContent className="p-12 text-center">
             <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-30" />
-            <p className="text-lg font-semibold text-muted-foreground">No active incidents</p>
-            <p className="text-sm text-muted-foreground mt-1">All clear — no critical incidents at this time.</p>
+            <p className="text-lg font-semibold text-muted-foreground">{t('emergency.noActiveIncidents')}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('emergency.noActiveIncidentsDesc')}</p>
           </CardContent>
         </Card>
       )}
@@ -99,13 +100,13 @@ export default function EmergencyIncidentsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <Badge className={`text-[10px] font-bold uppercase tracking-wider border ${sev}`}>
-                        {inc.severity}
+                        {t(`enums.incidentSeverity.${inc.severity}`)}
                       </Badge>
                       <Badge variant="outline" className="text-[10px] uppercase tracking-wider gap-1 text-blue-400">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {status}
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> {t(`enums.incidentStatus.${status}`)}
                       </Badge>
                       <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                        {inc.type}
+                        {t(`enums.incidentType.${inc.type}`)}
                       </Badge>
                     </div>
                     <h3 className="text-lg font-heading font-bold">{inc.title}</h3>
@@ -113,7 +114,7 @@ export default function EmergencyIncidentsPage() {
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{inc.description}</p>
                     )}
                     <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                      {inc.source && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {inc.source}</span>}
+                      {inc.source && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {t(`enums.incidentSource.${inc.source}`)}</span>}
                       <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {formatTime(inc.created_at)}</span>
                     </div>
                   </div>
@@ -123,13 +124,13 @@ export default function EmergencyIncidentsPage() {
                     {inc.reporter && (
                       <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-3 text-center min-w-[100px]">
                         <p className="text-xs font-bold text-violet-400 truncate">{inc.reporter.name}</p>
-                        <p className="text-[9px] font-bold text-violet-500 uppercase tracking-widest mt-1">Reporter</p>
+                        <p className="text-[9px] font-bold text-violet-500 uppercase tracking-widest mt-1">{t('emergency.reporter')}</p>
                       </div>
                     )}
                     {inc.assignee && (
                       <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 text-center min-w-[100px]">
                         <p className="text-xs font-bold text-blue-400 truncate">{inc.assignee.name}</p>
-                        <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-1">Assigned</p>
+                        <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mt-1">{t('emergency.assigned')}</p>
                       </div>
                     )}
                   </div>
@@ -138,13 +139,13 @@ export default function EmergencyIncidentsPage() {
                 {/* Action Bar */}
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/50">
                   <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-sm font-bold transition-colors shadow-lg shadow-rose-500/20">
-                    <Phone className="w-4 h-4" /> Dispatch Unit
+                    <Phone className="w-4 h-4" /> {t('emergency.dispatchUnit')}
                   </button>
                   <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-accent text-sm font-semibold transition-colors border border-border">
-                    <Shield className="w-4 h-4" /> Request Backup
+                    <Shield className="w-4 h-4" /> {t('emergency.requestBackup')}
                   </button>
                   <button className="ml-auto flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-                    Full Details <ChevronRight className="w-4 h-4" />
+                    {t('emergency.fullDetails')} <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </CardContent>

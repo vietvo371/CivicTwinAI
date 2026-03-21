@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 import { Bell, AlertTriangle, Info, ShieldAlert, MapPin, Clock, Filter } from "lucide-react";
 
 interface Alert {
@@ -12,12 +13,6 @@ interface Alert {
   created_at: string;
   active: boolean;
 }
-
-const severityConfig = {
-  info: { icon: <Info className="w-4 h-4" />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: "Info" },
-  warning: { icon: <AlertTriangle className="w-4 h-4" />, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", label: "Warning" },
-  critical: { icon: <ShieldAlert className="w-4 h-4" />, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", label: "Critical" },
-};
 
 const demoAlerts: Alert[] = [
   {
@@ -59,8 +54,15 @@ const demoAlerts: Alert[] = [
 ];
 
 export default function AlertsPage() {
+  const { t, locale } = useTranslation();
   const [filter, setFilter] = useState<"all" | "info" | "warning" | "critical">("all");
   const filteredAlerts = filter === "all" ? demoAlerts : demoAlerts.filter((a) => a.severity === filter);
+
+  const severityConfig = {
+    info: { icon: <Info className="w-4 h-4" />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", label: t('citizen.info') },
+    warning: { icon: <AlertTriangle className="w-4 h-4" />, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", label: t('citizen.warning') },
+    critical: { icon: <ShieldAlert className="w-4 h-4" />, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", label: t('citizen.critical') },
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
@@ -70,10 +72,10 @@ export default function AlertsPage() {
           <div className="p-2.5 bg-amber-500/10 rounded-xl border border-amber-500/20">
             <Bell className="w-5 h-5 text-amber-400" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Traffic Alerts</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('citizen.trafficAlerts')}</h1>
         </div>
         <p className="text-slate-400 text-sm ml-[52px]">
-          Real-time traffic warnings and advisories in your area
+          {t('citizen.alertsSubtitle')}
         </p>
       </div>
 
@@ -99,7 +101,7 @@ export default function AlertsPage() {
                   {config.label}
                 </span>
               ) : (
-                `All (${demoAlerts.length})`
+                t('citizen.allCount', { n: String(demoAlerts.length) })
               )}
             </button>
           );
@@ -112,9 +114,9 @@ export default function AlertsPage() {
           <div className="p-6 bg-slate-800/50 rounded-full mb-6">
             <Bell className="w-12 h-12 text-slate-600" />
           </div>
-          <h2 className="text-xl font-bold text-slate-300 mb-2">No Alerts</h2>
+          <h2 className="text-xl font-bold text-slate-300 mb-2">{t('citizen.noAlerts')}</h2>
           <p className="text-slate-500 max-w-sm">
-            There are currently no traffic alerts matching your filter. All clear!
+            {t('citizen.noAlertsDesc')}
           </p>
         </div>
       ) : (
@@ -152,7 +154,7 @@ export default function AlertsPage() {
                   </span>
                   {!alert.active && (
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-800 px-2.5 py-1 rounded-full">
-                      Expired
+                      {t('citizen.expired')}
                     </span>
                   )}
                 </div>
@@ -168,7 +170,7 @@ export default function AlertsPage() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
-                    {new Date(alert.created_at).toLocaleString("vi-VN", {
+                    {new Date(alert.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
                       hour: "2-digit",
                       minute: "2-digit",
                       day: "2-digit",

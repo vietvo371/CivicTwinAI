@@ -3,6 +3,7 @@
 import Image from 'next/image';
 
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,21 +14,22 @@ import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
-const navItems = [
-  { href: '/dashboard', icon: Map, label: 'Traffic Map' },
-  { href: '/dashboard/incidents', icon: AlertTriangle, label: 'Incidents' },
-  { href: '/dashboard/predictions', icon: Brain, label: 'Predictions' },
-  { href: '/dashboard/simulation', icon: FlaskConical, label: 'Simulation' },
-  { href: '/dashboard/recommendations', icon: Lightbulb, label: 'Recommendations' },
-  { href: '/dashboard/cctv', icon: Camera, label: 'CCTV Monitor' },
-  { href: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-];
-
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const navItems = [
+    { href: '/dashboard', icon: Map, labelKey: 'sidebar.trafficMap' },
+    { href: '/dashboard/incidents', icon: AlertTriangle, labelKey: 'sidebar.incidents' },
+    { href: '/dashboard/predictions', icon: Brain, labelKey: 'sidebar.predictions' },
+    { href: '/dashboard/simulation', icon: FlaskConical, labelKey: 'sidebar.simulation' },
+    { href: '/dashboard/recommendations', icon: Lightbulb, labelKey: 'sidebar.recommendations' },
+    { href: '/dashboard/cctv', icon: Camera, labelKey: 'sidebar.cctvMonitor' },
+    { href: '/dashboard/analytics', icon: BarChart3, labelKey: 'sidebar.analytics' },
+  ];
 
   // Auto-collapse on mobile/tablet
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Sidebar() {
         
         <div className={`flex flex-col min-w-0 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
           <span className="font-heading font-bold text-[15px] tracking-tight text-foreground truncate">CivicTwin AI</span>
-          <span className="text-[10px] font-bold text-muted-foreground truncate tracking-widest uppercase mt-0.5">Command Center</span>
+          <span className="text-[10px] font-bold text-muted-foreground truncate tracking-widest uppercase mt-0.5">{t('sidebar.commandCenter')}</span>
         </div>
 
         {!isMobile && (
@@ -72,12 +74,13 @@ export default function Sidebar() {
       <nav className="flex-1 py-4 px-3 flex flex-col gap-1.5 overflow-y-auto no-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const label = t(item.labelKey);
           
           return (
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? label : undefined}
               className={`flex items-center gap-3 px-3 min-h-[44px] rounded-xl transition-all duration-200 group cursor-pointer ${
                 isActive 
                   ? 'bg-primary/10 text-primary font-semibold' 
@@ -87,7 +90,7 @@ export default function Sidebar() {
               <item.icon className={`w-5 h-5 shrink-0 transition-transform ${isActive ? 'scale-110 text-primary' : 'group-hover:scale-110'}`} />
               
               <span className={`text-sm whitespace-nowrap transition-all duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
-                {item.label}
+                {label}
               </span>
               
               {isActive && !collapsed && (
@@ -108,13 +111,13 @@ export default function Sidebar() {
           <div className={`flex flex-col min-w-0 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0 hidden' : 'opacity-100 flex-1'}`}>
             <span className="text-sm font-semibold text-foreground truncate">{user?.name}</span>
             <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase truncate">
-              {user?.roles?.[0]?.replace('_', ' ') || 'Operator'}
+              {user?.roles?.[0] ? t(`enums.roles.${user.roles[0]}`) : t('sidebar.operator')}
             </span>
           </div>
 
           <button 
             onClick={logout}
-            title="Logout" 
+            title={t('auth.logout')} 
             className={`p-2 rounded-lg shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors ${collapsed ? 'hidden' : ''}`}
           >
             <LogOut className="w-4 h-4" />
@@ -123,7 +126,7 @@ export default function Sidebar() {
 
         {/* Language & Theme Toggle */}
         <div className={`flex items-center ${collapsed ? 'justify-center flex-col gap-2' : 'justify-between px-2'} pt-1`}>
-          {!collapsed && <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Theme</span>}
+          {!collapsed && <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('sidebar.theme')}</span>}
           <div className="flex items-center gap-1">
             <LanguageSwitcher />
             <ThemeToggle collapsed={collapsed} />

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslation } from '@/lib/i18n';
 import {
   Route, MapPin, Navigation, Clock, AlertTriangle,
   Play, CheckCircle2, Ambulance, Truck
@@ -15,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false });
 
 export default function PriorityRoutePage() {
+  const { t } = useTranslation();
   const [isRequesting, setIsRequesting] = useState(false);
   const [routeActive, setRouteActive] = useState(false);
 
@@ -35,15 +37,15 @@ export default function PriorityRoutePage() {
             <Route className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h1 className="text-2xl font-heading font-bold tracking-tight">Priority Route</h1>
+            <h1 className="text-2xl font-heading font-bold tracking-tight">{t('emergency.priorityRoute')}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Request traffic signal priority for emergency vehicles
+              {t('emergency.priorityRouteDesc')}
             </p>
           </div>
         </div>
         {routeActive && (
           <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] uppercase tracking-wider gap-1.5 animate-pulse">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Route Active
+            <CheckCircle2 className="w-3.5 h-3.5" /> {t('emergency.routeActive')}
           </Badge>
         )}
       </div>
@@ -55,52 +57,52 @@ export default function PriorityRoutePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Navigation className="w-4 h-4 text-blue-500" />
-                Route Request
+                {t('emergency.routeRequest')}
               </CardTitle>
-              <CardDescription>Set origin, destination & vehicle type</CardDescription>
+              <CardDescription>{t('emergency.routeRequestDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vehicle Type</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('emergency.vehicleType')}</label>
                 <Select defaultValue="ambulance">
                   <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ambulance">Ambulance</SelectItem>
-                    <SelectItem value="fire_truck">Fire Truck</SelectItem>
-                    <SelectItem value="police">Police Vehicle</SelectItem>
-                    <SelectItem value="rescue">Rescue Team</SelectItem>
+                    <SelectItem value="ambulance">{t('emergency.ambulance')}</SelectItem>
+                    <SelectItem value="fire_truck">{t('emergency.fireTruck')}</SelectItem>
+                    <SelectItem value="police">{t('emergency.policeVehicle')}</SelectItem>
+                    <SelectItem value="rescue">{t('emergency.rescueTeam')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Origin</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('emergency.origin')}</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-                  <Input placeholder="Current location..." className="pl-10 bg-background/50" defaultValue="BV Da Nang, Q. Hai Chau" />
+                  <Input placeholder={t('emergency.originPlaceholder')} className="pl-10 bg-background/50" defaultValue="BV Da Nang, Q. Hai Chau" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('emergency.destination')}</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rose-500" />
-                  <Input placeholder="Incident location..." className="pl-10 bg-background/50" defaultValue="Cau Rong, Q. Son Tra" />
+                  <Input placeholder={t('emergency.destinationPlaceholder')} className="pl-10 bg-background/50" defaultValue="Cau Rong, Q. Son Tra" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priority Level</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('emergency.priorityLevel')}</label>
                 <Select defaultValue="emergency">
                   <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="critical">Code Red (Life-threatening)</SelectItem>
-                    <SelectItem value="emergency">Emergency (Urgent)</SelectItem>
-                    <SelectItem value="standard">Standard Priority</SelectItem>
+                    <SelectItem value="critical">{t('emergency.codeRed')}</SelectItem>
+                    <SelectItem value="emergency">{t('emergency.emergencyUrgent')}</SelectItem>
+                    <SelectItem value="standard">{t('emergency.standardPriority')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -111,11 +113,11 @@ export default function PriorityRoutePage() {
                 className="w-full bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20 mt-2"
               >
                 {isRequesting ? (
-                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Requesting...</span>
+                  <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('emergency.requesting')}</span>
                 ) : routeActive ? (
-                  <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> Route Activated</span>
+                  <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {t('emergency.routeActivated')}</span>
                 ) : (
-                  <span className="flex items-center gap-2"><Play className="w-4 h-4" /> Request Priority Route</span>
+                  <span className="flex items-center gap-2"><Play className="w-4 h-4" /> {t('emergency.requestPriorityRoute')}</span>
                 )}
               </Button>
             </CardContent>
@@ -127,25 +129,25 @@ export default function PriorityRoutePage() {
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  <span className="font-bold text-sm text-emerald-500">Route Approved & Active</span>
+                  <span className="font-bold text-sm text-emerald-500">{t('emergency.routeApproved')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-background/50 p-3 rounded-lg border border-border/50 text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">ETA</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('emergency.eta')}</p>
                     <p className="text-xl font-heading font-black text-blue-500">12 <span className="text-xs font-normal text-muted-foreground">min</span></p>
                   </div>
                   <div className="bg-background/50 p-3 rounded-lg border border-border/50 text-center">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Distance</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('emergency.distance')}</p>
                     <p className="text-xl font-heading font-black text-amber-500">8.4 <span className="text-xs font-normal text-muted-foreground">km</span></p>
                   </div>
                 </div>
                 <div className="bg-background/50 p-3 rounded-lg border border-border/50">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Traffic Signals Cleared</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('emergency.signalsCleared')}</p>
                   <div className="flex items-center gap-2">
                     {[1,2,3,4,5,6].map(i => (
                       <div key={i} className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />
                     ))}
-                    <span className="text-xs font-semibold text-emerald-500 ml-1">6 intersections</span>
+                    <span className="text-xs font-semibold text-emerald-500 ml-1">{t('emergency.intersections', { n: '6' })}</span>
                   </div>
                 </div>
               </CardContent>
@@ -163,8 +165,8 @@ export default function PriorityRoutePage() {
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
                     <div className="w-16 h-16 border-4 border-rose-500/30 border-t-rose-500 rounded-full animate-spin" />
                     <div className="text-center">
-                      <p className="font-heading font-bold text-lg">Computing Optimal Route...</p>
-                      <p className="text-sm text-muted-foreground mt-1">Clearing traffic signals along the path</p>
+                      <p className="font-heading font-bold text-lg">{t('emergency.computingRoute')}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{t('emergency.clearingSignals')}</p>
                     </div>
                   </div>
                 )}
