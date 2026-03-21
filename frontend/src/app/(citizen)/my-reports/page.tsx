@@ -28,11 +28,11 @@ const statusConfig: Record<string, { icon: React.ReactNode; color: string; label
 };
 
 const typeLabels: Record<string, string> = {
-  accident: "🚗 Accident",
-  breakdown: "🔧 Vehicle Breakdown",
-  flood: "🌊 Flooding",
-  construction: "🚧 Road Work",
-  other: "📌 Other",
+  accident: "Accident",
+  breakdown: "Vehicle Breakdown",
+  flood: "Flooding",
+  construction: "Road Work",
+  other: "Other",
 };
 
 // Demo data

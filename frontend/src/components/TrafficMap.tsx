@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import api from '@/lib/api';
-import { AlertTriangle, AlertCircle, RefreshCw, Activity } from 'lucide-react';
+import { AlertTriangle, AlertCircle, RefreshCw, Activity, Menu, X, Search, Navigation, Construction, CarFront, Gauge, MapPin } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -21,6 +21,37 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // New UI States
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const DEMO_INCIDENTS = [
+    { id: 1, title: 'Roadwork on Le Loi', lat: 10.7732, lng: 106.7001, type: 'construction', severity: 'medium', time: '10 mins ago' },
+    { id: 2, title: 'Accident at Ben Thanh', lat: 10.7716, lng: 106.6983, type: 'accident', severity: 'high', time: 'Just now' },
+    { id: 3, title: 'Heavy Traffic on Nguyen Hue', lat: 10.7738, lng: 106.7042, type: 'congestion', severity: 'critical', time: '5 mins ago' },
+  ];
+
+  const handleMyLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          map.current?.flyTo({
+            center: [position.coords.longitude, position.coords.latitude],
+            zoom: 16,
+            essential: true
+          });
+        },
+        (error) => {
+          console.error("Error getting location: ", error);
+        }
+      );
+    }
+  };
+
+  const flyToIncident = (lng: number, lat: number) => {
+    map.current?.flyTo({ center: [lng, lat], zoom: 17, essential: true, pitch: 60 });
+  };
 
   // Stats
   const [totalEdges, setTotalEdges] = useState(0);
@@ -209,8 +240,94 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       
       <div ref={mapContainer} className="w-full h-full" />
 
-      {/* KPI Overlay */}
-      <div className="absolute top-6 left-6 flex flex-wrap gap-4 z-10 pointer-events-none">
+      {/* --- UI Controls Layer --- */}
+
+      {/* Search Bar */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-md z-20 px-4">
+        <div className="relative bg-card/90 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex items-center pr-2 pl-4 py-2 hover:border-primary/30 transition-colors focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
+          <Search className="w-5 h-5 text-muted-foreground mr-3" />
+          <input 
+            type="text" 
+            placeholder="Search for an area or address..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/70 font-medium py-1 text-foreground"
+          />
+        </div>
+      </div>
+
+      {/* Sidebar Toggle Button (if sidebar closed) */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="absolute top-6 left-6 z-20 p-3 bg-card/90 backdrop-blur-xl border border-border rounded-xl shadow-lg hover:bg-accent focus:outline-none transition-transform hover:scale-105 active:scale-95"
+        >
+          <Menu className="w-6 h-6 text-foreground" />
+        </button>
+      )}
+
+      {/* Collapsible Sidebar */}
+      <div 
+        className={`absolute top-0 left-0 h-full w-80 sm:w-96 bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl z-30 transform transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] flex flex-col ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-6 border-b border-border flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-rose-500/10 rounded-lg">
+              <AlertTriangle className="w-5 h-5 text-rose-500" />
+            </div>
+            <h2 className="text-xl font-bold font-heading">Nearby Incidents</h2>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+          {DEMO_INCIDENTS.map((inc) => (
+            <div 
+              key={inc.id}
+              onClick={() => flyToIncident(inc.lng, inc.lat)}
+              className="p-4 bg-background/50 hover:bg-accent/50 border border-border rounded-xl cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg active:scale-95 group"
+            >
+              <div className="flex gap-3">
+                <div className="mt-0.5 shrink-0">
+                  {inc.type === 'construction' && <Construction className="w-5 h-5 text-amber-500" />}
+                  {inc.type === 'accident' && <CarFront className="w-5 h-5 text-rose-500" />}
+                  {inc.type === 'congestion' && <Gauge className="w-5 h-5 text-orange-500" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors">{inc.title}</h4>
+                  <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground font-medium">
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {inc.lat.toFixed(3)}, {inc.lng.toFixed(3)}</span>
+                    <span className="text-border">•</span>
+                    <span>{inc.time}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="pt-4 text-center">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">End of nearby incidents</p>
+          </div>
+        </div>
+      </div>
+
+      {/* GPS / My Location Button */}
+      <button 
+        onClick={handleMyLocation}
+        className="absolute bottom-[104px] right-6 z-20 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl hover:shadow-blue-500/25 transition-all outline-none hover:scale-110 active:scale-95 border-2 border-white/10"
+        title="My Location"
+      >
+        <Navigation className="w-6 h-6" />
+      </button>
+
+      {/* KPI Overlay (Fade out if sidebar open) */}
+      <div className={`absolute top-24 left-6 flex flex-col gap-4 z-10 pointer-events-none transition-opacity duration-300 ${isSidebarOpen ? 'opacity-0' : 'opacity-100'}`}>
         <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5 text-blue-500" /> TOTAL SEGMENTS
