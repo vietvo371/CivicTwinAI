@@ -65,8 +65,28 @@ start_ai() {
   echo -e "${BLUE}🧠 Starting AI Service (port 8001)...${NC}"
   osascript -e "
     tell application \"Terminal\"
-      do script \"cd '$ROOT_DIR/ai-service' && python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload\"
+      do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload\"
       set custom title of front window to \"🧠 AI :8001\"
+    end tell
+  "
+}
+
+start_simulator() {
+  echo -e "${YELLOW}🚗 Starting Traffic Simulator...${NC}"
+  osascript -e "
+    tell application \"Terminal\"
+      do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python simulator.py\"
+      set custom title of front window to \"🚗 Simulator\"
+    end tell
+  "
+}
+
+start_traffic_consumer() {
+  echo -e "${GREEN}📡 Starting Traffic Consumer...${NC}"
+  osascript -e "
+    tell application \"Terminal\"
+      do script \"cd '$ROOT_DIR/backend' && php artisan traffic:consume\"
+      set custom title of front window to \"🔌 Consumer\"
     end tell
   "
 }
@@ -89,6 +109,12 @@ if [ -z "$1" ]; then
   start_reverb
   sleep 1
   start_worker
+  sleep 1
+  start_traffic_consumer
+  sleep 1
+  start_ai
+  sleep 1
+  start_simulator
 
   echo ""
   echo -e "${GREEN}✅ All services started!${NC}"
@@ -97,8 +123,10 @@ if [ -z "$1" ]; then
   echo "  🌐 Frontend:  http://localhost:3000"
   echo "  📡 Reverb WS: ws://localhost:8080"
   echo "  ⚡ Queue:     running"
+  echo "  🔌 Consumer:  running"
+  echo "  🧠 AI Engine: http://localhost:8001"
+  echo "  🚗 Simulator: running"
   echo ""
-  echo -e "${YELLOW}💡 Để chạy AI Service: ./dev.sh ai${NC}"
 else
   case "$1" in
     backend)  start_backend ;;
@@ -106,9 +134,11 @@ else
     reverb)   start_reverb ;;
     worker)   start_worker ;;
     ai)       start_ai ;;
+    sim)      start_simulator ;;
+    consumer) start_traffic_consumer ;;
     *)
-      echo "Usage: ./dev.sh [backend|frontend|reverb|worker|ai]"
-      echo "  Không có tham số = chạy tất cả (trừ AI)"
+      echo "Usage: ./dev.sh [backend|frontend|reverb|worker|ai|sim|consumer]"
+      echo "  Không có tham số = chạy tất cả"
       ;;
   esac
 fi

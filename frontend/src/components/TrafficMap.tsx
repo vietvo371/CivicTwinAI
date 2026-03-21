@@ -32,6 +32,9 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [mapIncidents, setMapIncidents] = useState<any[]>([]);
 
+  // Refs for tracking GeoJSON data
+  const geojsonDataRef = useRef<any>(null);
+
   useEffect(() => {
     const fetchIncidents = async () => {
       try {
@@ -57,6 +60,42 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
     if (data.latitude && data.longitude) {
       setMapIncidents(prev => [data, ...prev]);
     }
+  });
+
+  // Real-time: update traffic density coloring and KPIs
+  useEcho<any>('traffic', 'TrafficDensityUpdated', (data) => {
+    if (!data.telemetryBatch || !map.current || !geojsonDataRef.current) return;
+
+    // Create a fast-lookup map for telemetry batch
+    const updates = new Map(data.telemetryBatch.map((item: any) => [item.edge_id, item]));
+
+    let congested = 0;
+    let totalDen = 0;
+
+    // Mutate the cached geoJSON features
+    geojsonDataRef.current.features.forEach((feature: any) => {
+      const edgeId = feature.properties.id;
+      if (updates.has(edgeId)) {
+        const updateInfo = updates.get(edgeId) as any;
+        feature.properties.current_density = updateInfo.density;
+        feature.properties.current_speed_kmh = updateInfo.speed_kmh;
+      }
+
+      const den = feature.properties.current_density || 0;
+      totalDen += den;
+      if (den > 0.6) congested++;
+    });
+
+    // Request map repaint if source exists
+    const source = map.current.getSource('traffic-edges') as mapboxgl.GeoJSONSource;
+    if (source) {
+      source.setData(geojsonDataRef.current);
+    }
+
+    // Update UI Stats
+    setCongestedCount(congested);
+    const count = geojsonDataRef.current.features.length;
+    setAvgDensity(count > 0 ? totalDen / count : 0);
   });
 
   const handleMyLocation = () => {
@@ -96,6 +135,7 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
       const endpoint = isPublic ? '/public/edges/geojson' : '/edges/geojson';
       const res = await api.get(endpoint);
       const data = res.data;
+      geojsonDataRef.current = data; // Cache for real-time mutation
 
       setTotalEdges(data.features.length);
 

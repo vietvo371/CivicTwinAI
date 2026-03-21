@@ -1,15 +1,14 @@
-import random
 from fastapi import APIRouter
 from pydantic import BaseModel
+import time
+from app.services.graph_service import graph_service
 
 router = APIRouter(tags=["Prediction"])
-
 
 class PredictRequest(BaseModel):
     incident_id: int
     severity: str
     affected_edge_ids: list[int]
-
 
 class EdgePrediction(BaseModel):
     edge_id: int
@@ -19,42 +18,64 @@ class EdgePrediction(BaseModel):
     confidence: float
     severity: str
 
+class Recommendation(BaseModel):
+    type: str
+    description: str
+    alternative_edges: list[int]
+    estimated_time_saved_seconds: int
 
 class PredictResponse(BaseModel):
     incident_id: int
     model_version: str
     predictions: list[EdgePrediction]
+    recommendations: list[Recommendation] = []
     processing_time_ms: int
-
 
 @router.post("/predict", response_model=PredictResponse)
 async def predict_traffic(request: PredictRequest):
     """
-    Predict traffic impact for an incident.
-    Currently returns mock data — will be replaced by LSTM/GNN model.
+    Predict traffic impact for an incident using Heuristic BFS network propagation.
     """
-    severity_map = {"low": 0.3, "medium": 0.5, "high": 0.7, "critical": 0.9}
-    base_density = severity_map.get(request.severity, 0.5)
-
-    predictions = []
-    for edge_id in request.affected_edge_ids:
-        for horizon in [15, 30, 60]:
-            factor = 1.0 + (horizon / 60) * 0.3
-            density = min(base_density * factor + random.uniform(-0.05, 0.1), 1.0)
-            predictions.append(
-                EdgePrediction(
-                    edge_id=edge_id,
-                    time_horizon_minutes=horizon,
-                    predicted_density=round(density, 4),
-                    predicted_delay_s=int(density * 300),
-                    confidence=round(random.uniform(0.6, 0.95), 2),
-                    severity="critical" if density > 0.8 else "high" if density > 0.6 else "medium",
-                )
-            )
+    start_time = time.time()
+    
+    # Lan truyen un tac (cascading) ra xung quanh
+    predictions_data = graph_service.predict_cascading_impact(
+        incident_edge_ids=request.affected_edge_ids,
+        severity=request.severity,
+        time_horizons=[15, 30, 60]
+    )
+    
+    predictions = [EdgePrediction(**p) for p in predictions_data]
+    
+    # Recommendation don gian: Neu un tac rong
+    recommendations = []
+    if request.severity in ['high', 'critical'] and len(predictions) > 10:
+        recommendations.append(Recommendation(
+            type="reroute",
+            description=f"Ùn tắc phức tạp tại {len(request.affected_edge_ids)} điểm. Đề xuất phân luồng các xe đi vào từ đường liền kề khác.",
+            alternative_edges=[],
+            estimated_time_saved_seconds=300
+        ))
+        recommendations.append(Recommendation(
+            type="signal_change",
+            description="Đề xuất tăng 15s nhịp đèn xanh ở ngã tư thoát tuyến để giảm tải.",
+            alternative_edges=[],
+            estimated_time_saved_seconds=120
+        ))
+    elif request.severity in ['medium']:
+        recommendations.append(Recommendation(
+            type="advisory",
+            description="Tình trạng ùn ứ vừa phải. Hệ thống tiếp tục giữ nguyên tín hiệu theo dõi.",
+            alternative_edges=[],
+            estimated_time_saved_seconds=0
+        ))
+        
+    process_time = int((time.time() - start_time) * 1000)
 
     return PredictResponse(
         incident_id=request.incident_id,
-        model_version="mock_v0.1",
+        model_version="heuristic_bfs_v1.0",
         predictions=predictions,
-        processing_time_ms=random.randint(50, 200),
+        recommendations=recommendations,
+        processing_time_ms=process_time,
     )

@@ -1,11 +1,25 @@
+import contextlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import health, predict, simulate
+from app.core.database import connect_db, disconnect_db
+from app.services.graph_service import graph_service
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 Nạp kết nối CSDL PostGIS...")
+    await connect_db()
+    print("🌍 Nạp dữ liệu Map Graph cho AI-Service...")
+    await graph_service.load_graph()
+    yield
+    print("🛑 Đóng kết nối CSDL PostGIS...")
+    await disconnect_db()
 
 app = FastAPI(
     title="CivicTwin AI Service",
     description="Prediction & Simulation engine for CivicTwin AI — Predictive & Proactive traffic management",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
