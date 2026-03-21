@@ -13,6 +13,7 @@ import {
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { NotificationBell } from './NotificationBell';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -128,6 +129,7 @@ export default function Sidebar() {
         <div className={`flex items-center ${collapsed ? 'justify-center flex-col gap-2' : 'justify-between px-2'} pt-1`}>
           {!collapsed && <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('sidebar.theme')}</span>}
           <div className="flex items-center gap-1">
+            <NotificationBell collapsed={collapsed} />
             <LanguageSwitcher />
             <ThemeToggle collapsed={collapsed} />
           </div>

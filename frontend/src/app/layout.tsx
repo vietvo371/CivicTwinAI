@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from '@/lib/auth';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationProvider } from '@/hooks/useNotifications';
+import { NotificationListener } from '@/components/NotificationListener';
 
 import { I18nProvider } from '@/lib/i18n';
 
@@ -36,10 +38,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <I18nProvider>
             <AuthProvider>
-              <TooltipProvider>
-                {children}
-                <Toaster position="top-center" richColors />
-              </TooltipProvider>
+              <NotificationProvider>
+                <TooltipProvider>
+                  <NotificationListener />
+                  {children}
+                  <Toaster position="top-center" richColors />
+                </TooltipProvider>
+              </NotificationProvider>
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

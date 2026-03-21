@@ -24,7 +24,8 @@
     "id": "ID",
     "viewOnMap": "View on map",
     "back": "Go back",
-    "toggleTheme": "Toggle Dark Mode"
+    "toggleTheme": "Toggle Dark Mode",
+    "severity": "Severity"
   },
   "navbar": {
     "liveMap": "Live Map",
@@ -608,9 +609,14 @@
       "other": "Other"
     },
     "incidentSeverity": {
+      "none": "None",
+      "light": "Light",
       "low": "Low",
       "medium": "Medium",
+      "moderate": "Moderate",
       "high": "High",
+      "severe": "Severe",
+      "heavy": "Heavy",
       "critical": "Critical"
     },
     "incidentStatus": {
@@ -694,5 +700,15 @@
       "active": "Active",
       "inactive": "Inactive"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
+    "newIncident": "New Incident",
+    "incidentMessage": "Detected {{type}} incident - Severity: {{severity}}",
+    "newPrediction": "New AI Prediction",
+    "predictionMessage": "Prediction for {{edgeCount}} road segments"
   }
 }

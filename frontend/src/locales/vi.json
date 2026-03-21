@@ -24,7 +24,8 @@
     "id": "ID",
     "viewOnMap": "Xem trên bản đồ",
     "back": "Quay lại",
-    "toggleTheme": "Bật/Tắt giao diện tối"
+    "toggleTheme": "Bật/Tắt giao diện tối",
+    "severity": "Mức độ"
   },
   "navbar": {
     "liveMap": "Bản đồ trực tiếp",
@@ -608,10 +609,15 @@
       "other": "Khác"
     },
     "incidentSeverity": {
+      "none": "Không",
+      "light": "Nhẹ",
       "low": "Thấp",
       "medium": "Trung bình",
+      "moderate": "Vừa phải",
       "high": "Cao",
-      "critical": "Nghiêm trọng"
+      "severe": "Nghiêm trọng",
+      "heavy": "Nặng",
+      "critical": "Cực kỳ nghiêm trọng"
     },
     "incidentStatus": {
       "open": "Đang mở",
@@ -694,5 +700,15 @@
       "active": "Hoạt động",
       "inactive": "Không hoạt động"
     }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "empty": "Không có thông báo",
+    "markAllRead": "Đánh dấu đã đọc tất cả",
+    "clearAll": "Xóa tất cả",
+    "newIncident": "Sự cố mới",
+    "incidentMessage": "Phát hiện sự cố {{type}} - Mức độ {{severity}}",
+    "newPrediction": "Dự đoán AI mới",
+    "predictionMessage": "Dự đoán cho {{edgeCount}} đoạn đường"
   }
 }
