@@ -1,16 +1,21 @@
 "use client"
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import Image from 'next/image';
 import { useTranslation } from '@/lib/i18n';
 import { BrainIcon, RadarIcon, ShieldAlertIcon, MapIcon } from '../icons/TheSvgIcons';
 
-// 3D Tilt Card wrapper
+// 3D Tilt Card wrapper — disabled on touch devices
 function TiltCard({ children, className }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
+  const [isTouch, setIsTouch] = useState(false);
+  
+  useEffect(() => {
+    setIsTouch(window.matchMedia('(pointer: coarse)').matches);
+  }, []);
   
   const rotateX = useSpring(useTransform(mouseY, [0, 1], [8, -8]), { stiffness: 200, damping: 30 });
   const rotateY = useSpring(useTransform(mouseX, [0, 1], [-8, 8]), { stiffness: 200, damping: 30 });
@@ -28,6 +33,11 @@ function TiltCard({ children, className }: { children: React.ReactNode; classNam
     mouseX.set(0.5);
     mouseY.set(0.5);
   };
+
+  // On touch devices, just render a simple wrapper (no tilt)
+  if (isTouch) {
+    return <div className={className}>{children}</div>;
+  }
 
   return (
     <motion.div

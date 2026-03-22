@@ -65,7 +65,9 @@ function FloatingParticles() {
   }>>([]);
 
   useEffect(() => {
-    setParticles(Array.from({ length: 25 }, (_, i) => ({
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const count = isMobile ? 10 : 25;
+    setParticles(Array.from({ length: count }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,

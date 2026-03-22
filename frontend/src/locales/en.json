@@ -86,6 +86,15 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "systemStatus": "System Status",
+    "footerTagline": "Next-generation urban traffic Digital Twin. Predict congestion, optimize signals, and save lives with AI.",
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "liveMap": "Live Map",
+    "dashboard": "Dashboard",
+    "predictions": "Predictions",
+    "incidents": "Incidents",
+    "allSystemsOperational": "All systems operational",
     "stickyTitle1": "1. Congestion Prediction",
     "stickyDesc1": "Trained on terabytes of historical and real-time data via Apache Kafka. Deep Learning models scan every square meter of the city to detect gridlock risks before anyone notices.",
     "stickyTitle2": "2. Emergency Green Wave",
@@ -242,12 +251,30 @@
     "updateFailed": "Update failed."
   },
   "roles": {
-    "super_admin": { "label": "Super Admin", "desc": "Full system access, user management & configuration" },
-    "city_admin": { "label": "City Admin", "desc": "Urban infrastructure management, approve AI recommendations" },
-    "traffic_operator": { "label": "Traffic Operator", "desc": "Real-time traffic monitoring, incident handling" },
-    "urban_planner": { "label": "Urban Planner", "desc": "Data analysis, simulation & urban planning" },
-    "emergency": { "label": "Emergency Services", "desc": "Emergency coordination, critical incident response" },
-    "citizen": { "label": "Citizen", "desc": "View public map, report incidents" }
+    "super_admin": {
+      "label": "Super Admin",
+      "desc": "Full system access, user management & configuration"
+    },
+    "city_admin": {
+      "label": "City Admin",
+      "desc": "Urban infrastructure management, approve AI recommendations"
+    },
+    "traffic_operator": {
+      "label": "Traffic Operator",
+      "desc": "Real-time traffic monitoring, incident handling"
+    },
+    "urban_planner": {
+      "label": "Urban Planner",
+      "desc": "Data analysis, simulation & urban planning"
+    },
+    "emergency": {
+      "label": "Emergency Services",
+      "desc": "Emergency coordination, critical incident response"
+    },
+    "citizen": {
+      "label": "Citizen",
+      "desc": "View public map, report incidents"
+    }
   },
   "master": {
     "title": "Master Data",
@@ -571,7 +598,6 @@
     "emergencyUnit": "Emergency Unit",
     "emergencyRole": "Emergency"
   },
-
   "report": {
     "reportIncident": "Report Incident",
     "reportTitle": "Report Traffic Incident",
