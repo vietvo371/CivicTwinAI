@@ -419,6 +419,12 @@
     "selectSessionHint": "Please select an AI session from the left menu to inspect granular metadata and load distributions.",
     "opDecisions": "Operational Decisions",
     "opDecisionsDesc": "AI-generated mitigation strategies pending operator approval",
+    "id": "ID",
+    "description": "Description / Suggestion",
+    "status": "Status",
+    "createdAt": "Time Created",
+    "actions": "Actions",
+    "processed": "Processed",
     "fetchingRecs": "Fetching smart recommendations...",
     "allCaughtUp": "All caught up!",
     "noPendingRecs": "No operational decisions are pending your review.",
@@ -690,7 +696,8 @@
       "speed_limit": "Speed Limit",
       "lane_control": "Lane Control",
       "advisory": "Advisory",
-      "priority_route": "Priority Route"
+      "priority_route": "Priority Route",
+      "alert": "Alert"
     },
     "recommendationStatus": {
       "pending": "Pending",

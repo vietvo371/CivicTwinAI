@@ -419,6 +419,12 @@
     "selectSessionHint": "Vui lòng chọn phiên AI từ menu bên trái để xem metadata chi tiết và phân bố tải.",
     "opDecisions": "Quyết định điều hành",
     "opDecisionsDesc": "Chiến lược giảm thiểu do AI tạo, đang chờ duyệt",
+    "id": "Mã ID",
+    "description": "Mô tả / Đề xuất chi tiết",
+    "status": "Trạng thái",
+    "createdAt": "Thời gian tạo",
+    "actions": "Thao tác",
+    "processed": "Đã xử lý",
     "fetchingRecs": "Đang tải đề xuất thông minh...",
     "allCaughtUp": "Đã cập nhật!",
     "noPendingRecs": "Không có quyết định điều hành nào đang chờ duyệt.",
@@ -690,7 +696,8 @@
       "speed_limit": "Giới hạn tốc độ",
       "lane_control": "Kiểm soát làn đường",
       "advisory": "Khuyến cáo",
-      "priority_route": "Tuyến ưu tiên"
+      "priority_route": "Tuyến ưu tiên",
+      "alert": "Cảnh báo"
     },
     "recommendationStatus": {
       "pending": "Chờ duyệt",

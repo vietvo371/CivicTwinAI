@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Recommendation {
   id: number;
@@ -95,63 +96,88 @@ export default function RecommendationsPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {recs.map((rec) => {
-            const Icon = typeIcons[rec.type] || Lightbulb;
-
-            return (
-              <Card key={rec.id} className="flex flex-col overflow-hidden hover:border-primary/50 transition-colors group bg-card/60 backdrop-blur-xl">
-                <CardHeader className="p-5 border-b border-border/50 bg-card/30">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center border bg-secondary/50 text-primary">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <Badge variant={statusVariants[rec.status] || 'outline'} className="uppercase tracking-wider text-[10px]">
-                      {t(`enums.recommendationStatus.${rec.status}`)}
-                    </Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <CardTitle className="uppercase tracking-wide text-sm">{t(`enums.recommendationType.${rec.type}`)}</CardTitle>
-                    <p className="text-[11px] font-semibold text-muted-foreground">
-                      {t('op.correlatedIncident')}: <span className="text-primary/80">#{rec.incident_id}</span>
-                    </p>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="p-5 flex-1 flex flex-col pt-5">
-                  <p className="text-sm leading-relaxed flex-1">
-                    {rec.description}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-5 pt-4 border-t border-border/50 text-xs font-medium text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    {new Date(rec.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
-                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-                    })}
-                  </div>
-                </CardContent>
-
-                {rec.status === 'pending' && (
-                  <CardFooter className="p-0 border-t border-border/50 grid grid-cols-2 divide-x divide-border/50">
-                    <Button 
-                      variant="ghost" 
-                      className="rounded-none h-12 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => setRejectId(rec.id)}
-                    >
-                      <X className="w-4 h-4 mr-2" /> {t('op.decline')}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="rounded-none h-12 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
-                      onClick={() => handleApprove(rec.id)}
-                    >
-                      <Check className="w-4 h-4 mr-2" /> {t('op.approve')}
-                    </Button>
-                  </CardFooter>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+        <Card className="bg-card/50 backdrop-blur-xl border-border/80 overflow-hidden shadow-2xl">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[100px]">{t('op.id')}</TableHead>
+                <TableHead className="w-[160px]">{t('op.incidentType')}</TableHead>
+                <TableHead>{t('op.description')}</TableHead>
+                <TableHead className="w-[120px]">{t('op.status')}</TableHead>
+                <TableHead className="w-[180px]">{t('op.createdAt')}</TableHead>
+                <TableHead className="text-right w-[160px]">{t('op.actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {recs.map((rec) => {
+                const Icon = typeIcons[rec.type] || Lightbulb;
+                return (
+                  <TableRow key={rec.id} className="group hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-medium text-muted-foreground">#{rec.id}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center border bg-secondary/50 text-primary shrink-0">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className="font-semibold text-xs tracking-wide uppercase">
+                          {t(`enums.recommendationType.${rec.type}`)}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <p className="text-sm line-clamp-2" title={rec.description}>
+                        {rec.description}
+                      </p>
+                      <p className="text-[10px] font-semibold text-muted-foreground mt-1 uppercase tracking-widest">
+                        {t('op.correlatedIncident')}: <span className="text-primary/80">#{rec.incident_id}</span>
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariants[rec.status] || 'outline'} className="uppercase tracking-wider text-[10px]">
+                        {t(`enums.recommendationStatus.${rec.status}`)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        <span className="truncate">
+                          {new Date(rec.created_at).toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
+                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right align-middle">
+                      {rec.status === 'pending' ? (
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 border-destructive/30 text-destructive hover:bg-destructive/10 shrink-0"
+                            onClick={() => setRejectId(rec.id)}
+                          >
+                            <X className="w-4 h-4 mr-1" /> {t('op.decline')}
+                          </Button>
+                          <Button 
+                            size="sm"
+                            className="h-8 bg-emerald-500 hover:bg-emerald-600 shadow-sm shrink-0"
+                            onClick={() => handleApprove(rec.id)}
+                          >
+                            <Check className="w-4 h-4 mr-1" /> {t('op.approve')}
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic flex items-center justify-end h-8">
+                          {t('op.processed')}
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* Reject Dialog */}
