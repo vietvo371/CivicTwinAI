@@ -71,8 +71,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('incidents/{incident}', [IncidentController::class, 'update']);
 
         // AI Predictions
+        // AI Predictions & Simulations
         Route::get('predictions', [PredictionController::class, 'index']);
         Route::get('predictions/{prediction}', [PredictionController::class, 'show']);
+        Route::post('simulation/run', [\App\Http\Controllers\Api\TrafficSimulationController::class, 'runSimulation']);
 
         // Decision Approvals (Recommendations)
         Route::get('recommendations', [RecommendationController::class, 'index']);

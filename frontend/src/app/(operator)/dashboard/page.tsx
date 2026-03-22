@@ -188,8 +188,8 @@ export default function DashboardPage() {
               </Link>
             </CardHeader>
             <CardContent className="p-3 pt-2">
-              <div className="h-[420px] rounded-xl overflow-hidden border border-border/50">
-                <TrafficMap />
+              <div className="h-[500px] rounded-xl overflow-hidden border border-border/50 relative">
+                <TrafficMap hideOverlays />
               </div>
             </CardContent>
           </Card>

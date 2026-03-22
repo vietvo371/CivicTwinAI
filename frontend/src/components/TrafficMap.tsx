@@ -14,9 +14,10 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 interface TrafficMapProps {
   isPublic?: boolean;
+  hideOverlays?: boolean;
 }
 
-export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
+export default function TrafficMap({ isPublic = false, hideOverlays = false }: TrafficMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const { theme, resolvedTheme } = useTheme();
@@ -325,19 +326,21 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
 
       {/* --- UI Controls Layer --- */}
 
-      {/* Search Bar */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-md z-20 px-4">
-        <div className="relative bg-card/90 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex items-center pr-2 pl-4 py-2 hover:border-primary/30 transition-colors focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
-          <Search className="w-5 h-5 text-muted-foreground mr-3" />
-          <input
-            type="text"
-            placeholder={t('trafficMap.searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/70 font-medium py-1 text-foreground"
-          />
-        </div>
-      </div>
+      {!hideOverlays && (
+        <>
+          {/* Search Bar */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-md z-20 px-4">
+            <div className="relative bg-card/90 backdrop-blur-xl border border-border shadow-2xl rounded-2xl flex items-center pr-2 pl-4 py-2 hover:border-primary/30 transition-colors focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
+              <Search className="w-5 h-5 text-muted-foreground mr-3" />
+              <input
+                type="text"
+                placeholder={t('trafficMap.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/70 font-medium py-1 text-foreground"
+              />
+            </div>
+          </div>
 
       {/* Sidebar Toggle Button (if sidebar closed) */}
       {!isSidebarOpen && (
@@ -432,15 +435,17 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
           </div>
         </div>
 
-        <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
-          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-amber-500" /> {t('trafficMap.avgDensity')}
-          </div>
-          <div className="text-3xl font-heading font-black text-amber-500">
-            {(avgDensity * 100).toFixed(0)}%
+          <div className="bg-card/90 backdrop-blur-xl p-4 rounded-2xl shadow-lg border border-border min-w-[140px] pointer-events-auto">
+            <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5 text-amber-500" /> {t('trafficMap.avgDensity')}
+            </div>
+            <div className="text-3xl font-heading font-black text-amber-500">
+              {(avgDensity * 100).toFixed(0)}%
+            </div>
           </div>
         </div>
-      </div>
+        </>
+      )}
 
       {/* Legend & Controls Overlay */}
       <div className="absolute bottom-6 left-6 flex items-end gap-4 z-10 pointer-events-none">

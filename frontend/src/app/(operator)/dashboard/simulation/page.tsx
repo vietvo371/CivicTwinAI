@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import api from '@/lib/api';
 
 const TrafficMap = dynamic(() => import('@/components/TrafficMap'), { ssr: false });
 
@@ -60,13 +61,31 @@ export default function SimulationPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<SimulationResult | null>(null);
 
-  const handleRunSimulation = () => {
+  // States for inputs
+  const [incidentType, setIncidentType] = useState('accident');
+  const [severityLevel, setSeverityLevel] = useState('high');
+  const [locationArea, setLocationArea] = useState('Cau Rong, Q. Son Tra');
+  const [predictionHorizon, setPredictionHorizon] = useState('30');
+
+  const handleRunSimulation = async () => {
     setIsRunning(true);
     setResult(null);
-    setTimeout(() => {
-      setResult(DEMO_RESULT);
+    try {
+      const response = await api.post('/simulation/run', {
+        incident_type: incidentType,
+        severity_level: severityLevel,
+        location_area: locationArea,
+        prediction_horizon: parseInt(predictionHorizon, 10),
+      });
+      if (response.data && response.data.data) {
+        setResult(response.data.data);
+      }
+    } catch (error) {
+      console.error('Simulation Failed:', error);
+      alert(t('op.simFailed') || 'Simulation Failed. Make sure AI Service is running.');
+    } finally {
       setIsRunning(false);
-    }, 3000);
+    }
   };
 
   const handleReset = () => {
@@ -105,7 +124,7 @@ export default function SimulationPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('op.incidentType')}</label>
-                <Select defaultValue="accident">
+                <Select value={incidentType} onValueChange={(v) => setIncidentType(v || 'accident')}>
                   <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
@@ -120,7 +139,7 @@ export default function SimulationPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('op.severityLevel')}</label>
-                <Select defaultValue="high">
+                <Select value={severityLevel} onValueChange={(v) => setSeverityLevel(v || 'high')}>
                   <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
@@ -137,13 +156,18 @@ export default function SimulationPage() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('op.locationArea')}</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input placeholder="e.g. Cau Rong" className="pl-10 bg-background/50" defaultValue="Cau Rong, Q. Son Tra" />
+                  <Input 
+                    placeholder="e.g. Cau Rong" 
+                    className="pl-10 bg-background/50" 
+                    value={locationArea}
+                    onChange={(e) => setLocationArea(e.target.value)} 
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('op.predHorizon')}</label>
-                <Select defaultValue="30">
+                <Select value={predictionHorizon} onValueChange={(v) => setPredictionHorizon(v || '30')}>
                   <SelectTrigger className="bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
@@ -228,8 +252,8 @@ export default function SimulationPage() {
           {/* Map Preview */}
           <Card className="bg-card/40 backdrop-blur-xl shadow-2xl overflow-hidden border-border/80">
             <CardContent className="p-3">
-              <div className="h-[350px] rounded-xl overflow-hidden border border-border/50 relative">
-                <TrafficMap isPublic />
+              <div className="h-[500px] rounded-xl overflow-hidden border border-border/50 relative">
+                <TrafficMap isPublic hideOverlays />
                 {isRunning && (
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 z-20">
                     <div className="w-16 h-16 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />

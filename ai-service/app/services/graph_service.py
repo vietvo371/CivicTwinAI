@@ -136,4 +136,94 @@ class GraphService:
                         
         return predictions
 
+    def simulate_scenario(self, location_area: str, severity: str, incident_type: str, prediction_horizon: int):
+        """
+        Mo phong thay doi khi xay ra su kien (What-If analysis) hoac can doan tac nghia tuyen pho.
+        """
+        import random
+        if not self.is_loaded:
+            logger.warning("Graph chưa được nạp. Không thể chạy AI Simulation.")
+            return {}
+
+        all_edges = [(u, v, d) for u, v, d in self.graph.edges(data=True)]
+        if not all_edges:
+            return {}
+            
+        # Mock tim doan duong diem no (epicenter) 
+        # (Chon random 2-4 tuyen duong gan nhau gop lai tuy vao location_area string)
+        incident_edges = random.sample(all_edges, min(random.randint(2, 4), len(all_edges)))
+        
+        severity_map = {"low": 1.5, "medium": 2.0, "high": 3.0, "critical": 4.5}
+        impact_multiplier = severity_map.get(severity, 2.0)
+        
+        queue = []
+        visited_edges = set()
+        
+        segments = []
+        before_density_sum = 0
+        after_density_sum = 0
+        
+        for u, v, d in incident_edges:
+            orig_den = d['density'] if d['density'] > 0 else 0.1
+            new_den = min(orig_den * impact_multiplier, 0.95)
+            queue.append((u, v, 0, new_den))
+            visited_edges.add(d['edge_id'])
+            
+            segments.append({
+                "name": f"{location_area} - Tuyến {d['edge_id']}",
+                "before": orig_den,
+                "after": new_den,
+                "change": int(((new_den - orig_den) / orig_den) * 100)
+            })
+            before_density_sum += orig_den
+            after_density_sum += new_den
+            
+        max_depth = 4 if severity in ['low', 'medium'] else 6
+        
+        while queue:
+            u, v, depth, current_density = queue.pop(0)
+            
+            if depth >= max_depth:
+                continue
+                
+            for next_node in self.graph.successors(v):
+                if next_node == u:
+                    continue
+                    
+                next_edge_info = self.graph[v][next_node]
+                next_edge_id = next_edge_info['edge_id']
+                
+                if next_edge_id not in visited_edges:
+                    visited_edges.add(next_edge_id)
+                    decay_rate = 0.85  # Giam sat luong tac sau moi nut giao
+                    next_density = current_density * decay_rate
+                    
+                    orig_den = next_edge_info['density']
+                    if next_density > orig_den and next_density > 0.3:
+                        queue.append((v, next_node, depth + 1, next_density))
+                        segments.append({
+                            "name": f"Đ. nhánh lan tỏa {next_edge_id}",
+                            "before": orig_den,
+                            "after": next_density,
+                            "change": int(((next_density - orig_den) / max(orig_den, 0.01)) * 100)
+                        })
+                        before_density_sum += orig_den
+                        after_density_sum += next_density
+                        
+        segments = sorted(segments, key=lambda x: x['change'], reverse=True)[:5]
+        
+        affected_count = len(visited_edges)
+        if affected_count > 0:
+            avg_before = before_density_sum / affected_count
+            avg_after = after_density_sum / affected_count
+        else:
+            avg_before = avg_after = 0
+            
+        return {
+            "affected_edges": affected_count,
+            "before_avg_density": round(avg_before, 4),
+            "after_avg_density": round(avg_after, 4),
+            "segments": segments
+        }
+
 graph_service = GraphService()
