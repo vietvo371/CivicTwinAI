@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import health, predict, simulate
 from app.core.database import connect_db, disconnect_db
 from app.services.graph_service import graph_service
+from app.services.model_service import model_service
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -11,6 +12,8 @@ async def lifespan(app: FastAPI):
     await connect_db()
     print("🌍 Nạp dữ liệu Map Graph cho AI-Service...")
     await graph_service.load_graph()
+    print("🧠 Nạp LSTM Model AI...")
+    model_service.load_model()
     yield
     print("🛑 Đóng kết nối CSDL PostGIS...")
     await disconnect_db()

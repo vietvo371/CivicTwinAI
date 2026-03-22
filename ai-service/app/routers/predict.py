@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import time
 from app.services.graph_service import graph_service
+from app.services.model_service import model_service
 
 router = APIRouter(tags=["Prediction"])
 
@@ -72,10 +73,35 @@ async def predict_traffic(request: PredictRequest):
         
     process_time = int((time.time() - start_time) * 1000)
 
+    # Get LSTM model info for response
+    lstm_info = model_service.model_info or {}
+    lstm_metrics = model_service.metrics or {}
+    model_version = lstm_info.get('name', 'GNN-BFS-v1.0') if model_service.is_loaded else 'GNN-BFS-v1.0'
+
     return PredictResponse(
         incident_id=request.incident_id,
-        model_version="heuristic_bfs_v1.0",
+        model_version=model_version,
         predictions=predictions,
         recommendations=recommendations,
         processing_time_ms=process_time,
     )
+
+@router.get("/model-info")
+async def get_model_info():
+    """Return current AI model metadata and training metrics."""
+    if not model_service.is_loaded:
+        return {
+            "model_name": "GNN-BFS-v1.0",
+            "status": "fallback",
+            "message": "LSTM model not loaded, using BFS heuristic"
+        }
+    return {
+        "model_name": model_service.model_info.get('name', 'TrafficLSTM'),
+        "architecture": model_service.model_info.get('architecture', ''),
+        "status": "active",
+        "metrics": model_service.metrics,
+        "config": model_service.config,
+        "input_window": model_service.model_info.get('input_window', ''),
+        "output_window": model_service.model_info.get('output_window', ''),
+        "framework": model_service.model_info.get('framework', 'PyTorch'),
+    }

@@ -1,6 +1,10 @@
 # CivicTwin AI — Digital Twin Platform for Smart Urban Traffic
 
+> 🏆 **ASEAN AI Hackathon 2026** — Track: Smart City | Intelligent Transportation & Urban Sustainability
+
 > **CivicTwin AI** là nền tảng **Digital Twin (Bản sao số)** của thành phố, kết hợp **Trí tuệ nhân tạo (AI)** để **mô phỏng, phân tích và dự đoán** hoạt động của hệ thống giao thông & hạ tầng đô thị trong môi trường số.
+>
+> **Core Message: "Predict, Don't React"** — Dự đoán, Không Phản ứng
 
 ---
 
@@ -20,11 +24,11 @@
 
 CivicTwin AI sử dụng 3 phương pháp AI chuyên biệt:
 
-| Model | Công nghệ | Chức năng |
-|-------|-----------|-----------|
-| **LSTM Networks** | Long Short-Term Memory | Dự đoán mật độ giao thông theo chuỗi thời gian (time series) |
-| **Graph Neural Networks (GNN)** | Spatial Graph Processing | Phân tích lan truyền kẹt xe qua mạng lưới đường (graph topology) |
-| **Reinforcement Learning** | Decision Optimization | Tối ưu hóa thời gian đèn tín hiệu realtime |
+| Model | Công nghệ | Chức năng | Metrics |
+|-------|-----------|-----------|----------|
+| **TrafficLSTM-v2.1** | PyTorch LSTM (hidden=64, layers=2) | Dự đoán mật độ giao thông 30 phút tương lai | MAE: 0.031, R²: 0.800 |
+| **GNN-BFS Engine** | NetworkX + BFS Algorithm | Phân tích lan truyền ùn tắc qua graph topology | Cascading Analysis |
+| **What-if Simulator** | BFS + Density Heuristic | Mô phỏng tác động đóng đường/sự kiện | Before/After Delta |
 
 ---
 

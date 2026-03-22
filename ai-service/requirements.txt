@@ -10,3 +10,8 @@ asyncpg
 databases
 psycopg2-binary
 redis
+torch
+pandas
+scikit-learn
+matplotlib
+joblib
