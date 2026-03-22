@@ -166,42 +166,42 @@ export default function IncidentDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Info className="w-5 h-5 text-primary" />
-                Thông tin chung
+                {t('op.generalInfo')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Loại sự cố</p>
+                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('op.incidentType')}</p>
                   <p className="font-medium text-sm">{t(`enums.incidentType.${incident.type}`)}</p>
                 </div>
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nguồn báo cáo</p>
+                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('op.reportSource')}</p>
                   <p className="font-medium text-sm flex items-center gap-2">
                     {incident.source === 'operator' ? <ShieldAlert className="w-4 h-4 text-blue-500" /> : <User className="w-4 h-4 text-green-500" />}
                     {t(`enums.incidentSource.${incident.source}`)}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thời gian ghi nhận</p>
+                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('op.recordedTime')}</p>
                   <p className="font-medium text-sm flex items-center gap-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     {formatDate(incident.created_at)}
                   </p>
                 </div>
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vị trí (Tọa độ)</p>
+                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('op.locationCoords')}</p>
                   <p className="font-medium text-sm flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    {incident.location && incident.location.lat ? `${parseFloat(incident.location.lat.toString()).toFixed(4)}, ${parseFloat(incident.location.lng.toString()).toFixed(4)}` : 'Chưa xác định tọa độ'}
+                    {incident.location && incident.location.lat ? `${parseFloat(incident.location.lat.toString()).toFixed(4)}, ${parseFloat(incident.location.lng.toString()).toFixed(4)}` : t('op.noCoords')}
                   </p>
                 </div>
               </div>
               
               <div className="pt-5 border-t border-border/50">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Mô tả chi tiết</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('op.detailedDescription')}</p>
                 <div className="bg-muted/30 p-4 rounded-xl text-sm leading-relaxed whitespace-pre-wrap border border-muted">
-                  {incident.description || <span className="text-muted-foreground italic">Không có mô tả chi tiết do người tạo cung cấp.</span>}
+                  {incident.description || <span className="text-muted-foreground italic">{t('op.noDescription')}</span>}
                 </div>
               </div>
             </CardContent>
@@ -212,10 +212,10 @@ export default function IncidentDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <BrainCircuit className="w-5 h-5 text-primary" />
-                Dự đoán luồng giao thông (AI)
+                {t('op.aiTrafficPrediction')}
               </CardTitle>
               <CardDescription>
-                Phân tích tác động lan truyền của sự cố này qua Graph Neural Network
+                {t('op.aiTrafficPredictionDesc')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -224,13 +224,13 @@ export default function IncidentDetailPage() {
                   {incident.predictions.map(pred => (
                     <div key={pred.id} className="p-4 rounded-xl border border-primary/20 bg-primary/[0.02]">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-sm font-semibold text-primary">Phiên đánh giá #{pred.id}</span>
+                        <span className="text-sm font-semibold text-primary">{t('op.evaluationSession', { id: String(pred.id) })}</span>
                         <Badge variant={pred.status === 'completed' ? 'default' : 'outline'} className={pred.status === 'completed' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}>
                           {t(`enums.predictionStatus.${pred.status}`)}
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Độ tự tin mạng nơ ron:</span>
+                        <span className="text-muted-foreground">{t('op.neuralNetConfidence')}:</span>
                         <strong className="font-bold text-foreground">
                           {typeof pred.confidence_score === 'number' 
                             ? `${(pred.confidence_score * 100).toFixed(1)}%` 
@@ -238,8 +238,8 @@ export default function IncidentDetailPage() {
                         </strong>
                       </div>
                       <div className="mt-3 pt-3 border-t border-primary/10 flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Phạm vi ảnh hưởng:</span>
-                        <span className="font-medium">{pred.prediction_edges?.length || 0} đoạn đường lân cận</span>
+                        <span className="text-muted-foreground">{t('op.impactScope')}:</span>
+                        <span className="font-medium">{t('op.adjacentSegments', { n: String(pred.prediction_edges?.length || 0) })}</span>
                       </div>
                     </div>
                   ))}
@@ -248,7 +248,7 @@ export default function IncidentDetailPage() {
                 <div className="text-center p-8 bg-muted/30 border border-dashed rounded-xl flex flex-col items-center justify-center gap-3">
                   <Activity className="w-8 h-8 text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground">
-                    {incident.severity === 'low' ? 'Sự cố mức độ thấp, hệ thống tự động bỏ qua phân tích lan truyền AI.' : 'Đang chờ phân tích AI hoàn tất...'}
+                    {incident.severity === 'low' ? t('op.lowSeveritySkipped') : t('op.waitingAiAnalysis')}
                   </p>
                 </div>
               )}
@@ -260,23 +260,23 @@ export default function IncidentDetailPage() {
         <div className="space-y-6">
           <Card className="border-border/50 shadow-sm backdrop-blur-sm bg-card/50">
             <CardHeader>
-              <CardTitle className="text-lg">Nhân sự liên quan</CardTitle>
+              <CardTitle className="text-lg">{t('op.relatedPersonnel')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Người báo cáo</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('op.reporter')}</p>
                 <div className="flex items-center gap-3 bg-muted/30 p-3 rounded-xl border">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
                     <User className="w-5 h-5 text-secondary-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{incident.reporter?.name || 'Hệ thống tự động'}</p>
+                    <p className="text-sm font-semibold truncate">{incident.reporter?.name || t('op.automatedSystem')}</p>
                     <p className="text-xs text-muted-foreground truncate">{incident.reporter?.email || 'N/A'}</p>
                   </div>
                 </div>
               </div>
               <div className="pt-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Chịu trách nhiệm xử lý</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">{t('op.assignedHandler')}</p>
                 {incident.assignee ? (
                   <div className="flex items-center gap-3 bg-primary/5 p-3 rounded-xl border border-primary/20">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
@@ -289,7 +289,7 @@ export default function IncidentDetailPage() {
                   </div>
                 ) : (
                   <div className="bg-muted/30 p-3 rounded-xl border border-dashed text-center">
-                    <p className="text-sm text-muted-foreground italic">Chưa phân công</p>
+                    <p className="text-sm text-muted-foreground italic">{t('op.notAssigned')}</p>
                   </div>
                 )}
               </div>
@@ -298,7 +298,7 @@ export default function IncidentDetailPage() {
 
           <Card className="border-border/50 shadow-sm backdrop-blur-sm bg-card/50">
             <CardHeader>
-              <CardTitle className="text-lg">Khuyến nghị Điều hành</CardTitle>
+              <CardTitle className="text-lg">{t('op.operationalRecommendations')}</CardTitle>
             </CardHeader>
             <CardContent>
               {incident.recommendations && incident.recommendations.length > 0 ? (
@@ -319,7 +319,7 @@ export default function IncidentDetailPage() {
               ) : (
                 <div className="text-center p-6 bg-muted/30 border border-dashed rounded-xl">
                   <p className="text-sm text-muted-foreground italic">
-                    Chưa có khuyến nghị điều hướng hoặc thay đổi tín hiệu nào từ hệ thống chuyên môn.
+                    {t('op.noRecommendations')}
                   </p>
                 </div>
               )}

@@ -74,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // AI Predictions & Simulations
         Route::get('predictions', [PredictionController::class, 'index']);
         Route::get('predictions/{prediction}', [PredictionController::class, 'show']);
+        Route::post('predictions/trigger', [PredictionController::class, 'trigger']);
         Route::post('simulation/run', [\App\Http\Controllers\Api\TrafficSimulationController::class, 'runSimulation']);
 
         // Decision Approvals (Recommendations)

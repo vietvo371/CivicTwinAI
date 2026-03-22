@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Prediction;
+use App\Models\Incident;
+use App\Jobs\CallAIPrediction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Helpers\ApiResponse;
@@ -32,5 +34,25 @@ class PredictionController extends Controller
         $prediction->load(['incident', 'predictionEdges.edge', 'recommendations']);
 
         return ApiResponse::success($prediction, 'api.prediction_details');
+    }
+
+    public function trigger(Request $request): JsonResponse
+    {
+        $incidentId = $request->input('incident_id');
+
+        $incident = $incidentId
+            ? Incident::findOrFail($incidentId)
+            : Incident::latest()->first();
+
+        if (!$incident) {
+            return ApiResponse::error('No incidents found to run prediction on.', 404);
+        }
+
+        CallAIPrediction::dispatch($incident);
+
+        return ApiResponse::success([
+            'message' => 'Prediction job dispatched',
+            'incident_id' => $incident->id,
+        ], 'api.prediction_triggered');
     }
 }
