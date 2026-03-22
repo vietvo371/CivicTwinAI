@@ -63,8 +63,13 @@ export default function TrafficMap({ isPublic = false }: TrafficMapProps) {
   });
 
   // Real-time: update traffic density coloring and KPIs
-  useEcho<any>('traffic', 'TrafficDensityUpdated', (data) => {
-    if (!data.telemetryBatch || !map.current || !geojsonDataRef.current) return;
+  useEcho<any>('traffic', 'traffic.telemetry.updated', (data) => {
+    console.log("🔥 [Socket] Nhận bản tin TrafficRealtime:", data);
+    
+    if (!data.telemetryBatch || !map.current || !geojsonDataRef.current) {
+        console.warn("⚠️ [Socket] Thiếu dữ liệu hoặc map chưa sẵn sàng!", { hasBatch: !!data.telemetryBatch, hasMap: !!map.current, hasGeoRef: !!geojsonDataRef.current});
+        return;
+    }
 
     // Create a fast-lookup map for telemetry batch
     const updates = new Map(data.telemetryBatch.map((item: any) => [item.edge_id, item]));

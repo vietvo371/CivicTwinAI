@@ -89,7 +89,7 @@ try:
                 "timestamp": int(time.time()),
             })
             
-        # Push batch to Redis PubSub
+        # Push batch to Redis PubSub without Laravel prefix (Consumer handles it)
         r.publish("traffic_telemetry", json.dumps(telemetry_batch))
         print(f"[{time.strftime('%X')}] Đã broadcast telemetry cho {len(telemetry_batch)} edges lên kênh 'traffic_telemetry'")
         

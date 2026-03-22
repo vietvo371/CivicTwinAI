@@ -15,8 +15,12 @@ class TrafficTelemetryConsumer extends Command
     {
         $this->info("Bắt đầu lắng nghe kênh Redis 'traffic_telemetry'...");
 
+        // Disable prefix temporarily for this connection to match Python
+        config(['database.redis.options.prefix' => '']);
+        $redis = app('redis')->connection();
+
         // Subscribe blocking mode in Redis
-        Redis::subscribe(['traffic_telemetry'], function (string $message) {
+        $redis->subscribe(['traffic_telemetry'], function (string $message) {
             $telemetryBatch = json_decode($message, true);
 
             if (!is_array($telemetryBatch)) {
