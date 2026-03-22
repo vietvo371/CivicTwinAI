@@ -18,10 +18,10 @@ const doubledTechs = [...technologies, ...technologies];
 
 export default function InfiniteMarquee() {
   return (
-    <section className="py-16 border-y border-white/5 bg-slate-950/50 overflow-hidden relative">
+    <section className="py-16 border-y border-border/50 bg-background/50 overflow-hidden relative">
       {/* Edge masks */}
-      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#020617] to-transparent z-10 pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#020617] to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
       
       <div className="flex w-fit animate-marquee">
          {doubledTechs.map((tech, idx) => (
@@ -29,8 +29,8 @@ export default function InfiniteMarquee() {
              key={idx} 
              className="mx-10 lg:mx-14 flex items-center gap-3 min-w-max group"
            >
-              <span className="text-slate-700 group-hover:text-white transition-colors duration-300">{tech.logo}</span>
-              <span className="text-lg md:text-xl font-bold tracking-wider font-heading text-slate-700 group-hover:text-white transition-colors duration-300">
+              <span className="text-muted-foreground/50 group-hover:text-foreground transition-colors duration-300">{tech.logo}</span>
+              <span className="text-lg md:text-xl font-bold tracking-wider font-heading text-muted-foreground/50 group-hover:text-foreground transition-colors duration-300">
                 {tech.name}
               </span>
            </div>

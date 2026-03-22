@@ -86,15 +86,15 @@ export default function LoginDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="bg-white/10 hover:bg-white/20 text-white border border-white/10 px-6 backdrop-blur-md rounded-full font-semibold transition-all shadow-[0_0_15px_-3px_rgba(255,255,255,0.1)] h-10 flex items-center justify-center text-sm">
+      <DialogTrigger className="bg-primary hover:bg-primary/90 text-primary-foreground border border-border px-6 backdrop-blur-md rounded-full font-semibold transition-all shadow-md h-10 flex items-center justify-center text-sm">
         {t('loginDialog.consoleSignIn')}
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-md bg-slate-900/90 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-card/90 backdrop-blur-2xl border-border text-foreground shadow-2xl rounded-2xl p-0 overflow-hidden">
         {/* Decorative Top Border */}
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
 
-        <DialogHeader className="flex flex-col items-center justify-center gap-3 space-y-0 px-6 pt-8 pb-3 border-b border-white/5 bg-white/[0.02]">
+        <DialogHeader className="flex flex-col items-center justify-center gap-3 space-y-0 px-6 pt-8 pb-3 border-b border-border bg-secondary/20">
           <div className="flex items-center justify-center relative shrink-0 group">
             <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full scale-150 animate-pulse"></div>
             <Image 
@@ -110,7 +110,7 @@ export default function LoginDialog() {
             <DialogTitle className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
               CivicTwin AI
             </DialogTitle>
-            <DialogDescription className="text-sm font-medium mt-1 text-slate-400">
+            <DialogDescription className="text-sm font-medium mt-1 text-muted-foreground">
               {t('loginDialog.commandCenter')}
             </DialogDescription>
           </div>
@@ -125,15 +125,15 @@ export default function LoginDialog() {
           )}
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-black/40 border border-white/5 rounded-xl p-1 mb-4">
-              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">{t('loginDialog.signIn')}</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400">{t('loginDialog.signUp')}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-secondary border border-border rounded-xl p-1 mb-4">
+              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground shadow-sm">{t('loginDialog.signIn')}</TabsTrigger>
+              <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground shadow-sm">{t('loginDialog.signUp')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login" className="mt-0 outline-none">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="login-email" className="text-sm font-semibold text-slate-300">{t('loginDialog.emailAddress')}</label>
+                  <label htmlFor="login-email" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.emailAddress')}</label>
                   <Input
                     id="login-email"
                     type="email"
@@ -141,19 +141,19 @@ export default function LoginDialog() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                    className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="login-password" className="text-sm font-semibold text-slate-300">{t('loginDialog.password')}</label>
+                  <label htmlFor="login-password" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.password')}</label>
                   <Input
                     id="login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                    className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                   />
                 </div>
 
@@ -172,7 +172,7 @@ export default function LoginDialog() {
             <TabsContent value="register" className="mt-0 outline-none">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="reg-name" className="text-sm font-semibold text-slate-300">{t('loginDialog.fullName')}</label>
+                  <label htmlFor="reg-name" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.fullName')}</label>
                   <Input
                     id="reg-name"
                     type="text"
@@ -180,12 +180,12 @@ export default function LoginDialog() {
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
                     required
-                    className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                    className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="reg-email" className="text-sm font-semibold text-slate-300">{t('loginDialog.emailAddress')}</label>
+                  <label htmlFor="reg-email" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.emailAddress')}</label>
                   <Input
                     id="reg-email"
                     type="email"
@@ -193,31 +193,31 @@ export default function LoginDialog() {
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     required
-                    className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                    className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-password" className="text-sm font-semibold text-slate-300">{t('loginDialog.password')}</label>
+                    <label htmlFor="reg-password" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.password')}</label>
                     <Input
                       id="reg-password"
                       type="password"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
                       required
-                      className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                      className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label htmlFor="reg-confirm" className="text-sm font-semibold text-slate-300">{t('loginDialog.confirm')}</label>
+                    <label htmlFor="reg-confirm" className="text-sm font-semibold text-muted-foreground">{t('loginDialog.confirm')}</label>
                     <Input
                       id="reg-confirm"
                       type="password"
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
                       required
-                      className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
+                      className="bg-background border-input text-foreground h-11 focus-visible:ring-blue-500/50 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -237,16 +237,16 @@ export default function LoginDialog() {
 
           {/* Social Login Separator */}
           <div className="mt-6 mb-4 flex items-center gap-4">
-            <div className="h-[1px] flex-1 bg-white/10"></div>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">{t('loginDialog.orContinueWith')}</span>
-            <div className="h-[1px] flex-1 bg-white/10"></div>
+            <div className="h-[1px] flex-1 bg-border"></div>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">{t('loginDialog.orContinueWith')}</span>
+            <div className="h-[1px] flex-1 bg-border"></div>
           </div>
 
           {/* Google Login Button */}
           <Button 
             type="button" 
             variant="outline"
-            className="w-full text-base font-medium h-12 bg-white/5 border-white/10 hover:bg-white/10 text-white flex items-center justify-center gap-3 transition-colors"
+            className="w-full text-base font-medium h-12 bg-secondary hover:bg-secondary/80 text-foreground border-border flex items-center justify-center gap-3 transition-colors"
             onClick={() => {
               window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/redirect`;
             }}
@@ -262,8 +262,8 @@ export default function LoginDialog() {
           </Button>
         </div>
 
-        <div className="flex justify-center py-4 border-t border-white/5 bg-black/20">
-          <p className="text-xs font-medium text-slate-500">
+        <div className="flex justify-center py-4 border-t border-border bg-secondary/30">
+          <p className="text-xs font-medium text-muted-foreground">
             {t('loginDialog.citizenOperatorAuth')}
           </p>
         </div>

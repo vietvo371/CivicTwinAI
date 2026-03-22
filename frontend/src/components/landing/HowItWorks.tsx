@@ -41,7 +41,7 @@ export default function HowItWorks() {
           <div className="flex-1 space-y-2">
             {[85, 62, 94, 45].map((v, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-purple-500/20 flex-1">
+                <div className="h-2 rounded-full bg-purple-500/20 flex-1 animate-shimmer">
                   <motion.div
                     initial={{ width: 0 }}
                     whileInView={{ width: `${v}%` }}
@@ -99,7 +99,7 @@ export default function HowItWorks() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-medium text-slate-300"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50 border border-border text-[11px] font-medium text-muted-foreground"
             >
               <span className={`w-2 h-2 rounded-full ${item.dot} animate-pulse`}></span>
               {item.label}
@@ -119,7 +119,7 @@ export default function HowItWorks() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold font-heading mb-6 text-white"
+            className="text-4xl md:text-5xl font-bold font-heading mb-6 text-foreground"
           >
             {t('landing.howIt')}{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
@@ -131,7 +131,7 @@ export default function HowItWorks() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-slate-400"
+            className="text-lg text-muted-foreground"
           >
             {t('landing.howItWorksSubtitle')}
           </motion.p>
@@ -140,7 +140,7 @@ export default function HowItWorks() {
         {/* Timeline */}
         <div className="relative">
           {/* Vertical line */}
-          <div className="absolute left-8 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-[2px] bg-slate-800/80" />
+          <div className="absolute left-8 md:left-1/2 md:-translate-x-px top-0 bottom-0 w-[2px] bg-secondary/80" />
 
           <div className="space-y-16 md:space-y-24">
             {steps.map((step, idx) => (
@@ -163,24 +163,24 @@ export default function HowItWorks() {
 
                 {/* Content Card */}
                 <div className={`ml-20 md:ml-0 md:w-[calc(50%-3rem)] ${idx % 2 === 0 ? "md:pr-4" : "md:pl-4"}`}>
-                  <div className={`rounded-2xl border ${step.borderColor} bg-slate-900/60 backdrop-blur-md p-6 hover:bg-slate-900/80 transition-all hover:shadow-xl group`}>
+                  <div className={`rounded-2xl border ${step.borderColor} bg-card/60 backdrop-blur-md p-6 hover:bg-card/80 transition-all hover:shadow-xl group`}>
                     {/* Step Number */}
                     <div className={`text-xs font-bold ${step.color} uppercase tracking-[0.3em] mb-3`}>
                       {t('landing.step')} {step.step}
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl md:text-2xl font-bold font-heading text-white mb-3 tracking-wide">
+                    <h3 className="text-xl md:text-2xl font-bold font-heading text-foreground mb-3 tracking-wide">
                       {step.title}
                     </h3>
 
                     {/* Description */}
-                    <p className="text-slate-400 leading-relaxed text-sm mb-5">
+                    <p className="text-muted-foreground leading-relaxed text-sm mb-5">
                       {step.description}
                     </p>
 
                     {/* Mini Visual */}
-                    <div className="pt-4 border-t border-white/5">
+                    <div className="pt-4 border-t border-border/50">
                       {step.visual}
                     </div>
                   </div>
