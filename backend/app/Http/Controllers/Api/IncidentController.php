@@ -103,7 +103,7 @@ class IncidentController extends Controller
 
     public function show(Incident $incident): JsonResponse
     {
-        $incident->load(['reporter', 'assignee', 'predictions.predictionEdges', 'recommendations']);
+        $incident->load(['reporter', 'assignee', 'predictions.predictionEdges.edge', 'recommendations']);
 
         $coords = null;
         if (DB::connection()->getDriverName() === 'pgsql') {
