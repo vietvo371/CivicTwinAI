@@ -36,19 +36,42 @@ const NotificationContext = createContext<NotificationContextType>({
 });
 
 const MAX_NOTIFICATIONS = 50;
+const LOCAL_STORAGE_KEY = 'civictwin-read-notifs';
+
+const getReadIds = (): Set<string> => {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch {
+    return new Set();
+  }
+};
+
+const saveReadIds = (ids: Set<string>) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(Array.from(ids)));
+  } catch {}
+};
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const counterRef = useRef(0);
   const [seeded, setSeeded] = useState(false);
 
+  // Load from local storage initially inside seedNotifications
+
   const addNotification = useCallback((n: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     counterRef.current += 1;
+    const newId = `notif-${Date.now()}-${counterRef.current}`;
+    const readIds = getReadIds();
+    
     const newNotification: Notification = {
       ...n,
-      id: `notif-${Date.now()}-${counterRef.current}`,
+      id: newId,
       timestamp: new Date(),
-      read: false,
+      read: readIds.has(newId),
     };
     setNotifications(prev => [newNotification, ...prev].slice(0, MAX_NOTIFICATIONS));
   }, []);
@@ -56,7 +79,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const seedNotifications = useCallback((items: Notification[]) => {
     setNotifications(prev => {
       const existingIds = new Set(prev.map(n => n.id));
-      const newItems = items.filter(i => !existingIds.has(i.id));
+      const readIds = getReadIds();
+      const newItems = items
+        .filter(i => !existingIds.has(i.id))
+        .map(i => ({ ...i, read: i.read || readIds.has(i.id) }));
       return [...prev, ...newItems].slice(0, MAX_NOTIFICATIONS);
     });
     setSeeded(true);
@@ -64,10 +90,19 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    const ids = getReadIds();
+    ids.add(id);
+    saveReadIds(ids);
   }, []);
 
   const markAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => {
+      const next = prev.map(n => ({ ...n, read: true }));
+      const ids = getReadIds();
+      next.forEach(n => ids.add(n.id));
+      saveReadIds(ids);
+      return next;
+    });
   }, []);
 
   const clearAll = useCallback(() => {
