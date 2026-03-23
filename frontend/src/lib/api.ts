@@ -54,10 +54,12 @@ api.interceptors.response.use(
 
     switch (status) {
       case 401:
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
-          toast.error(message);
-          window.location.href = '/';
+          if (!['/', '/login'].includes(window.location.pathname)) {
+            toast.error(message);
+            window.location.href = '/';
+          }
         }
         break;
       case 403:

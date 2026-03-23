@@ -1,23 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { getEcho } from '@/lib/echo';
 import { useNotifications, type Notification as NotifType } from '@/hooks/useNotifications';
 import { useTranslation } from '@/lib/i18n';
+import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { useRef } from 'react';
 import api from '@/lib/api';
 
 export function NotificationListener() {
   const { addNotification, seedNotifications, seeded } = useNotifications();
   const { t } = useTranslation();
   const router = useRouter();
+  const { user } = useAuth();
   
-  // Use a ref so the WebSocket listener always has the latest translation function
-  // without needing to re-subscribe on language change.
+  // Use refs so the WebSocket listener always has the latest values
+  // without needing to re-subscribe.
   const tRef = useRef(t);
   tRef.current = t;
+  
+  const userRef = useRef(user);
+  userRef.current = user;
 
   // Seed notifications from API on first mount
   useEffect(() => {
@@ -58,13 +62,25 @@ export function NotificationListener() {
         console.log('[NotificationListener] 🔔 IncidentCreated received:', data);
 
         const currentT = tRef.current;
+        const currentUser = userRef.current;
+        
         const title = data.title || currentT('notifications.newIncident');
         const rawSeverity = data.severity || 'medium';
         const rawType = data.type || 'other';
         
         const translatedType = currentT(`enums.incidentType.${rawType}`);
         const translatedSeverity = currentT(`enums.incidentSeverity.${rawSeverity}`);
-        const link = `/alerts`;
+        
+        // Determine link based on user role
+        let link = `/alerts`;
+        if (data.id && currentUser) {
+          const roles = currentUser.roles || [];
+          if (roles.includes('traffic_operator') || roles.includes('super_admin') || roles.includes('city_admin')) {
+            link = `/dashboard/incidents/${data.id}`;
+          } else if (roles.includes('emergency')) {
+            link = `/emergency/incidents/${data.id}`;
+          }
+        }
 
         addNotification({
           title,
