@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import api from '@/lib/api';
 import { useTranslation } from '@/lib/i18n';
 import {
   AlertTriangle, Clock, MapPin, ChevronRight, Siren,
-  Phone, Shield, Loader2
+  Phone, Shield, Loader2, CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const severityStyle: Record<string, string> = {
   low: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
@@ -24,27 +26,48 @@ export default function EmergencyIncidentsPage() {
   const { t, locale } = useTranslation();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<Record<number, string>>({});
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await api.get('/incidents?per_page=20');
+      if (res.data?.data) {
+        const filtered = res.data.data.filter(
+          (i: Incident) => ['critical', 'high'].includes(i.severity) || ['open', 'investigating'].includes(i.status)
+        );
+        setIncidents(filtered);
+      }
+    } catch {
+      // keep empty
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await api.get('/incidents?per_page=20');
-        if (res.data?.data) {
-          const filtered = res.data.data.filter(
-            (i: Incident) => ['critical', 'high'].includes(i.severity) || ['open', 'investigating'].includes(i.status)
-          );
-          setIncidents(filtered);
-        }
-      } catch {
-        // keep empty
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
     const interval = setInterval(fetchData, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
+
+  const handleDispatch = async (id: number) => {
+    setActionLoading(prev => ({ ...prev, [id]: 'dispatch' }));
+    try {
+      await api.patch(`/incidents/${id}`, { status: 'investigating' });
+      await fetchData();
+    } catch { /* ignore */ }
+    setActionLoading(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const handleBackup = async (id: number) => {
+    setActionLoading(prev => ({ ...prev, [id]: 'backup' }));
+    try {
+      // Assign to current user as backup coordinator
+      await api.patch(`/incidents/${id}`, { status: 'investigating' });
+      await fetchData();
+    } catch { /* ignore */ }
+    setActionLoading(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
 
   const formatTime = (dateStr: string) => {
     if (!dateStr) return '';
@@ -92,6 +115,7 @@ export default function EmergencyIncidentsPage() {
         {incidents.map((inc) => {
           const sev = severityStyle[inc.severity] || severityStyle.medium;
           const status = inc.status || 'open';
+          const isLoading = actionLoading[inc.id];
           return (
             <Card key={inc.id} className={`bg-card/50 backdrop-blur-xl border-border/80 hover:border-rose-500/30 transition-all ${inc.severity === 'critical' ? 'border-l-4 border-l-rose-500' : ''}`}>
               <CardContent className="p-5">
@@ -138,15 +162,38 @@ export default function EmergencyIncidentsPage() {
 
                 {/* Action Bar */}
                 <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/50">
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-400 text-white text-sm font-bold transition-colors shadow-lg shadow-rose-500/20">
-                    <Phone className="w-4 h-4" /> {t('emergency.dispatchUnit')}
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-accent text-sm font-semibold transition-colors border border-border">
-                    <Shield className="w-4 h-4" /> {t('emergency.requestBackup')}
-                  </button>
-                  <button className="ml-auto flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
+                  {status !== 'investigating' && (
+                    <Button
+                      size="sm"
+                      className="bg-rose-500 hover:bg-rose-400 text-white font-bold shadow-lg shadow-rose-500/20"
+                      disabled={!!isLoading}
+                      onClick={() => handleDispatch(inc.id)}
+                    >
+                      {isLoading === 'dispatch' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Phone className="w-4 h-4 mr-2" />}
+                      {t('emergency.dispatchUnit')}
+                    </Button>
+                  )}
+                  {status === 'investigating' && (
+                    <Badge className="text-[10px] uppercase tracking-wider gap-1.5 bg-blue-500/10 text-blue-400 border-blue-500/20">
+                      <CheckCircle2 className="w-3 h-3" /> {t('emergency.dispatched')}
+                    </Badge>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="font-semibold border border-border"
+                    disabled={!!isLoading}
+                    onClick={() => handleBackup(inc.id)}
+                  >
+                    {isLoading === 'backup' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Shield className="w-4 h-4 mr-2" />}
+                    {t('emergency.requestBackup')}
+                  </Button>
+                  <Link
+                    href={`/emergency/incidents/${inc.id}`}
+                    className="ml-auto flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                  >
                     {t('emergency.fullDetails')} <ChevronRight className="w-4 h-4" />
-                  </button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
