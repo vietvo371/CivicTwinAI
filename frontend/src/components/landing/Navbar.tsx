@@ -17,54 +17,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Map, FileText, Bell, UserCircle, LayoutDashboard, LogOut, ChevronDown, AlertTriangle, ShieldAlert, Info, ChevronRight, MapPin } from "lucide-react";
+import { Map, FileText, Bell, UserCircle, LayoutDashboard, LogOut, ChevronDown, AlertTriangle, ShieldAlert, Info, ChevronRight, MapPin, CheckCheck, Trash2, Brain } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useNotifications, type Notification } from "@/hooks/useNotifications";
 
-// Demo notifications data
-const notifications = [
-  {
-    id: 1,
-    title: "Tai nạn nghiêm trọng — Cầu Sài Gòn",
-    area: "Q.2 ↔ Q.Bình Thạnh",
-    severity: "critical" as const,
-    time: "5 phút trước",
-    read: false,
-  },
-  {
-    id: 2,
-    title: "Ngập nước — Nguyễn Hữu Cảnh",
-    area: "Q.Bình Thạnh",
-    severity: "warning" as const,
-    time: "30 phút trước",
-    read: false,
-  },
-  {
-    id: 3,
-    title: "Thi công đường — Lê Lợi",
-    area: "Q.1",
-    severity: "info" as const,
-    time: "2 giờ trước",
-    read: true,
-  },
-];
-
-const sevIcon = {
-  critical: <ShieldAlert className="w-4 h-4 !text-rose-500" />,
-  warning: <AlertTriangle className="w-4 h-4 !text-amber-500" />,
-  info: <Info className="w-4 h-4 !text-blue-500" />,
+const notifTypeConfig: Record<string, { icon: typeof AlertTriangle; color: string }> = {
+  incident: { icon: AlertTriangle, color: 'text-orange-500' },
+  prediction: { icon: Brain, color: 'text-blue-500' },
+  system: { icon: Info, color: 'text-emerald-500' },
 };
 
-const sevDot = {
-  critical: "bg-rose-500",
-  warning: "bg-amber-500",
-  info: "bg-blue-500",
-};
+function timeAgo(date: Date, locale: string): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return locale === 'vi' ? 'Vừa xong' : 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}${locale === 'vi' ? ' phút trước' : 'm ago'}`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}${locale === 'vi' ? ' giờ trước' : 'h ago'}`;
+  const days = Math.floor(hours / 24);
+  return `${days}${locale === 'vi' ? ' ngày trước' : 'd ago'}`;
+}
 
 export default function Navbar({ showScrollProgress = false }: { showScrollProgress?: boolean }) {
   const { user, logout } = useAuth();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
+  const { notifications, unreadCount, markAllRead, clearAll, markAsRead } = useNotifications();
 
   const handleLogout = async () => {
     await logout();
@@ -77,8 +56,6 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
   const isOperatorOrAdmin = user?.roles?.some((r: string) =>
     ["traffic_operator", "city_admin", "super_admin"].includes(r)
   );
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
@@ -138,7 +115,7 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
               <Bell className="w-4.5 h-4.5 text-muted-foreground" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full ring-2 ring-background animate-pulse">
-                  {unreadCount}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </DropdownMenuTrigger>
@@ -149,42 +126,76 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="px-4 py-3 flex items-center justify-between !text-foreground">
                   <span className="text-sm font-bold !text-foreground">{t('navbar.notifications')}</span>
-                  {unreadCount > 0 && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full !bg-rose-500/10 !text-rose-400 !border !border-rose-500/20">
-                      {t('navbar.newCount', { n: String(unreadCount) })}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); markAllRead(); }}
+                        className="p-1 rounded-md hover:bg-accent transition-colors"
+                        title={t('notifications.markAllRead')}
+                      >
+                        <CheckCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); clearAll(); }}
+                        className="p-1 rounded-md hover:bg-destructive/10 transition-colors"
+                        title={t('notifications.clearAll')}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
+                      </button>
+                    )}
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full !bg-rose-500/10 !text-rose-400 !border !border-rose-500/20 ml-1">
+                        {t('navbar.newCount', { n: String(unreadCount) })}
+                      </span>
+                    )}
+                  </div>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator className="!bg-secondary m-0" />
 
               <div className="relative max-h-[320px] overflow-y-auto">
-                {notifications.map((n, i) => (
-                  <DropdownMenuGroup key={n.id}>
-                    <DropdownMenuItem
-                      onClick={() => router.push("/alerts")}
-                      className={`px-4 py-3.5 gap-3 rounded-none cursor-pointer focus:!bg-secondary/80 hover:!bg-secondary/80 transition-colors ${n.read ? "!opacity-60" : ""}`}
-                    >
-                      <div className="shrink-0 mt-0.5">{sevIcon[n.severity]}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className={`text-sm font-semibold truncate ${n.read ? "!text-muted-foreground" : "!text-foreground"}`}>{n.title}</p>
-                          {!n.read && <div className={`w-2 h-2 rounded-full shrink-0 ${sevDot[n.severity]}`} />}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[11px] flex items-center gap-1 !text-muted-foreground">
-                            <MapPin className="w-3 h-3 !text-muted-foreground" />{n.area}
-                          </span>
-                          <span className="text-[11px] !text-muted-foreground">·</span>
-                          <span className="text-[11px] !text-muted-foreground">{n.time}</span>
-                        </div>
-                      </div>
-                    </DropdownMenuItem>
-                    {i < notifications.length - 1 && (
-                      <DropdownMenuSeparator className="!bg-secondary m-0" />
-                    )}
-                  </DropdownMenuGroup>
-                ))}
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                    <Bell className="w-8 h-8 mb-2 opacity-30" />
+                    <p className="text-sm">{t('notifications.empty')}</p>
+                  </div>
+                ) : (
+                  notifications.map((notif: Notification, i: number) => {
+                    const config = notifTypeConfig[notif.type] || notifTypeConfig.system;
+                    const Icon = config.icon;
+                    return (
+                      <DropdownMenuGroup key={notif.id}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (!notif.read) markAsRead(notif.id);
+                            if (notif.link) router.push(notif.link);
+                            else router.push("/alerts");
+                          }}
+                          className={`px-4 py-3.5 gap-3 rounded-none cursor-pointer focus:!bg-secondary/80 hover:!bg-secondary/80 transition-colors ${notif.read ? "!opacity-60" : ""}`}
+                        >
+                          <div className={`shrink-0 mt-0.5 p-1.5 rounded-lg bg-secondary/80 ${config.color}`}>
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm truncate ${!notif.read ? "font-semibold !text-foreground" : "font-medium !text-muted-foreground"}`}>{notif.title}</p>
+                              {!notif.read && <div className="w-2 h-2 rounded-full shrink-0 bg-primary" />}
+                            </div>
+                            <p className="text-xs !text-muted-foreground mt-0.5 line-clamp-1">{notif.message}</p>
+                            <p className="text-[10px] !text-muted-foreground mt-1 font-medium">
+                              {timeAgo(notif.timestamp, locale)}
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                        {i < notifications.length - 1 && (
+                          <DropdownMenuSeparator className="!bg-secondary m-0" />
+                        )}
+                      </DropdownMenuGroup>
+                    );
+                  })
+                )}
               </div>
 
               <DropdownMenuSeparator className="!bg-secondary m-0" />

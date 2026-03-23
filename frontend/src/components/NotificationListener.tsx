@@ -2,14 +2,15 @@
 
 import { useEffect } from 'react';
 import { getEcho } from '@/lib/echo';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications, type Notification as NotifType } from '@/hooks/useNotifications';
 import { useTranslation } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
+import api from '@/lib/api';
 
 export function NotificationListener() {
-  const { addNotification } = useNotifications();
+  const { addNotification, seedNotifications, seeded } = useNotifications();
   const { t } = useTranslation();
   const router = useRouter();
   
@@ -17,6 +18,29 @@ export function NotificationListener() {
   // without needing to re-subscribe on language change.
   const tRef = useRef(t);
   tRef.current = t;
+
+  // Seed notifications from API on first mount
+  useEffect(() => {
+    if (seeded) return;
+    const seed = async () => {
+      try {
+        const res = await api.get('/incidents?per_page=20');
+        const incidents = res.data.data || [];
+        const items: NotifType[] = incidents.map((inc: any) => ({
+          id: `seed-${inc.id}`,
+          title: inc.title || 'Incident',
+          message: inc.description || inc.location_name || '',
+          type: 'incident' as const,
+          severity: inc.severity,
+          timestamp: new Date(inc.created_at),
+          read: inc.status === 'resolved',
+          link: `/alerts`,
+        }));
+        seedNotifications(items);
+      } catch {}
+    };
+    seed();
+  }, [seeded, seedNotifications]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -40,7 +64,7 @@ export function NotificationListener() {
         
         const translatedType = currentT(`enums.incidentType.${rawType}`);
         const translatedSeverity = currentT(`enums.incidentSeverity.${rawSeverity}`);
-        const link = `/dashboard/incidents/${data.id || ''}`;
+        const link = `/alerts`;
 
         addNotification({
           title,

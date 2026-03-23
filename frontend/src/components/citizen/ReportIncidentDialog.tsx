@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
+import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +26,10 @@ export default function ReportIncidentDialog() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState('');
+  const [incidentType, setIncidentType] = useState('accident');
+  const [severity, setSeverity] = useState('medium');
+  const [description, setDescription] = useState('');
 
   const handleOpenAlert = () => {
     if (!user) {
@@ -40,17 +45,34 @@ export default function ReportIncidentDialog() {
     setOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!location.trim()) return;
     setLoading(true);
-    
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      await api.post('/incidents', {
+        title: `${t(`enums.incidentType.${incidentType}`)} - ${location}`,
+        type: incidentType,
+        severity,
+        description: description || undefined,
+        source: 'citizen',
+        location_name: location,
+      });
+
       setOpen(false);
+      setLocation('');
+      setDescription('');
+      setIncidentType('accident');
+      setSeverity('medium');
       toast.success(t('report.incidentReported'), {
         description: t('report.reportSuccess'),
       });
-    }, 1500);
+    } catch {
+      toast.error(t('report.submitFailed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,7 +117,9 @@ export default function ReportIncidentDialog() {
               <Input 
                 placeholder={t('report.locationPlaceholder')}
                 className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-rose-500/50" 
-                required 
+                required
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
               />
             </div>
           </div>
@@ -104,7 +128,7 @@ export default function ReportIncidentDialog() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-slate-300">{t('op.incidentType')}</label>
-              <Select required defaultValue="accident">
+              <Select required value={incidentType} onValueChange={(v) => setIncidentType(v || 'accident')}>
                 <SelectTrigger className="bg-black/40 border-white/10 text-white h-11 focus:ring-rose-500/50">
                   <SelectValue placeholder={t('report.selectType')} />
                 </SelectTrigger>
@@ -120,7 +144,7 @@ export default function ReportIncidentDialog() {
             
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-slate-300">{t('common.severity')}</label>
-              <Select required defaultValue="medium">
+              <Select required value={severity} onValueChange={(v) => setSeverity(v || 'medium')}>
                 <SelectTrigger className="bg-black/40 border-white/10 text-white h-11 focus:ring-rose-500/50">
                   <SelectValue placeholder={t('report.selectSeverity')} />
                 </SelectTrigger>
@@ -138,7 +162,9 @@ export default function ReportIncidentDialog() {
             <label className="text-sm font-semibold text-slate-300">{t('report.descriptionOptional')}</label>
             <Textarea 
               placeholder={t('report.descriptionPlaceholder')}
-              className="bg-black/40 border-white/10 text-white min-h-[80px] focus-visible:ring-rose-500/50 resize-none" 
+              className="bg-black/40 border-white/10 text-white min-h-[80px] focus-visible:ring-rose-500/50 resize-none"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 

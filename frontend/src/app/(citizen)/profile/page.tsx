@@ -4,16 +4,21 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
+import api from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserCircle, Mail, Phone, Shield, Camera, FileText, Bell, Loader2, Save, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [reportCount, setReportCount] = useState(0);
+  const [alertCount, setAlertCount] = useState(0);
 
   // Form state
   const [name, setName] = useState("");
@@ -25,6 +30,14 @@ export default function ProfilePage() {
     }
     if (user) {
       setName(user.name || "");
+      setPhone((user as any).phone || "");
+      // Fetch activity stats
+      api.get('/incidents?source=citizen&per_page=1').then(res => {
+        setReportCount(res.data?.meta?.total || res.data?.data?.length || 0);
+      }).catch(() => {});
+      api.get('/incidents?per_page=1').then(res => {
+        setAlertCount(res.data?.meta?.total || res.data?.data?.length || 0);
+      }).catch(() => {});
     }
   }, [user, authLoading, router]);
 
@@ -41,9 +54,18 @@ export default function ProfilePage() {
   const getInitials = (n: string) =>
     n.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put('/profile', { name, phone: phone || null });
+      setSaved(true);
+      toast.success(t('citizen.profileUpdated'));
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      toast.error(t('citizen.profileUpdateFailed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const providerLabel = user?.roles?.includes("citizen")
@@ -138,6 +160,7 @@ export default function ProfilePage() {
           <div className="pt-2">
             <Button
               onClick={handleSave}
+              disabled={saving}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-8 h-11 shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all"
             >
               {saved ? (
@@ -156,12 +179,12 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-black/30 rounded-xl p-5 border border-white/5 text-center">
             <FileText className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-emerald-400">3</p>
+            <p className="text-2xl font-bold text-emerald-400">{reportCount}</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">{t('citizen.reportsSubmitted')}</p>
           </div>
           <div className="bg-black/30 rounded-xl p-5 border border-white/5 text-center">
             <Bell className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-amber-400">4</p>
+            <p className="text-2xl font-bold text-amber-400">{alertCount}</p>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">{t('citizen.alertsReceived')}</p>
           </div>
         </div>

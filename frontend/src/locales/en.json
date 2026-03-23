@@ -578,6 +578,8 @@
     "openLiveMap": "Open Live Map",
     "profile": "Profile",
     "profileSubtitle": "Manage your personal information",
+    "profileUpdated": "Profile updated successfully!",
+    "profileUpdateFailed": "Failed to update profile. Please try again.",
     "personalInfo": "Personal Information",
     "fullName": "Full Name",
     "emailAddress": "Email Address",
@@ -587,6 +589,9 @@
     "saveChanges": "Save Changes",
     "activitySummary": "Activity Summary",
     "reportsSubmitted": "Reports Submitted",
+    "reportDetail": "Report Detail",
+    "submittedAt": "Submitted",
+    "lastUpdated": "Last Updated",
     "alertsReceived": "Alerts Received",
     "citizenRole": "Citizen",
     "operatorRole": "Traffic Operator",
@@ -667,7 +672,8 @@
     "submitting": "Submitting...",
     "submitReport": "Submit Report",
     "incidentReported": "Incident Reported",
-    "reportSuccess": "Thank you! Your report has been sent to the command center."
+    "reportSuccess": "Thank you! Your report has been sent to the command center.",
+    "submitFailed": "Failed to submit report. Please try again."
   },
   "enums": {
     "roles": {

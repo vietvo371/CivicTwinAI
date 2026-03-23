@@ -560,6 +560,8 @@
     "openLiveMap": "Mở bản đồ trực tiếp",
     "profile": "Hồ sơ",
     "profileSubtitle": "Quản lý thông tin cá nhân",
+    "profileUpdated": "Cập nhật hồ sơ thành công!",
+    "profileUpdateFailed": "Cập nhật hồ sơ thất bại. Vui lòng thử lại.",
     "personalInfo": "Thông tin cá nhân",
     "fullName": "Họ và tên",
     "emailAddress": "Địa chỉ Email",
@@ -569,6 +571,9 @@
     "saveChanges": "Lưu thay đổi",
     "activitySummary": "Tóm tắt hoạt động",
     "reportsSubmitted": "Báo cáo đã gửi",
+    "reportDetail": "Chi tiết báo cáo",
+    "submittedAt": "Ngày gửi",
+    "lastUpdated": "Cập nhật lần cuối",
     "alertsReceived": "Cảnh báo đã nhận",
     "citizenRole": "Công dân",
     "operatorRole": "Điều hành giao thông",
@@ -650,7 +655,8 @@
     "submitting": "Đang gửi...",
     "submitReport": "Gửi báo cáo",
     "incidentReported": "Đã báo cáo sự cố",
-    "reportSuccess": "Cảm ơn! Báo cáo của bạn đã được gửi đến trung tâm điều hành."
+    "reportSuccess": "Cảm ơn! Báo cáo của bạn đã được gửi đến trung tâm điều hành.",
+    "submitFailed": "Gửi báo cáo thất bại. Vui lòng thử lại."
   },
   "enums": {
     "roles": {
