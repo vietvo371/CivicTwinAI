@@ -76,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('predictions/{prediction}', [PredictionController::class, 'show']);
         Route::post('predictions/trigger', [PredictionController::class, 'trigger']);
         Route::post('simulation/run', [\App\Http\Controllers\Api\TrafficSimulationController::class, 'runSimulation']);
+        Route::get('analytics/overview', [\App\Http\Controllers\Api\AnalyticsController::class, 'overview']);
 
         // Decision Approvals (Recommendations)
         Route::get('recommendations', [RecommendationController::class, 'index']);

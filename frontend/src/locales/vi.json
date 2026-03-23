@@ -560,7 +560,20 @@
     "resolved": "đã xử lý",
     "aiPredictionSpeed": "Tốc độ xử lý dự đoán AI",
     "incidentsByType": "Sự cố theo loại",
-    "breakdownByCategory": "Phân loại theo danh mục sự cố"
+    "breakdownByCategory": "Phân loại theo danh mục sự cố",
+    "avgDensity": "Mật độ TB",
+    "congested": "tắc nghẽn",
+    "aiConfidence": "Độ tin cậy AI",
+    "avgConfidence": "Độ tin cậy dự đoán trung bình",
+    "incidentTimeline": "Dòng thời gian sự cố",
+    "incidentsOverTime": "Số lượng sự cố theo thời gian",
+    "densityDistribution": "Phân bố mật độ",
+    "edgeDensityBuckets": "Đoạn đường theo mức mật độ hiện tại",
+    "edgesCount": "Đoạn đường",
+    "topCongestedRoads": "Đường tắc nhất",
+    "currentDensityRanking": "Xếp hạng theo mật độ giao thông hiện tại",
+    "realtime": "Thời gian thực",
+    "roadsAffected": "đường"
   },
   "citizen": {
     "trafficAlerts": "Cảnh báo giao thông",

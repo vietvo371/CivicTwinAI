@@ -578,7 +578,20 @@
     "resolved": "resolved",
     "aiPredictionSpeed": "AI prediction processing speed",
     "incidentsByType": "Incidents by Type",
-    "breakdownByCategory": "Breakdown by incident category"
+    "breakdownByCategory": "Breakdown by incident category",
+    "avgDensity": "Avg Density",
+    "congested": "congested",
+    "aiConfidence": "AI Confidence",
+    "avgConfidence": "Average prediction confidence",
+    "incidentTimeline": "Incident Timeline",
+    "incidentsOverTime": "Number of incidents over time",
+    "densityDistribution": "Density Distribution",
+    "edgeDensityBuckets": "Road segments by current density level",
+    "edgesCount": "Segments",
+    "topCongestedRoads": "Top Congested Roads",
+    "currentDensityRanking": "Roads ranked by current traffic density",
+    "realtime": "Real-time",
+    "roadsAffected": "roads"
   },
   "citizen": {
     "trafficAlerts": "Traffic Alerts",
