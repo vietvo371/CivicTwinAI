@@ -21,12 +21,21 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('vi');
+  const [locale, setLocaleState] = useState<Locale>('en');
 
   useEffect(() => {
+    if (!localStorage.getItem('civictwin-i18n-v2')) {
+      localStorage.setItem('civictwin-locale', 'en');
+      localStorage.setItem('civictwin-i18n-v2', 'true');
+      setLocaleState('en');
+      document.documentElement.lang = 'en';
+      return;
+    }
+
     const saved = localStorage.getItem('civictwin-locale') as Locale;
     if (saved && (saved === 'vi' || saved === 'en')) {
       setLocaleState(saved);
+      document.documentElement.lang = saved;
     }
   }, []);
 

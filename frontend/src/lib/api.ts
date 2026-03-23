@@ -27,7 +27,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
 
     // Send current locale to backend for translated responses
-    const locale = localStorage.getItem('civictwin-locale') || 'vi';
+    const locale = localStorage.getItem('civictwin-locale') || 'en';
     config.headers['Accept-Language'] = locale;
   }
   return config;

@@ -211,40 +211,52 @@ export default function TrafficMap({ isPublic = false, hideOverlays = false }: T
       map.current.on('load', () => {
         if (!map.current) return;
 
-        hideSymbols();
-        map.current.on('style.load', hideSymbols);
-
-        map.current.addSource('traffic-edges', {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] }
-        });
-
-        map.current.addLayer({
-          id: 'traffic-lines',
-          type: 'line',
-          source: 'traffic-edges',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          paint: {
-            'line-width': [
-              'interpolate', ['linear'], ['zoom'],
-              10, 2,
-              15, 6
-            ],
-            'line-color': [
-              'interpolate',
-              ['linear'],
-              ['get', 'current_density'],
-              0.0, '#10b981',
-              0.4, '#eab308',
-              0.6, '#f97316',
-              0.8, '#ef4444',
-              1.0, '#881337'
-            ]
+        const addLayers = () => {
+          if (!map.current) return;
+          if (!map.current.getSource('traffic-edges')) {
+            map.current.addSource('traffic-edges', {
+              type: 'geojson',
+              data: geojsonDataRef.current || { type: 'FeatureCollection', features: [] }
+            });
           }
-        });
+          if (!map.current.getLayer('traffic-lines')) {
+            map.current.addLayer({
+              id: 'traffic-lines',
+              type: 'line',
+              source: 'traffic-edges',
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-width': [
+                  'interpolate', ['linear'], ['zoom'],
+                  10, 2,
+                  15, 6
+                ],
+                'line-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'current_density'],
+                  0.0, '#10b981',
+                  0.4, '#eab308',
+                  0.6, '#f97316',
+                  0.8, '#ef4444',
+                  1.0, '#881337'
+                ]
+              }
+            });
+          }
+        };
+
+        const handleStyleLoad = () => {
+          hideSymbols();
+          addLayers();
+        };
+
+        hideSymbols();
+        addLayers();
+        map.current.on('style.load', handleStyleLoad);
 
         // Setup popups on hover — use pre-translated labels
         const speedLabel = t('trafficMap.speed');

@@ -44,6 +44,10 @@ export default function SimulationMap({ segments, isRunning, hasResult }: Simula
   const getStyle = () =>
     resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
 
+  // Keep a ref of resolvedTheme so the style.load closure reads the latest truth
+  const resolvedThemeRef = useRef(resolvedTheme);
+  useEffect(() => { resolvedThemeRef.current = resolvedTheme; }, [resolvedTheme]);
+
   // Initialize map once
   useEffect(() => {
     if (map.current || !mapContainer.current || !mapboxgl.accessToken) return;
@@ -65,61 +69,79 @@ export default function SimulationMap({ segments, isRunning, hasResult }: Simula
     map.current.on('load', async () => {
       if (!map.current) return;
 
-      // Hide buildings
-      const style = map.current.getStyle();
-      style?.layers?.forEach((layer: any) => {
-        if (layer.type === 'fill-extrusion' || layer.id.includes('building')) {
-          map.current?.setLayoutProperty(layer.id, 'visibility', 'none');
+      const hideBuildings = () => {
+        const style = map.current?.getStyle();
+        style?.layers?.forEach((layer: any) => {
+          if (layer.type === 'fill-extrusion' || layer.id.includes('building')) {
+            map.current?.setLayoutProperty(layer.id, 'visibility', 'none');
+          }
+        });
+      };
+
+      const addLayers = () => {
+        if (!map.current) return;
+
+        if (!map.current.getSource('sim-edges')) {
+          map.current.addSource('sim-edges', {
+            type: 'geojson',
+            data: geojsonRef.current || { type: 'FeatureCollection', features: [] },
+          });
         }
-      });
 
-      // Add source
-      map.current.addSource('sim-edges', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      });
+        if (!map.current.getLayer('sim-bg')) {
+          map.current.addLayer({
+            id: 'sim-bg',
+            type: 'line',
+            source: 'sim-edges',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.5, 15, 4],
+              'line-color': resolvedThemeRef.current === 'dark' ? '#374151' : '#d1d5db',
+              'line-opacity': 0.6,
+            },
+          });
+        }
 
-      // Background layer (all edges, dim)
-      map.current.addLayer({
-        id: 'sim-bg',
-        type: 'line',
-        source: 'sim-edges',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.5, 15, 4],
-          'line-color': resolvedTheme === 'dark' ? '#374151' : '#d1d5db',
-          'line-opacity': 0.6,
-        },
-      });
+        if (!map.current.getLayer('sim-affected')) {
+          map.current.addLayer({
+            id: 'sim-affected',
+            type: 'line',
+            source: 'sim-edges',
+            filter: ['==', ['get', 'sim_affected'], true],
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 8],
+              'line-color': ['get', 'sim_color'],
+              'line-opacity': 0.9,
+            },
+          });
+        }
 
-      // Affected layer (simulation result, brighter + thicker)
-      map.current.addLayer({
-        id: 'sim-affected',
-        type: 'line',
-        source: 'sim-edges',
-        filter: ['==', ['get', 'sim_affected'], true],
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3, 15, 8],
-          'line-color': ['get', 'sim_color'],
-          'line-opacity': 0.9,
-        },
-      });
+        if (!map.current.getLayer('sim-glow')) {
+          map.current.addLayer({
+            id: 'sim-glow',
+            type: 'line',
+            source: 'sim-edges',
+            filter: ['==', ['get', 'sim_affected'], true],
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-width': ['interpolate', ['linear'], ['zoom'], 10, 6, 15, 14],
+              'line-color': ['get', 'sim_color'],
+              'line-opacity': 0.15,
+              'line-blur': 4,
+            },
+          });
+        }
+      };
 
-      // Glow layer for affected
-      map.current.addLayer({
-        id: 'sim-glow',
-        type: 'line',
-        source: 'sim-edges',
-        filter: ['==', ['get', 'sim_affected'], true],
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-width': ['interpolate', ['linear'], ['zoom'], 10, 6, 15, 14],
-          'line-color': ['get', 'sim_color'],
-          'line-opacity': 0.15,
-          'line-blur': 4,
-        },
-      });
+      const handleStyleLoad = () => {
+        hideBuildings();
+        addLayers();
+      };
+
+      hideBuildings();
+      addLayers();
+      map.current.on('style.load', handleStyleLoad);
 
       // Load GeoJSON
       try {
