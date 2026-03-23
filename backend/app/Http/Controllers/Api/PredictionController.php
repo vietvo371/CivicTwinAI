@@ -14,7 +14,7 @@ class PredictionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Prediction::with('predictionEdges');
+        $query = Prediction::with('predictionEdges.edge');
 
         if ($request->has('incident_id')) {
             $query->where('incident_id', $request->incident_id);
@@ -48,11 +48,19 @@ class PredictionController extends Controller
             return ApiResponse::error('No incidents found to run prediction on.', 404);
         }
 
-        CallAIPrediction::dispatch($incident);
+        // Run synchronously so we can return results immediately
+        CallAIPrediction::dispatchSync($incident);
+
+        // Load the latest prediction for this incident
+        $prediction = Prediction::where('incident_id', $incident->id)
+            ->latest()
+            ->with('predictionEdges.edge')
+            ->first();
 
         return ApiResponse::success([
-            'message' => 'Prediction job dispatched',
+            'message' => 'Prediction completed',
             'incident_id' => $incident->id,
+            'prediction' => $prediction,
         ], 'api.prediction_triggered');
     }
 }

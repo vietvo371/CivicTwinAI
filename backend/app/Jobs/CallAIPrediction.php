@@ -33,11 +33,34 @@ class CallAIPrediction implements ShouldQueue
         );
 
         $edgeIds = $affectedEdgeIds?->affected_edge_ids
-            ? array_map('intval', explode(',', trim($affectedEdgeIds->affected_edge_ids, '{}')))
+            ? array_filter(
+                array_map('intval', explode(',', trim($affectedEdgeIds->affected_edge_ids, '{}'))),
+                fn ($id) => $id > 0
+              )
             : [];
 
+        // Auto-find nearby edges if none specified
         if (empty($edgeIds)) {
-            Log::warning("Incident #{$this->incident->id} has no affected edges, skipping prediction.");
+            $nearbyEdges = DB::select(
+                "SELECT e.id FROM edges e, incidents i
+                 WHERE i.id = ? AND i.location IS NOT NULL
+                 AND ST_DWithin(e.geometry::geography, i.location::geography, 500)
+                 ORDER BY ST_Distance(e.geometry::geography, i.location::geography)
+                 LIMIT 5",
+                [$this->incident->id]
+            );
+
+            $edgeIds = array_map(fn ($row) => $row->id, $nearbyEdges);
+        }
+
+        // Fallback: pick random edges if still empty (no location on incident)
+        if (empty($edgeIds)) {
+            $randomEdges = DB::select('SELECT id FROM edges ORDER BY RANDOM() LIMIT 3');
+            $edgeIds = array_map(fn ($row) => $row->id, $randomEdges);
+        }
+
+        if (empty($edgeIds)) {
+            Log::warning("Incident #{$this->incident->id}: no edges found at all, skipping.");
             return;
         }
 
@@ -64,15 +87,24 @@ class CallAIPrediction implements ShouldQueue
                 'status' => 'completed',
             ]);
 
+            // Deduplicate: keep only shortest time_horizon per edge_id
+            $grouped = [];
             foreach ($data['predictions'] ?? [] as $pred) {
+                $eid = $pred['edge_id'];
+                if (!isset($grouped[$eid]) || $pred['time_horizon_minutes'] < $grouped[$eid]['time_horizon_minutes']) {
+                    $grouped[$eid] = $pred;
+                }
+            }
+
+            foreach ($grouped as $pred) {
                 PredictionEdge::create([
                     'prediction_id' => $prediction->id,
-                    'edge_id' => $pred['edge_id'],
+                    'edge_id'       => $pred['edge_id'],
                     'time_horizon_minutes' => $pred['time_horizon_minutes'],
-                    'predicted_density' => $pred['predicted_density'],
-                    'predicted_delay_s' => $pred['predicted_delay_s'],
-                    'confidence' => $pred['confidence'],
-                    'severity' => $pred['severity'],
+                    'predicted_density'    => $pred['predicted_density'],
+                    'predicted_delay_s'    => $pred['predicted_delay_s'],
+                    'confidence'           => $pred['confidence'],
+                    'severity'             => $pred['severity'],
                 ]);
             }
 

@@ -99,26 +99,19 @@ export function NotificationListener() {
         console.log('[NotificationListener] 🧠 PredictionReceived:', data);
 
         const currentT = tRef.current;
+        const edgeCount = data.edges?.length || 0;
         const title = currentT('notifications.newPrediction');
         const link = `/dashboard/predictions`;
+        const message = edgeCount > 0
+          ? currentT('notifications.predictionMessage', { edgeCount: String(edgeCount) })
+          : currentT('notifications.predictionCompleted');
 
-        addNotification({
-          title,
-          message: currentT('notifications.predictionMessage', {
-            edgeCount: String(data.edges?.length || 0),
-          }),
-          type: 'prediction',
-          link,
-        });
+        addNotification({ title, message, type: 'prediction', link });
 
         toast.info(
           <div className="cursor-pointer w-full flex flex-col gap-1" onClick={() => router.push(link)}>
             <span className="font-medium">{title}</span>
-            <span className="text-sm opacity-90">
-              {currentT('notifications.predictionMessage', {
-                edgeCount: String(data.edges?.length || 0),
-              })}
-            </span>
+            <span className="text-sm opacity-90">{message}</span>
           </div>,
           { duration: 5000 }
         );

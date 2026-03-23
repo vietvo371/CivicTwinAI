@@ -36,6 +36,7 @@ return [
     // Predictions
     'predictions_retrieved' => 'Predictions retrieved',
     'prediction_details' => 'Prediction details retrieved',
+    'prediction_triggered' => 'AI prediction job dispatched',
 
     // Recommendations
     'recommendations_retrieved' => 'Recommendations retrieved',

@@ -452,6 +452,10 @@
     "forecastDetail": "Chi tiết dự báo #{id}",
     "forecastDesc": "Công cụ phân tích không gian đã đánh giá tác động lan truyền trên {n} đoạn đường lân cận.",
     "noTelemetry": "Không có dữ liệu telemetry chi tiết cho phiên này.",
+    "roadsAffected": "đoạn đường bị ảnh hưởng",
+    "affectedRoadsTitle": "Dự đoán tác động lên các đoạn đường",
+    "predictionFailedDesc": "Mô hình AI gặp lỗi khi xử lý dự đoán này.",
+    "noAffectedEdgesDesc": "Sự cố này chưa có đoạn đường liên quan. Hãy gán đoạn đường bị ảnh hưởng khi tạo sự cố để AI phân tích.",
     "adjacentLocation": "Vị trí lân cận",
     "timeHorizon": "Khoảng thời gian",
     "projectedLoad": "Tải dự kiến",
@@ -516,6 +520,14 @@
     "before": "Trước",
     "after": "Sau",
     "segmentImpact": "Phân tích tác động theo đoạn",
+    "resetSim": "Đặt lại",
+    "simMapWaiting": "Chờ chạy mô phỏng",
+    "simMapHint": "Cấu hình tham số và chạy để xem kết quả trên bản đồ",
+    "simLegend": "Mật độ dự đoán",
+    "changeLabel": "Thay đổi",
+    "showAll": "Xem tất cả",
+    "more": "còn lại",
+    "simFailed": "Mô phỏng thất bại. Kiểm tra AI Service có đang chạy không.",
     "cctvMonitoring": "Giám sát CCTV",
     "camerasOnline": "{online}/{total} camera trực tuyến",
     "online": "Trực tuyến",
@@ -790,6 +802,7 @@
     "newIncident": "Sự cố mới",
     "incidentMessage": "Phát hiện sự cố {type} - Mức độ {severity}",
     "newPrediction": "Dự đoán AI mới",
-    "predictionMessage": "Dự đoán cho {edgeCount} đoạn đường"
+    "predictionMessage": "Dự đoán cho {edgeCount} đoạn đường",
+    "predictionCompleted": "Phân tích AI hoàn tất"
   }
 }

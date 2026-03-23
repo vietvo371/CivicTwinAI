@@ -36,6 +36,7 @@ return [
     // Predictions
     'predictions_retrieved' => 'Danh sách dự đoán',
     'prediction_details' => 'Chi tiết dự đoán',
+    'prediction_triggered' => 'Đã kích hoạt dự đoán AI',
 
     // Recommendations
     'recommendations_retrieved' => 'Danh sách đề xuất',

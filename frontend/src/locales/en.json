@@ -470,6 +470,10 @@
     "forecastDetail": "Forecast Detail #{id}",
     "forecastDesc": "The spatial engine has analyzed the spread impact on {n} adjacent road segments.",
     "noTelemetry": "No granular telemetry data generated for this session.",
+    "roadsAffected": "roads affected",
+    "affectedRoadsTitle": "Predicted Impact on Road Segments",
+    "predictionFailedDesc": "The AI model encountered an error while processing this prediction.",
+    "noAffectedEdgesDesc": "This incident has no associated road segments. Assign affected edges when creating incidents for AI analysis.",
     "adjacentLocation": "Adjacent location",
     "timeHorizon": "Time Horizon",
     "projectedLoad": "Projected Load",
@@ -534,6 +538,14 @@
     "before": "Before",
     "after": "After",
     "segmentImpact": "Segment-Level Impact Analysis",
+    "resetSim": "Reset",
+    "simMapWaiting": "Waiting for simulation",
+    "simMapHint": "Configure parameters and run to see results on map",
+    "simLegend": "Predicted Density",
+    "changeLabel": "Change",
+    "showAll": "Show all",
+    "more": "more",
+    "simFailed": "Simulation failed. Ensure AI Service is running.",
     "cctvMonitoring": "CCTV Monitoring",
     "camerasOnline": "{online}/{total} cameras online",
     "online": "Online",
@@ -807,6 +819,7 @@
     "newIncident": "New Incident",
     "incidentMessage": "Detected {type} incident - Severity: {severity}",
     "newPrediction": "New AI Prediction",
-    "predictionMessage": "Prediction for {edgeCount} road segments"
+    "predictionMessage": "Prediction for {edgeCount} road segments",
+    "predictionCompleted": "AI analysis completed"
   }
 }
