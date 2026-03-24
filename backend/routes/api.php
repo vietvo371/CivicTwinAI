@@ -42,6 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
+    // AI Assist (NLP + Vision)
+    Route::post('ai/parse-report', [\App\Http\Controllers\Api\AIAssistController::class, 'parseReport']);
+    Route::post('ai/analyze-image', [\App\Http\Controllers\Api\AIAssistController::class, 'analyzeImage']);
+
     // Shared Map Data (Nodes, Edges)
     Route::get('nodes', [NodeController::class, 'index']);
     Route::get('nodes/{node}', [NodeController::class, 'show']);
@@ -55,6 +59,9 @@ Route::middleware('auth:sanctum')->group(function () {
         return \App\Helpers\ApiResponse::success($query->get(), 'api.sensors_retrieved');
     });
 
+    // Citizen-accessible: Create Incident
+    Route::post('incidents', [IncidentController::class, 'store']);
+
     // ==========================================
     // ==========================================
     // 3. OPERATOR ROUTES (traffic_operator | city_admin | super_admin)
@@ -66,7 +73,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Traffic Management & Incidents
         Route::get('incidents', [IncidentController::class, 'index']);
-        Route::post('incidents', [IncidentController::class, 'store']);
         Route::get('incidents/{incident}', [IncidentController::class, 'show']);
         Route::patch('incidents/{incident}', [IncidentController::class, 'update']);
 

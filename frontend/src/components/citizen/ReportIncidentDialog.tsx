@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
@@ -17,8 +17,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MapPin, Camera, AlertTriangle } from "lucide-react";
+import { MapPin, Camera, AlertTriangle, Sparkles, Loader2, Eye, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 export default function ReportIncidentDialog() {
   const { t } = useTranslation();
@@ -27,9 +29,21 @@ export default function ReportIncidentDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState('');
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [incidentType, setIncidentType] = useState('accident');
   const [severity, setSeverity] = useState('medium');
   const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // AI states
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [aiParseLoading, setAiParseLoading] = useState(false);
+  const [aiVisionLoading, setAiVisionLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [aiVisionResult, setAiVisionResult] = useState<Record<string, any> | null>(null);
 
   const handleOpenAlert = () => {
     if (!user) {
@@ -45,26 +59,150 @@ export default function ReportIncidentDialog() {
     setOpen(true);
   };
 
+  // ─── MODULE 1: GPS Auto-Detect ───
+  const handleGetGPS = () => {
+    if (!navigator.geolocation) {
+      toast.error('Trình duyệt không hỗ trợ định vị GPS.');
+      return;
+    }
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setCoords({ lat, lng });
+
+        // Reverse Geocode via Mapbox
+        try {
+          const res = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}&language=vi&limit=1`
+          );
+          const geo = await res.json();
+          const placeName = geo.features?.[0]?.place_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          setLocation(placeName);
+          toast.success('📍 Đã xác định vị trí!', { description: placeName });
+        } catch {
+          setLocation(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }
+        setGpsLoading(false);
+      },
+      (err) => {
+        toast.error('Không thể lấy vị trí: ' + err.message);
+        setGpsLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  // ─── MODULE 2: Groq NLP Auto-Fill ───
+  const handleAIParse = async () => {
+    if (!description.trim()) {
+      toast.error('Hãy nhập mô tả trước khi phân tích AI.');
+      return;
+    }
+    setAiParseLoading(true);
+    setAiSuggestion(null);
+    try {
+      const res = await api.post('/ai/parse-report', { text: description });
+      const data = res.data?.data;
+
+      if (data?.error === 'NOT_ENOUGH_INFO') {
+        toast.warning('🤖 ' + (data.message || 'Mô tả chưa rõ ràng để AI phân tích.'));
+        setAiParseLoading(false);
+        return;
+      }
+
+      // Auto-fill form fields from AI response
+      if (data?.type && ['accident', 'congestion', 'construction', 'weather', 'other'].includes(data.type)) {
+        setIncidentType(data.type);
+      }
+      if (data?.severity && ['low', 'medium', 'high', 'critical'].includes(data.severity)) {
+        setSeverity(data.severity);
+      }
+      if (data?.location && !location.trim()) {
+        setLocation(data.location);
+      }
+      setAiSuggestion(data?.summary || data?.title || null);
+      toast.success('🧠 AI đã phân tích xong!', {
+        description: data?.summary || 'Các trường đã được tự động điền.',
+      });
+    } catch {
+      toast.error('Phân tích AI thất bại. Vui lòng điền thủ công.');
+    }
+    setAiParseLoading(false);
+  };
+
+  // ─── MODULE 3: Groq Vision ───
+  const handleImageSelect = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ảnh quá lớn (tối đa 5MB).');
+      return;
+    }
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+
+    // Auto-analyze with Vision
+    setAiVisionLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await api.post('/ai/analyze-image', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const data = res.data?.data;
+
+      if (data?.type && ['accident', 'congestion', 'construction', 'weather', 'other'].includes(data.type)) {
+        setIncidentType(data.type);
+      }
+      if (data?.severity && ['low', 'medium', 'high', 'critical'].includes(data.severity)) {
+        setSeverity(data.severity);
+      }
+      if (data?.description) {
+        setDescription(data.description);
+        setAiSuggestion(data.description);
+      }
+      setAiVisionResult(data);
+
+      const conf = data?.confidence ? `(${(data.confidence * 100).toFixed(0)}% tin cậy)` : '';
+      toast.success(`👁️ AI đã phân tích ảnh! ${conf}`, {
+        description: data?.description || 'Đã nhận diện tình huống.',
+      });
+    } catch {
+      // Vision fail is non-blocking - user can still submit
+      toast.info('Không thể phân tích ảnh tự động. Bạn vẫn có thể gửi báo cáo.');
+    }
+    setAiVisionLoading(false);
+  };
+
+  // ─── SUBMIT ───
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!location.trim()) return;
+    if (!location.trim()) {
+      toast.error('Vui lòng nhập hoặc chọn vị trí.');
+      return;
+    }
     setLoading(true);
 
     try {
-      await api.post('/incidents', {
-        title: `${t(`enums.incidentType.${incidentType}`)} - ${location}`,
-        type: incidentType,
-        severity,
-        description: description || undefined,
-        source: 'citizen',
-        location_name: location,
+      const formData = new FormData();
+      formData.append('title', `${t(`enums.incidentType.${incidentType}`)} - ${location}`);
+      formData.append('type', incidentType);
+      formData.append('severity', severity);
+      if (description) formData.append('description', description);
+      formData.append('source', 'citizen');
+      formData.append('location_name', location);
+      if (coords) {
+        formData.append('latitude', coords.lat.toString());
+        formData.append('longitude', coords.lng.toString());
+      }
+      if (imageFile) formData.append('image', imageFile);
+
+      await api.post('/incidents', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       setOpen(false);
-      setLocation('');
-      setDescription('');
-      setIncidentType('accident');
-      setSeverity('medium');
+      resetForm();
       toast.success(t('report.incidentReported'), {
         description: t('report.reportSuccess'),
       });
@@ -73,6 +211,18 @@ export default function ReportIncidentDialog() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    setLocation('');
+    setCoords(null);
+    setDescription('');
+    setIncidentType('accident');
+    setSeverity('medium');
+    setImageFile(null);
+    setPreviewUrl('');
+    setAiSuggestion(null);
+    setAiVisionResult(null);
   };
 
   return (
@@ -90,8 +240,8 @@ export default function ReportIncidentDialog() {
         <span>{t('report.reportIncident')}</span>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-xl bg-slate-900/90 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-2xl p-0 overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-orange-500"></div>
+      <DialogContent className="sm:max-w-xl bg-slate-900/90 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500"></div>
         
         <DialogHeader className="p-6 pb-4 border-b border-white/5 flex flex-row items-center gap-4">
           <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 shrink-0">
@@ -106,13 +256,29 @@ export default function ReportIncidentDialog() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Location */}
+          {/* Location + GPS */}
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-slate-300">{t('report.location')}</label>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" className="shrink-0 bg-white/5 border-white/10 hover:bg-white/10 text-slate-300 h-11">
-                <MapPin className="w-4 h-4 mr-2 text-blue-400" />
-                {t('report.currentGPS')}
+              <Button
+                type="button"
+                variant="outline"
+                className={`shrink-0 border-white/10 h-11 transition-all ${
+                  coords
+                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/30'
+                    : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                }`}
+                onClick={handleGetGPS}
+                disabled={gpsLoading}
+              >
+                {gpsLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : coords ? (
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-400" />
+                ) : (
+                  <MapPin className="w-4 h-4 mr-2 text-blue-400" />
+                )}
+                {coords ? 'GPS ✓' : t('report.currentGPS')}
               </Button>
               <Input 
                 placeholder={t('report.locationPlaceholder')}
@@ -122,6 +288,11 @@ export default function ReportIncidentDialog() {
                 onChange={(e) => setLocation(e.target.value)}
               />
             </div>
+            {coords && (
+              <p className="text-[10px] text-emerald-400/80 font-mono pl-1">
+                📍 {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+              </p>
+            )}
           </div>
 
           {/* Type & Severity Grid */}
@@ -134,9 +305,9 @@ export default function ReportIncidentDialog() {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-white/10 text-white">
                   <SelectItem value="accident">{t('report.accidentCrash')}</SelectItem>
-                  <SelectItem value="breakdown">{t('report.vehicleBreakdown')}</SelectItem>
-                  <SelectItem value="flood">{t('report.floodWeather')}</SelectItem>
+                  <SelectItem value="congestion">Ùn tắc / Kẹt xe</SelectItem>
                   <SelectItem value="construction">{t('report.roadWorkBlocked')}</SelectItem>
+                  <SelectItem value="weather">{t('report.floodWeather')}</SelectItem>
                   <SelectItem value="other">{t('report.other')}</SelectItem>
                 </SelectContent>
               </Select>
@@ -152,30 +323,164 @@ export default function ReportIncidentDialog() {
                   <SelectItem value="low">{t('report.lowPartial')}</SelectItem>
                   <SelectItem value="medium">{t('report.mediumDelay')}</SelectItem>
                   <SelectItem value="high">{t('report.highGridlock')}</SelectItem>
+                  <SelectItem value="critical">🔴 Rất nghiêm trọng</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description + AI Parse */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-300">{t('report.descriptionOptional')}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-300">{t('report.descriptionOptional')}</label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 gap-1.5 font-semibold"
+                onClick={handleAIParse}
+                disabled={aiParseLoading || !description.trim()}
+              >
+                {aiParseLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                {aiParseLoading ? 'Đang phân tích...' : 'AI Phân tích'}
+              </Button>
+            </div>
             <Textarea 
-              placeholder={t('report.descriptionPlaceholder')}
+              placeholder="VD: Xe tải lật ở ngã tư Nguyễn Văn Linh, kẹt cứng 2 hướng..."
               className="bg-black/40 border-white/10 text-white min-h-[80px] focus-visible:ring-rose-500/50 resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            <p className="text-[10px] text-slate-500 pl-1">💡 Mô tả chi tiết sẽ giúp AI tự điền loại & mức độ sự cố</p>
           </div>
 
-          {/* Photo Upload */}
-          <div className="space-y-1.5 focus-within:ring-2 focus-within:ring-rose-500/50 rounded-xl transition-all">
-            <label className="text-sm font-semibold text-slate-300">{t('report.photoEvidence')}</label>
-            <div className="border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center text-slate-400 hover:bg-white/5 hover:border-white/20 transition-colors cursor-pointer bg-black/20">
-              <Camera className="w-8 h-8 mb-2 opacity-50" />
-              <p className="text-sm font-medium text-slate-300">{t('report.clickUpload')}</p>
-              <p className="text-xs opacity-50 mt-1">{t('report.maxSize')}</p>
+          {/* AI Vision Analysis Card */}
+          {aiVisionResult && (
+            <div className="relative rounded-xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-950/50 via-slate-900/80 to-slate-900/50 animate-in fade-in slide-in-from-bottom-3 duration-300">
+              {/* Glow top bar */}
+              <div className="h-0.5 bg-gradient-to-r from-emerald-500 via-cyan-400 to-blue-500" />
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                    <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">AI Vision Analysis</span>
+                  </div>
+                  <button type="button" onClick={() => { setAiVisionResult(null); setAiSuggestion(null); }} className="text-slate-500 hover:text-white transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Detected badges */}
+                <div className="flex flex-wrap gap-2">
+                  {aiVisionResult.type && (
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                      {aiVisionResult.type}
+                    </span>
+                  )}
+                  {aiVisionResult.severity && (
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                      aiVisionResult.severity === 'critical' ? 'bg-rose-500/15 text-rose-300 border-rose-500/25' :
+                      aiVisionResult.severity === 'high' ? 'bg-orange-500/15 text-orange-300 border-orange-500/25' :
+                      aiVisionResult.severity === 'medium' ? 'bg-amber-500/15 text-amber-300 border-amber-500/25' :
+                      'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
+                    }`}>
+                      {aiVisionResult.severity}
+                    </span>
+                  )}
+                </div>
+
+                {/* Description */}
+                {aiVisionResult.description && (
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {aiVisionResult.description}
+                  </p>
+                )}
+
+                {/* Confidence bar */}
+                {aiVisionResult.confidence != null && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400 font-medium">Độ tin cậy</span>
+                      <span className="text-[10px] font-bold text-emerald-300">{(aiVisionResult.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-700 ease-out"
+                        style={{ width: `${Math.min(aiVisionResult.confidence * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Các trường đã được tự động điền từ ảnh
+                </p>
+              </div>
             </div>
+          )}
+
+          {/* Photo Upload + Vision */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-slate-300">{t('report.photoEvidence')}</label>
+              {aiVisionLoading && (
+                <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-semibold animate-pulse">
+                  <Eye className="w-3.5 h-3.5" /> AI đang phân tích ảnh...
+                </span>
+              )}
+            </div>
+            <input 
+              type="file" 
+              accept="image/jpeg, image/png, image/jpg" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleImageSelect(file);
+              }}
+            />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-white/5 transition-colors cursor-pointer bg-black/20 min-h-[120px] overflow-hidden group ${
+                aiVisionLoading
+                  ? 'border-amber-500/30 animate-pulse'
+                  : previewUrl
+                    ? 'border-emerald-500/30'
+                    : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              {previewUrl ? (
+                <div className="relative w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt="Preview" className="w-full object-cover rounded-lg group-hover:opacity-80 transition-opacity" style={{ maxHeight: '180px' }} />
+                  {aiVisionLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                      <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Đang phân tích...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-5 flex flex-col items-center">
+                  <Camera className="w-8 h-8 mb-2 opacity-50 group-hover:text-rose-400 group-hover:opacity-100 transition-colors" />
+                  <p className="text-sm font-medium text-slate-300">{t('report.clickUpload')}</p>
+                  <p className="text-[10px] opacity-50 mt-1">JPEG, PNG — max 5MB • AI sẽ tự nhận diện</p>
+                </div>
+              )}
+            </div>
+            {previewUrl && (
+              <Button type="button" variant="ghost" size="sm" className="mt-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 h-7 text-xs font-semibold w-full" onClick={() => { setImageFile(null); setPreviewUrl(''); }}>
+                Xóa ảnh
+              </Button>
+            )}
           </div>
 
           <div className="pt-2">
@@ -184,7 +489,12 @@ export default function ReportIncidentDialog() {
               className="w-full text-base font-bold h-12 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white border-0 shadow-lg shadow-rose-900/50" 
               disabled={loading}
             >
-              {loading ? t('report.submitting') : t('report.submitReport')}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  {t('report.submitting')}
+                </>
+              ) : t('report.submitReport')}
             </Button>
           </div>
         </form>

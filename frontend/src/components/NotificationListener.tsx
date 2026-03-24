@@ -63,6 +63,10 @@ export function NotificationListener() {
 
         const currentT = tRef.current;
         const currentUser = userRef.current;
+
+        // Citizens don't need operator-level incident notifications
+        const role = currentUser?.roles?.[0] || '';
+        if (role === 'citizen') return;
         
         const title = data.title || currentT('notifications.newIncident');
         const rawSeverity = data.severity || 'medium';
@@ -115,6 +119,12 @@ export function NotificationListener() {
         console.log('[NotificationListener] 🧠 PredictionReceived:', data);
 
         const currentT = tRef.current;
+        const currentUser = userRef.current;
+
+        // Only operators see AI prediction notifications
+        const role = currentUser?.roles?.[0] || '';
+        if (role === 'citizen') return;
+
         const edgeCount = data.edges?.length || 0;
         const title = currentT('notifications.newPrediction');
         const link = `/dashboard/predictions`;

@@ -62,7 +62,14 @@ class IncidentController extends Controller
             'longitude' => 'nullable|numeric',
             'affected_edge_ids' => 'nullable|array',
             'affected_edge_ids.*' => 'integer|exists:edges,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
+
+        $metadata = [];
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('incidents', 'public');
+            $metadata['images'] = [url('storage/' . $path)];
+        }
 
         $incident = Incident::create([
             'title' => $validated['title'],
@@ -71,7 +78,7 @@ class IncidentController extends Controller
             'severity' => $validated['severity'],
             'source' => $validated['source'],
             'reported_by' => $request->user()->id,
-            'metadata' => [],
+            'metadata' => $metadata,
         ]);
 
         $isPostgres = DB::connection()->getDriverName() === 'pgsql';

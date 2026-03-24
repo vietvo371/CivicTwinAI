@@ -40,6 +40,10 @@ return [
         'timeout' => env('AI_SERVICE_TIMEOUT', 10),
     ],
 
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY', ''),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

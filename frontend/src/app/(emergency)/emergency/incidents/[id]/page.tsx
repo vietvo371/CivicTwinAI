@@ -194,35 +194,45 @@ export default function IncidentDetailPage() {
         <div className="lg:col-span-3 space-y-6">
 
           {/* Description & Images */}
-          {(data.description || data.metadata?.images || data.metadata?.image_url) && (
-            <Card className="bg-card/50 backdrop-blur-xl border-border/80">
-              <CardContent className="p-6">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t('emergency.details')}</h3>
-                {data.description && <p className="text-sm leading-relaxed text-foreground/90">{data.description}</p>}
-                
-                {/* Citizen Evidence Images */}
-                {(() => {
-                  let imgs: string[] = [];
-                  if (Array.isArray(data.metadata?.images)) imgs = data.metadata.images;
-                  else if (typeof data.metadata?.image_url === 'string') imgs = [data.metadata.image_url];
-                  else if (typeof data.metadata?.photo === 'string') imgs = [data.metadata.photo];
-                  
-                  if (imgs.length === 0) return null;
+          {(() => {
+            let meta = data.metadata;
+            if (typeof meta === 'string') {
+              try { meta = JSON.parse(meta); } catch(e) {}
+            }
+            const hasImages = meta?.images?.length > 0 || meta?.image_url || meta?.photo;
+            
+            if (!data.description && !hasImages) return null;
 
-                  return (
-                    <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {imgs.map((src, idx) => (
-                        <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-border/50 group bg-black/20">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="Evidence" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </CardContent>
-            </Card>
-          )}
+            return (
+              <Card className="bg-card/50 backdrop-blur-xl border-border/80">
+                <CardContent className="p-6">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">{t('emergency.details')}</h3>
+                  {data.description && <p className="text-sm leading-relaxed text-foreground/90">{data.description}</p>}
+                  
+                  {/* Citizen Evidence Images */}
+                  {(() => {
+                    let imgs: string[] = [];
+                    if (Array.isArray(meta?.images)) imgs = meta.images;
+                    else if (typeof meta?.image_url === 'string') imgs = [meta.image_url];
+                    else if (typeof meta?.photo === 'string') imgs = [meta.photo];
+                    
+                    if (imgs.length === 0) return null;
+
+                    return (
+                      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {imgs.map((src, idx) => (
+                          <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-border/50 group bg-black/20">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt="Evidence" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            );
+          })()}
 
           {/* People */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
