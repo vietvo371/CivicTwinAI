@@ -21,8 +21,15 @@ interface Report {
   title?: string;
   description: string;
   status: string;
+  source?: string;
   created_at: string;
   updated_at?: string;
+  resolved_at?: string;
+  metadata?: {
+    images?: string[];
+  };
+  location?: { lat: number; lng: number } | null;
+  reporter?: { name: string; email?: string } | null;
 }
 
 const severityConfig: Record<string, { color: string; bg: string; border: string }> = {
@@ -201,55 +208,136 @@ export default function MyReportsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
           {selected && (() => {
             const sev = severityConfig[selected.severity] || severityConfig.low;
             const stat = statusConfig[selected.status] || statusConfig.pending;
+            const images = selected.metadata?.images || [];
+            const hasCoords = selected.location && selected.location.lat && selected.location.lng;
+
             return (
               <>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2 text-lg">
-                    <Eye className="w-5 h-5 text-primary" />
-                    {t('citizen.reportDetail')}
-                  </DialogTitle>
-                  <DialogDescription>
-                    #{selected.id} — {formatDate(selected.created_at)}
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="space-y-4 pt-2">
-                  {/* Type + Severity + Status */}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider">
-                      {t(`enums.incidentType.${selected.type}`)}
-                    </Badge>
-                    <Badge className={`text-[10px] font-bold uppercase tracking-wider border ${sev.bg} ${sev.border} ${sev.color}`}>
-                      {t(`enums.incidentSeverity.${selected.severity}`)}
-                    </Badge>
-                    <Badge variant="secondary" className={`text-[10px] font-bold uppercase tracking-wider gap-1 ${stat.color}`}>
-                      {stat.icon} {stat.label}
-                    </Badge>
+                {/* Image banner */}
+                {images.length > 0 && (
+                  <div className="relative w-full h-48 bg-secondary overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={images[0]}
+                      alt="Incident"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-3 left-4 flex items-center gap-2">
+                      <Badge className={`text-[10px] font-bold uppercase tracking-wider border ${sev.bg} ${sev.border} ${sev.color}`}>
+                        {t(`enums.incidentSeverity.${selected.severity}`)}
+                      </Badge>
+                      <Badge variant="secondary" className={`text-[10px] font-bold uppercase tracking-wider gap-1 ${stat.color} bg-white/90 dark:bg-black/60`}>
+                        {stat.icon} {stat.label}
+                      </Badge>
+                    </div>
+                    {images.length > 1 && (
+                      <span className="absolute bottom-3 right-4 text-[10px] font-bold text-white/80 bg-black/40 px-2 py-0.5 rounded-full">
+                        +{images.length - 1} {t('common.photos') || 'photos'}
+                      </span>
+                    )}
                   </div>
+                )}
+
+                <div className={`${images.length > 0 ? 'p-5' : 'p-6'} space-y-4`}>
+                  {/* Header */}
+                  <DialogHeader className="p-0">
+                    <DialogTitle className="text-lg font-bold flex items-center gap-2">
+                      <Eye className="w-5 h-5 text-primary shrink-0" />
+                      {selected.title || t(`enums.incidentType.${selected.type}`)}
+                    </DialogTitle>
+                    <DialogDescription className="flex items-center gap-2 text-xs">
+                      <span>#{selected.id}</span>
+                      <span className="text-muted-foreground/40">•</span>
+                      <span>{formatDate(selected.created_at)}</span>
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {/* Badges (if no image banner) */}
+                  {images.length === 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="text-xs font-bold uppercase tracking-wider">
+                        {t(`enums.incidentType.${selected.type}`)}
+                      </Badge>
+                      <Badge className={`text-[10px] font-bold uppercase tracking-wider border ${sev.bg} ${sev.border} ${sev.color}`}>
+                        {t(`enums.incidentSeverity.${selected.severity}`)}
+                      </Badge>
+                      <Badge variant="secondary" className={`text-[10px] font-bold uppercase tracking-wider gap-1 ${stat.color}`}>
+                        {stat.icon} {stat.label}
+                      </Badge>
+                    </div>
+                  )}
 
                   {/* Location */}
                   <div className="bg-secondary/50 rounded-xl p-4 border border-border">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('report.location')}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{t('report.location')}</p>
                     <p className="text-sm font-medium flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
                       {selected.location_name || selected.title || '—'}
                     </p>
+                    {hasCoords && (
+                      <p className="text-[10px] font-mono text-muted-foreground mt-1.5 pl-6">
+                        📍 {selected.location!.lat.toFixed(5)}, {selected.location!.lng.toFixed(5)}
+                      </p>
+                    )}
                   </div>
 
                   {/* Description */}
                   {selected.description && (
                     <div className="bg-secondary/50 rounded-xl p-4 border border-border">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('op.description')}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{t('report.description')}</p>
                       <p className="text-sm leading-relaxed">{selected.description}</p>
                     </div>
                   )}
 
+                  {/* Status Timeline */}
+                  <div className="bg-secondary/50 rounded-xl p-4 border border-border">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3">{t('common.status')}</p>
+                    <div className="flex items-center gap-1">
+                      {['open', 'investigating', 'resolved'].map((step, idx) => {
+                        const stepOrder = { open: 0, investigating: 1, resolved: 2 };
+                        const currentOrder = stepOrder[selected.status as keyof typeof stepOrder] ?? 0;
+                        const stepIdx = stepOrder[step as keyof typeof stepOrder];
+                        const isActive = stepIdx <= currentOrder;
+                        const isCurrent = step === selected.status;
+                        const stepLabels: Record<string, string> = {
+                          open: t('citizen.pending'),
+                          investigating: t('citizen.underReview'),
+                          resolved: t('citizen.resolved'),
+                        };
+                        return (
+                          <div key={step} className="flex items-center gap-1 flex-1">
+                            <div className={`flex flex-col items-center flex-1 ${isCurrent ? 'scale-105' : ''}`}>
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                                isActive
+                                  ? step === 'resolved' ? 'bg-emerald-500 text-white' : 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-muted-foreground'
+                              }`}>
+                                {step === 'open' ? <Clock className="w-3.5 h-3.5" /> :
+                                 step === 'investigating' ? <AlertTriangle className="w-3.5 h-3.5" /> :
+                                 <CheckCircle2 className="w-3.5 h-3.5" />}
+                              </div>
+                              <span className={`text-[9px] font-semibold mt-1 text-center leading-tight ${
+                                isActive ? 'text-foreground' : 'text-muted-foreground'
+                              }`}>{stepLabels[step]}</span>
+                            </div>
+                            {idx < 2 && (
+                              <div className={`h-0.5 flex-1 rounded-full -mt-3 ${
+                                stepIdx < currentOrder ? 'bg-primary' : 'bg-muted'
+                              }`} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Timestamps */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={`grid ${selected.resolved_at ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
                     <div className="bg-secondary/50 rounded-xl p-3 border border-border text-center">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('citizen.submittedAt')}</p>
                       <p className="text-sm font-medium">{formatDate(selected.created_at)}</p>
@@ -258,6 +346,12 @@ export default function MyReportsPage() {
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{t('citizen.lastUpdated')}</p>
                       <p className="text-sm font-medium">{selected.updated_at ? formatDate(selected.updated_at) : '—'}</p>
                     </div>
+                    {selected.resolved_at && (
+                      <div className="bg-emerald-500/5 rounded-xl p-3 border border-emerald-500/20 text-center">
+                        <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1">{t('citizen.resolvedAt') || 'Resolved'}</p>
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{formatDate(selected.resolved_at)}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>

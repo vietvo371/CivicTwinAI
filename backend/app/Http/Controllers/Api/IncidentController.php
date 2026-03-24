@@ -37,6 +37,12 @@ class IncidentController extends Controller
         $query = Incident::with(['reporter', 'assignee'])
             ->latest();
 
+        // Citizens only see incidents they reported
+        $user = $request->user();
+        if ($user && $user->roles && in_array('citizen', $user->roles->pluck('name')->toArray())) {
+            $query->where('reported_by', $user->id);
+        }
+
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
@@ -54,12 +60,13 @@ class IncidentController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string|min:10',
             'type' => 'required|in:accident,congestion,construction,weather,other',
             'severity' => 'required|in:low,medium,high,critical',
             'source' => 'required|in:operator,citizen,auto_detected',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'location_name' => 'required|string|min:5',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
             'affected_edge_ids' => 'nullable|array',
             'affected_edge_ids.*' => 'integer|exists:edges,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',

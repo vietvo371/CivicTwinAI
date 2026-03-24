@@ -59,8 +59,15 @@ Route::middleware('auth:sanctum')->group(function () {
         return \App\Helpers\ApiResponse::success($query->get(), 'api.sensors_retrieved');
     });
 
-    // Citizen-accessible: Create Incident
+    // Citizen-accessible: Create Incident + View (filtered by role in controller)
     Route::post('incidents', [IncidentController::class, 'store']);
+    Route::get('incidents', [IncidentController::class, 'index']);
+    Route::get('incidents/{incident}', [IncidentController::class, 'show']);
+
+    // Notifications (all authenticated users)
+    Route::get('notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::patch('notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);
+    Route::patch('notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
 
     // ==========================================
     // ==========================================
@@ -71,9 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('sensor-data', [SensorDataController::class, 'ingest']);
         Route::post('sensor-data/batch', [SensorDataController::class, 'batchIngest']);
 
-        // Traffic Management & Incidents
-        Route::get('incidents', [IncidentController::class, 'index']);
-        Route::get('incidents/{incident}', [IncidentController::class, 'show']);
+        // Traffic Management — Operator-only actions
         Route::patch('incidents/{incident}', [IncidentController::class, 'update']);
 
         // AI Predictions

@@ -23,13 +23,19 @@ export function NotificationListener() {
   const userRef = useRef(user);
   userRef.current = user;
 
-  // Seed notifications from API on first mount
+  // Seed notifications from API on first mount (API filters by role automatically)
   useEffect(() => {
     if (seeded) return;
     const seed = async () => {
       try {
         const res = await api.get('/incidents?per_page=20');
         const incidents = res.data.data || [];
+
+        // Determine link based on user role
+        const role = user?.roles?.[0] || 'citizen';
+        const linkPrefix = role === 'citizen' ? '/map' 
+          : (role === 'emergency' ? '/emergency/incidents' : '/dashboard/incidents');
+
         const items: NotifType[] = incidents.map((inc: any) => ({
           id: `seed-${inc.id}`,
           title: inc.title || 'Incident',
@@ -38,13 +44,13 @@ export function NotificationListener() {
           severity: inc.severity,
           timestamp: new Date(inc.created_at),
           read: inc.status === 'resolved',
-          link: `/alerts`,
+          link: role === 'citizen' ? `/map` : `${linkPrefix}/${inc.id}`,
         }));
         seedNotifications(items);
       } catch {}
     };
     seed();
-  }, [seeded, seedNotifications]);
+  }, [seeded, seedNotifications, user]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

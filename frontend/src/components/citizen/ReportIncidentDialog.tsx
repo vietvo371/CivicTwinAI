@@ -51,7 +51,7 @@ export default function ReportIncidentDialog() {
         description: t('auth.authRequiredDesc'),
         action: {
           label: t('auth.signIn'),
-          onClick: () => router.push("/login?redirect=/map")
+          onClick: () => router.push("/?redirect=/map")
         }
       });
       return;
@@ -62,7 +62,7 @@ export default function ReportIncidentDialog() {
   // ─── MODULE 1: GPS Auto-Detect ───
   const handleGetGPS = () => {
     if (!navigator.geolocation) {
-      toast.error('Trình duyệt không hỗ trợ định vị GPS.');
+      toast.error(t('report.gpsNotSupported'));
       return;
     }
     setGpsLoading(true);
@@ -80,14 +80,14 @@ export default function ReportIncidentDialog() {
           const geo = await res.json();
           const placeName = geo.features?.[0]?.place_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
           setLocation(placeName);
-          toast.success('📍 Đã xác định vị trí!', { description: placeName });
+          toast.success(`📍 ${t('report.gpsLocated')}`, { description: placeName });
         } catch {
           setLocation(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         }
         setGpsLoading(false);
       },
       (err) => {
-        toast.error('Không thể lấy vị trí: ' + err.message);
+        toast.error(`${t('report.gpsFailed')}: ${err.message}`);
         setGpsLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -97,7 +97,7 @@ export default function ReportIncidentDialog() {
   // ─── MODULE 2: Groq NLP Auto-Fill ───
   const handleAIParse = async () => {
     if (!description.trim()) {
-      toast.error('Hãy nhập mô tả trước khi phân tích AI.');
+      toast.error(t('report.aiParseEmpty'));
       return;
     }
     setAiParseLoading(true);
@@ -107,7 +107,7 @@ export default function ReportIncidentDialog() {
       const data = res.data?.data;
 
       if (data?.error === 'NOT_ENOUGH_INFO') {
-        toast.warning('🤖 ' + (data.message || 'Mô tả chưa rõ ràng để AI phân tích.'));
+        toast.warning('🤖 ' + (data.message || t('report.aiParseNotEnough')));
         setAiParseLoading(false);
         return;
       }
@@ -123,11 +123,11 @@ export default function ReportIncidentDialog() {
         setLocation(data.location);
       }
       setAiSuggestion(data?.summary || data?.title || null);
-      toast.success('🧠 AI đã phân tích xong!', {
-        description: data?.summary || 'Các trường đã được tự động điền.',
+      toast.success(t('report.aiParseSuccess'), {
+        description: data?.summary || t('report.aiAutoFilled'),
       });
     } catch {
-      toast.error('Phân tích AI thất bại. Vui lòng điền thủ công.');
+      toast.error(t('report.aiParseFailed'));
     }
     setAiParseLoading(false);
   };
@@ -135,7 +135,7 @@ export default function ReportIncidentDialog() {
   // ─── MODULE 3: Groq Vision ───
   const handleImageSelect = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ảnh quá lớn (tối đa 5MB).');
+      toast.error(t('report.imageTooLarge'));
       return;
     }
     setImageFile(file);
@@ -163,13 +163,13 @@ export default function ReportIncidentDialog() {
       }
       setAiVisionResult(data);
 
-      const conf = data?.confidence ? `(${(data.confidence * 100).toFixed(0)}% tin cậy)` : '';
-      toast.success(`👁️ AI đã phân tích ảnh! ${conf}`, {
-        description: data?.description || 'Đã nhận diện tình huống.',
+      const conf = data?.confidence ? `(${(data.confidence * 100).toFixed(0)}%)` : '';
+      toast.success(`${t('report.aiVisionSuccess')} ${conf}`, {
+        description: data?.description || t('report.aiVisionDetected'),
       });
     } catch {
       // Vision fail is non-blocking - user can still submit
-      toast.info('Không thể phân tích ảnh tự động. Bạn vẫn có thể gửi báo cáo.');
+      toast.info(t('report.aiVisionFailed'));
     }
     setAiVisionLoading(false);
   };
@@ -177,8 +177,24 @@ export default function ReportIncidentDialog() {
   // ─── SUBMIT ───
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!location.trim()) {
-      toast.error('Vui lòng nhập hoặc chọn vị trí.');
+
+    // ─── Validation ───
+    if (!coords) {
+      toast.error(t('report.validGpsRequired'), {
+        description: t('report.validGpsDesc'),
+      });
+      return;
+    }
+    if (location.trim().length < 5) {
+      toast.error(t('report.validLocationMin'), {
+        description: t('report.validLocationEx'),
+      });
+      return;
+    }
+    if (!description.trim() || description.trim().length < 10) {
+      toast.error(t('report.validDescMin'), {
+        description: t('report.validDescEx'),
+      });
       return;
     }
     setLoading(true);
@@ -239,17 +255,17 @@ export default function ReportIncidentDialog() {
         <AlertTriangle className="w-6 h-6 animate-pulse group-hover:animate-none" />
         <span>{t('report.reportIncident')}</span>
       </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-xl bg-slate-900/90 backdrop-blur-2xl border-white/10 text-white shadow-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+
+      <DialogContent className="sm:max-w-xl bg-white dark:bg-slate-900/95 backdrop-blur-2xl border-slate-200 dark:border-white/10 text-slate-900 dark:text-white shadow-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500"></div>
-        
-        <DialogHeader className="p-6 pb-4 border-b border-white/5 flex flex-row items-center gap-4">
+
+        <DialogHeader className="p-6 pb-4 border-b border-slate-200 dark:border-white/5 flex flex-row items-center gap-4">
           <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 shrink-0">
             <AlertTriangle className="w-6 h-6 text-rose-500" />
           </div>
           <div className="text-left space-y-1">
-            <DialogTitle className="text-2xl font-bold tracking-tight text-white">{t('report.reportTitle')}</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogTitle className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{t('report.reportTitle')}</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400">
               {t('report.reportDesc')}
             </DialogDescription>
           </div>
@@ -258,16 +274,15 @@ export default function ReportIncidentDialog() {
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Location + GPS */}
           <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-slate-300">{t('report.location')}</label>
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('report.location')}</label>
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
-                className={`shrink-0 border-white/10 h-11 transition-all ${
-                  coords
-                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/30'
-                    : 'bg-white/5 hover:bg-white/10 text-slate-300'
-                }`}
+                className={`shrink-0 h-11 transition-all ${coords
+                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/30'
+                    : 'bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-white/10'
+                  }`}
                 onClick={handleGetGPS}
                 disabled={gpsLoading}
               >
@@ -278,11 +293,11 @@ export default function ReportIncidentDialog() {
                 ) : (
                   <MapPin className="w-4 h-4 mr-2 text-blue-400" />
                 )}
-                {coords ? 'GPS ✓' : t('report.currentGPS')}
+                {coords ? t('report.gpsConfirmed') : t('report.currentGPS')}
               </Button>
-              <Input 
+              <Input
                 placeholder={t('report.locationPlaceholder')}
-                className="bg-black/40 border-white/10 text-white h-11 focus-visible:ring-rose-500/50" 
+                className="bg-slate-100 dark:bg-black/40 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-11 focus-visible:ring-rose-500/50"
                 required
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -298,32 +313,32 @@ export default function ReportIncidentDialog() {
           {/* Type & Severity Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-300">{t('op.incidentType')}</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('op.incidentType')}</label>
               <Select required value={incidentType} onValueChange={(v) => setIncidentType(v || 'accident')}>
-                <SelectTrigger className="bg-black/40 border-white/10 text-white h-11 focus:ring-rose-500/50">
+                <SelectTrigger className="bg-slate-100 dark:bg-black/40 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-11 focus:ring-rose-500/50">
                   <SelectValue placeholder={t('report.selectType')} />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/10 text-white">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                   <SelectItem value="accident">{t('report.accidentCrash')}</SelectItem>
-                  <SelectItem value="congestion">Ùn tắc / Kẹt xe</SelectItem>
+                  <SelectItem value="congestion">{t('report.congestion')}</SelectItem>
                   <SelectItem value="construction">{t('report.roadWorkBlocked')}</SelectItem>
                   <SelectItem value="weather">{t('report.floodWeather')}</SelectItem>
                   <SelectItem value="other">{t('report.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-300">{t('common.severity')}</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('common.severity')}</label>
               <Select required value={severity} onValueChange={(v) => setSeverity(v || 'medium')}>
-                <SelectTrigger className="bg-black/40 border-white/10 text-white h-11 focus:ring-rose-500/50">
+                <SelectTrigger className="bg-slate-100 dark:bg-black/40 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white h-11 focus:ring-rose-500/50">
                   <SelectValue placeholder={t('report.selectSeverity')} />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-white/10 text-white">
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white">
                   <SelectItem value="low">{t('report.lowPartial')}</SelectItem>
                   <SelectItem value="medium">{t('report.mediumDelay')}</SelectItem>
                   <SelectItem value="high">{t('report.highGridlock')}</SelectItem>
-                  <SelectItem value="critical">🔴 Rất nghiêm trọng</SelectItem>
+                  <SelectItem value="critical">{t('report.critical')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -332,12 +347,12 @@ export default function ReportIncidentDialog() {
           {/* Description + AI Parse */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-300">{t('report.descriptionOptional')}</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('report.descriptionOptional')}</label>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 gap-1.5 font-semibold"
+                className="h-7 text-xs text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 hover:bg-violet-500/10 gap-1.5 font-semibold"
                 onClick={handleAIParse}
                 disabled={aiParseLoading || !description.trim()}
               >
@@ -346,21 +361,21 @@ export default function ReportIncidentDialog() {
                 ) : (
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
-                {aiParseLoading ? 'Đang phân tích...' : 'AI Phân tích'}
+                {aiParseLoading ? t('report.aiParsing') : t('report.aiParse')}
               </Button>
             </div>
-            <Textarea 
-              placeholder="VD: Xe tải lật ở ngã tư Nguyễn Văn Linh, kẹt cứng 2 hướng..."
-              className="bg-black/40 border-white/10 text-white min-h-[80px] focus-visible:ring-rose-500/50 resize-none"
+            <Textarea
+              placeholder={t('report.descriptionPlaceholder')}
+              className="bg-slate-100 dark:bg-black/40 border-slate-300 dark:border-white/10 text-slate-900 dark:text-white min-h-[80px] focus-visible:ring-rose-500/50 resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <p className="text-[10px] text-slate-500 pl-1">💡 Mô tả chi tiết sẽ giúp AI tự điền loại & mức độ sự cố</p>
+            <p className="text-[10px] text-slate-500 pl-1">{t('report.descriptionHint')}</p>
           </div>
 
           {/* AI Vision Analysis Card */}
           {aiVisionResult && (
-            <div className="relative rounded-xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-950/50 via-slate-900/80 to-slate-900/50 animate-in fade-in slide-in-from-bottom-3 duration-300">
+            <div className="relative rounded-xl overflow-hidden border border-emerald-500/20 bg-gradient-to-br from-emerald-50 dark:from-emerald-950/50 via-slate-50 dark:via-slate-900/80 to-white dark:to-slate-900/50 animate-in fade-in slide-in-from-bottom-3 duration-300">
               {/* Glow top bar */}
               <div className="h-0.5 bg-gradient-to-r from-emerald-500 via-cyan-400 to-blue-500" />
               <div className="p-4 space-y-3">
@@ -369,9 +384,9 @@ export default function ReportIncidentDialog() {
                     <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
                       <Eye className="w-3.5 h-3.5 text-emerald-400" />
                     </div>
-                    <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">AI Vision Analysis</span>
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-300 uppercase tracking-wider">{t('report.aiVisionTitle')}</span>
                   </div>
-                  <button type="button" onClick={() => { setAiVisionResult(null); setAiSuggestion(null); }} className="text-slate-500 hover:text-white transition-colors">
+                  <button type="button" onClick={() => { setAiVisionResult(null); setAiSuggestion(null); }} className="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -384,12 +399,11 @@ export default function ReportIncidentDialog() {
                     </span>
                   )}
                   {aiVisionResult.severity && (
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
-                      aiVisionResult.severity === 'critical' ? 'bg-rose-500/15 text-rose-300 border-rose-500/25' :
-                      aiVisionResult.severity === 'high' ? 'bg-orange-500/15 text-orange-300 border-orange-500/25' :
-                      aiVisionResult.severity === 'medium' ? 'bg-amber-500/15 text-amber-300 border-amber-500/25' :
-                      'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
-                    }`}>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${aiVisionResult.severity === 'critical' ? 'bg-rose-500/15 text-rose-300 border-rose-500/25' :
+                        aiVisionResult.severity === 'high' ? 'bg-orange-500/15 text-orange-300 border-orange-500/25' :
+                          aiVisionResult.severity === 'medium' ? 'bg-amber-500/15 text-amber-300 border-amber-500/25' :
+                            'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
+                      }`}>
                       {aiVisionResult.severity}
                     </span>
                   )}
@@ -397,7 +411,7 @@ export default function ReportIncidentDialog() {
 
                 {/* Description */}
                 {aiVisionResult.description && (
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                     {aiVisionResult.description}
                   </p>
                 )}
@@ -406,10 +420,10 @@ export default function ReportIncidentDialog() {
                 {aiVisionResult.confidence != null && (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 font-medium">Độ tin cậy</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t('report.aiVisionConfidence')}</span>
                       <span className="text-[10px] font-bold text-emerald-300">{(aiVisionResult.confidence * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700/50 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-700 ease-out"
                         style={{ width: `${Math.min(aiVisionResult.confidence * 100, 100)}%` }}
@@ -419,7 +433,7 @@ export default function ReportIncidentDialog() {
                 )}
 
                 <p className="text-[10px] text-slate-500 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Các trường đã được tự động điền từ ảnh
+                  <Sparkles className="w-3 h-3" /> {t('report.aiVisionAutoFill')}
                 </p>
               </div>
             </div>
@@ -428,32 +442,31 @@ export default function ReportIncidentDialog() {
           {/* Photo Upload + Vision */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-slate-300">{t('report.photoEvidence')}</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('report.photoEvidence')}</label>
               {aiVisionLoading && (
                 <span className="flex items-center gap-1.5 text-[10px] text-amber-400 font-semibold animate-pulse">
-                  <Eye className="w-3.5 h-3.5" /> AI đang phân tích ảnh...
+                  <Eye className="w-3.5 h-3.5" /> {t('report.aiVisionAnalyzing')}
                 </span>
               )}
             </div>
-            <input 
-              type="file" 
-              accept="image/jpeg, image/png, image/jpg" 
-              className="hidden" 
+            <input
+              type="file"
+              accept="image/jpeg, image/png, image/jpg"
+              className="hidden"
               ref={fileInputRef}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleImageSelect(file);
               }}
             />
-            <div 
+            <div
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-white/5 transition-colors cursor-pointer bg-black/20 min-h-[120px] overflow-hidden group ${
-                aiVisionLoading
+              className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer bg-slate-50/50 dark:bg-black/20 min-h-[120px] overflow-hidden group ${aiVisionLoading
                   ? 'border-amber-500/30 animate-pulse'
                   : previewUrl
                     ? 'border-emerald-500/30'
-                    : 'border-white/10 hover:border-white/20'
-              }`}
+                    : 'border-slate-300 dark:border-white/10 hover:border-slate-400 dark:hover:border-white/20'
+                }`}
             >
               {previewUrl ? (
                 <div className="relative w-full">
@@ -463,7 +476,7 @@ export default function ReportIncidentDialog() {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
                       <div className="flex items-center gap-2 text-amber-400 text-sm font-semibold">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Đang phân tích...</span>
+                        <span>{t('report.aiParsing')}</span>
                       </div>
                     </div>
                   )}
@@ -471,22 +484,22 @@ export default function ReportIncidentDialog() {
               ) : (
                 <div className="py-5 flex flex-col items-center">
                   <Camera className="w-8 h-8 mb-2 opacity-50 group-hover:text-rose-400 group-hover:opacity-100 transition-colors" />
-                  <p className="text-sm font-medium text-slate-300">{t('report.clickUpload')}</p>
-                  <p className="text-[10px] opacity-50 mt-1">JPEG, PNG — max 5MB • AI sẽ tự nhận diện</p>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('report.clickUpload')}</p>
+                  <p className="text-[10px] opacity-50 mt-1">{t('report.photoHint')}</p>
                 </div>
               )}
             </div>
             {previewUrl && (
               <Button type="button" variant="ghost" size="sm" className="mt-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 h-7 text-xs font-semibold w-full" onClick={() => { setImageFile(null); setPreviewUrl(''); }}>
-                Xóa ảnh
+                {t('report.removePhoto')}
               </Button>
             )}
           </div>
 
           <div className="pt-2">
-            <Button 
-              type="submit" 
-              className="w-full text-base font-bold h-12 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white border-0 shadow-lg shadow-rose-900/50" 
+            <Button
+              type="submit"
+              className="w-full text-base font-bold h-12 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white border-0 shadow-lg shadow-rose-900/50"
               disabled={loading}
             >
               {loading ? (
