@@ -14,7 +14,7 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
       if (!user) {
         router.push('/');
       } else {
-        const hasAccess = user.roles?.includes('traffic_operator') || user.roles?.includes('city_admin') || user.roles?.includes('super_admin');
+        const hasAccess = user.roles?.includes('traffic_operator') || user.roles?.includes('city_admin') || user.roles?.includes('super_admin') || user.roles?.includes('urban_planner');
         if (!hasAccess) {
           router.push('/unauthorized');
         }

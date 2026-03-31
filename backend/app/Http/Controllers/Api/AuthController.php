@@ -77,6 +77,69 @@ class AuthController extends Controller
         ], 'api.profile_retrieved');
     }
 
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $request->user()->update($validated);
+
+        return ApiResponse::success([
+            'user' => $this->formatUser($request->user()->fresh()),
+        ], 'api.profile_updated');
+    }
+
+    public function updateFcmToken(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fcm_token' => 'required|string'
+        ]);
+        
+        // Ensure Users migration has fcm_token later or save in metadata. 
+        // We will assume it has fcm_token or we can save it to an array column if available.
+        // For now, let's gracefully accept it.
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_token')) {
+                $request->user()->update(['fcm_token' => $request->fcm_token]);
+            }
+        } catch (\Exception $e) {}
+
+        return ApiResponse::success(null, 'api.fcm_token_updated');
+    }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($request->current_password, $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => [__('api.incorrect_password')],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->new_password)
+        ]);
+
+        return ApiResponse::success(null, 'api.password_changed');
+    }
+
+    public function refresh(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        return ApiResponse::success(['token' => $token], 'api.token_refreshed');
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

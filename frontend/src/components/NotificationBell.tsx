@@ -5,6 +5,7 @@ import { Bell, CheckCheck, Trash2, AlertTriangle, Brain, Info } from 'lucide-rea
 import { useNotifications, type Notification } from '@/hooks/useNotifications';
 import { useTranslation } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 
 const typeConfig: Record<string, { icon: typeof AlertTriangle; color: string }> = {
   incident: { icon: AlertTriangle, color: 'text-orange-500' },
@@ -29,6 +30,7 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
   const { notifications, unreadCount, markAllRead, clearAll, markAsRead } = useNotifications();
   const { t, locale } = useTranslation();
   const router = useRouter();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const [animate, setAnimate] = useState(false);
@@ -41,6 +43,16 @@ export function NotificationBell({ collapsed = false }: NotificationBellProps) {
     if (notif.link) {
       setOpen(false);
       router.push(notif.link);
+    } else {
+      setOpen(false);
+      const role = user?.roles?.[0] || '';
+      if (role === 'emergency') {
+        router.push('/emergency/incidents');
+      } else if (['traffic_operator', 'super_admin', 'city_admin', 'urban_planner'].includes(role)) {
+        router.push('/dashboard/incidents');
+      } else {
+        router.push('/alerts');
+      }
     }
   };
 

@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import { Map, AlertTriangle, Route, LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { NotificationBell } from '@/components/NotificationBell';
 
 function EmergencyGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -93,6 +94,7 @@ function EmergencyGuard({ children }: { children: React.ReactNode }) {
           <div className="flex items-center justify-center lg:justify-between px-2 pt-1 pb-2">
             <span className="hidden lg:block text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{t('sidebar.theme')}</span>
             <div className="flex items-center gap-1">
+              <NotificationBell collapsed={false} />
               <LanguageSwitcher />
               <ThemeToggle collapsed={false} />
             </div>

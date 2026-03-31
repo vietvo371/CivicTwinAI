@@ -253,12 +253,30 @@
     "updateFailed": "Cập nhật thất bại."
   },
   "roles": {
-    "super_admin": { "label": "Super Admin", "desc": "Toàn quyền hệ thống, quản lý users và cấu hình" },
-    "city_admin": { "label": "City Admin", "desc": "Quản lý hạ tầng đô thị, phê duyệt đề xuất AI" },
-    "traffic_operator": { "label": "Traffic Operator", "desc": "Giám sát giao thông real-time, xử lý sự cố" },
-    "urban_planner": { "label": "Urban Planner", "desc": "Phân tích dữ liệu, mô phỏng quy hoạch" },
-    "emergency": { "label": "Emergency Services", "desc": "Điều phối cứu hộ, xem incident khẩn cấp" },
-    "citizen": { "label": "Citizen", "desc": "Xem bản đồ công cộng, báo cáo sự cố" }
+    "super_admin": {
+      "label": "Super Admin",
+      "desc": "Toàn quyền hệ thống, quản lý users và cấu hình"
+    },
+    "city_admin": {
+      "label": "City Admin",
+      "desc": "Quản lý hạ tầng đô thị, phê duyệt đề xuất AI"
+    },
+    "traffic_operator": {
+      "label": "Traffic Operator",
+      "desc": "Giám sát giao thông real-time, xử lý sự cố"
+    },
+    "urban_planner": {
+      "label": "Urban Planner",
+      "desc": "Phân tích dữ liệu, mô phỏng quy hoạch"
+    },
+    "emergency": {
+      "label": "Emergency Services",
+      "desc": "Điều phối cứu hộ, xem incident khẩn cấp"
+    },
+    "citizen": {
+      "label": "Citizen",
+      "desc": "Xem bản đồ công cộng, báo cáo sự cố"
+    }
   },
   "master": {
     "title": "Dữ liệu nền tảng",
@@ -454,7 +472,7 @@
     "forecastDetail": "Chi tiết dự báo #{id}",
     "forecastDesc": "Công cụ phân tích không gian đã đánh giá tác động lan truyền trên {n} đoạn đường lân cận.",
     "noTelemetry": "Không có dữ liệu telemetry chi tiết cho phiên này.",
-    "roadsAffected": "đoạn đường bị ảnh hưởng",
+    "roadsAffected": "đường",
     "affectedRoadsTitle": "Dự đoán tác động lên các đoạn đường",
     "predictionFailedDesc": "Mô hình AI gặp lỗi khi xử lý dự đoán này.",
     "noAffectedEdgesDesc": "Sự cố này chưa có đoạn đường liên quan. Hãy gán đoạn đường bị ảnh hưởng khi tạo sự cố để AI phân tích.",
@@ -465,12 +483,11 @@
     "congestionTrajectory": "Quỹ đạo ùn tắc",
     "totalPredictions": "Tổng dự đoán",
     "successRate": "Tỉ lệ thành công",
-    "avgConfidence": "Độ tin cậy TB",
+    "avgConfidence": "Độ tin cậy dự đoán trung bình",
     "avgProcessingTime": "Thời gian xử lý TB",
     "runPrediction": "Chạy dự đoán",
     "framework": "Framework",
     "densityChart": "Mật độ & Độ tin cậy dự đoán",
-    "incidentRef": "Sự cố #{id}",
     "noSessionSelected": "Chưa chọn phiên nào",
     "selectSessionHint": "Vui lòng chọn phiên AI từ menu bên trái để xem metadata chi tiết và phân bố tải.",
     "opDecisions": "Quyết định điều hành",
@@ -565,8 +582,6 @@
     "breakdownByCategory": "Phân loại theo danh mục sự cố",
     "avgDensity": "Mật độ TB",
     "congested": "tắc nghẽn",
-    "aiConfidence": "Độ tin cậy AI",
-    "avgConfidence": "Độ tin cậy dự đoán trung bình",
     "incidentTimeline": "Dòng thời gian sự cố",
     "incidentsOverTime": "Số lượng sự cố theo thời gian",
     "densityDistribution": "Phân bố mật độ",
@@ -574,8 +589,7 @@
     "edgesCount": "Đoạn đường",
     "topCongestedRoads": "Đường tắc nhất",
     "currentDensityRanking": "Xếp hạng theo mật độ giao thông hiện tại",
-    "realtime": "Thời gian thực",
-    "roadsAffected": "đường"
+    "realtime": "Thời gian thực"
   },
   "citizen": {
     "trafficAlerts": "Cảnh báo giao thông",
@@ -682,7 +696,6 @@
     "emergencyUnit": "Đơn vị khẩn cấp",
     "emergencyRole": "Khẩn cấp"
   },
-
   "report": {
     "reportIncident": "Báo cáo sự cố",
     "reportTitle": "Báo cáo sự cố giao thông",

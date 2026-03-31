@@ -33,6 +33,8 @@ class IncidentCreated implements ShouldBroadcast
             'severity' => $this->incident->severity,
             'status' => $this->incident->status,
             'source' => $this->incident->source,
+            'location_name' => $this->incident->location_name ?? null,
+            'description' => $this->incident->description ?? null,
             'created_at' => $this->incident->created_at->toISOString(),
         ];
     }
