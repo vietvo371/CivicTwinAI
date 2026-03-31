@@ -25,29 +25,36 @@ export function NotificationListener() {
 
   // Seed notifications from API on first mount (API filters by role automatically)
   useEffect(() => {
-    if (seeded) return;
+    if (seeded || !user) return;
     const seed = async () => {
       try {
-        const res = await api.get('/incidents?per_page=20');
-        const incidents = res.data.data || [];
+        const res = await api.get('/notifications?per_page=20');
+        const notifications = res.data.data || [];
 
         // Determine link based on user role
         const role = user?.roles?.[0] || 'citizen';
         const linkPrefix = role === 'citizen' ? '/map' 
           : (role === 'emergency' ? '/emergency/incidents' : '/dashboard/incidents');
 
-        const items: NotifType[] = incidents.map((inc: any) => ({
-          id: `seed-${inc.id}`,
-          title: inc.title || 'Incident',
-          message: inc.description || inc.location_name || '',
-          type: 'incident' as const,
-          severity: inc.severity,
-          timestamp: new Date(inc.created_at),
-          read: inc.status === 'resolved',
-          link: role === 'citizen' ? `/map` : `${linkPrefix}/${inc.id}`,
-        }));
+        const items: NotifType[] = notifications.map((notif: any) => {
+          const type = notif.type === 'incident_created' ? 'incident' : 'system';
+          const incidentId = notif.data?.id || notif.data?.incident_id;
+          
+          return {
+            id: notif.id,
+            title: notif.title || 'Notification',
+            message: notif.message || '',
+            type: type as any,
+            severity: notif.data?.severity || 'medium',
+            timestamp: new Date(notif.created_at),
+            read: !!notif.read,
+            link: role === 'citizen' ? `/map` : (incidentId ? `${linkPrefix}/${incidentId}` : linkPrefix),
+          };
+        });
         seedNotifications(items);
-      } catch {}
+      } catch (error) {
+        console.error('[NotificationListener] ❌ Error seeding:', error);
+      }
     };
     seed();
   }, [seeded, seedNotifications, user]);
@@ -85,7 +92,7 @@ export function NotificationListener() {
         let link = `/alerts`;
         if (data.id && currentUser) {
           const roles = currentUser.roles || [];
-          if (roles.includes('traffic_operator') || roles.includes('super_admin') || roles.includes('city_admin')) {
+          if (roles.includes('traffic_operator') || roles.includes('super_admin') || roles.includes('city_admin') || roles.includes('urban_planner')) {
             link = `/dashboard/incidents/${data.id}`;
           } else if (roles.includes('emergency')) {
             link = `/emergency/incidents/${data.id}`;
@@ -127,9 +134,9 @@ export function NotificationListener() {
         const currentT = tRef.current;
         const currentUser = userRef.current;
 
-        // Only operators see AI prediction notifications
+        // Only operators/admins/planners see AI prediction notifications
         const role = currentUser?.roles?.[0] || '';
-        if (role === 'citizen') return;
+        if (role === 'citizen' || role === 'emergency') return;
 
         const edgeCount = data.edges?.length || 0;
         const title = currentT('notifications.newPrediction');

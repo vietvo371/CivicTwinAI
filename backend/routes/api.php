@@ -3,6 +3,9 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EdgeController;
 use App\Http\Controllers\Api\IncidentController;
+use App\Http\Controllers\Api\MapController;
+use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\NodeController;
 use App\Http\Controllers\Api\PredictionController;
 use App\Http\Controllers\Api\RecommendationController;
@@ -40,7 +43,12 @@ Route::prefix('public')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     // Profile Management
     Route::get('auth/me', [AuthController::class, 'me']);
+    Route::get('auth/check-login', [AuthController::class, 'me']); // Alias for mobile app
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('auth/update-fcm-token', [AuthController::class, 'updateFcmToken']);
+    Route::post('auth/refresh', [AuthController::class, 'refresh']);
+    Route::post('auth/change-password', [AuthController::class, 'changePassword']);
+    Route::put('profile', [AuthController::class, 'updateProfile']);
 
     // AI Assist (NLP + Vision)
     Route::post('ai/parse-report', [\App\Http\Controllers\Api\AIAssistController::class, 'parseReport']);
@@ -59,6 +67,39 @@ Route::middleware('auth:sanctum')->group(function () {
         return \App\Helpers\ApiResponse::success($query->get(), 'api.sensors_retrieved');
     });
 
+    // Mobile specific: Map Data endpoints
+    Route::prefix('map')->group(function () {
+        Route::get('reports', [MapController::class, 'reports']);
+        Route::get('heatmap', [MapController::class, 'heatmap']);
+        Route::get('clusters', [MapController::class, 'clusters']);
+        Route::get('routes', [MapController::class, 'routes']);
+    });
+
+    // Mobile specific: Reports endpoints (Citizen View)
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [ReportController::class, 'index']);
+        Route::post('/', [ReportController::class, 'store']);
+        Route::get('my', [ReportController::class, 'my']);
+        // Route::get('nearby', [ReportController::class, 'nearby']); 
+        // Route::get('trending', [ReportController::class, 'trending']);
+        // Route::get('stats', [ReportController::class, 'stats']);
+        Route::get('{id}', [ReportController::class, 'show']);
+        Route::post('{id}/view', [ReportController::class, 'view']);
+        // Route::put('{id}', [ReportController::class, 'update']);
+        // Route::delete('{id}', [ReportController::class, 'destroy']);
+        // Route::post('{id}/vote', [ReportController::class, 'vote']);
+        // Route::post('{id}/rate', [ReportController::class, 'rate']);
+        // Route::post('{id}/comments', [ReportController::class, 'comment']);
+    });
+
+    // Mobile specific: Media endpoints
+    Route::prefix('media')->group(function () {
+        Route::post('upload', [MediaController::class, 'upload']);
+        Route::get('my', [MediaController::class, 'my']);
+        Route::get('{id}', [MediaController::class, 'show']);
+        Route::delete('{id}', [MediaController::class, 'destroy']);
+    });
+
     // Citizen-accessible: Create Incident + View (filtered by role in controller)
     Route::post('incidents', [IncidentController::class, 'store']);
     Route::get('incidents', [IncidentController::class, 'index']);
@@ -66,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Notifications (all authenticated users)
     Route::get('notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::get('notifications/unread', [\App\Http\Controllers\Api\NotificationController::class, 'unread']);
+    Route::get('notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
     Route::patch('notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);
     Route::patch('notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
 
@@ -73,7 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // 3. OPERATOR ROUTES (traffic_operator | city_admin | super_admin)
     // ==========================================
-    Route::middleware('role:traffic_operator|city_admin|super_admin')->group(function () {
+    Route::middleware('role:traffic_operator|city_admin|super_admin|emergency|urban_planner')->group(function () {
         // Sensor Data Ingestion
         Route::post('sensor-data', [SensorDataController::class, 'ingest']);
         Route::post('sensor-data/batch', [SensorDataController::class, 'batchIngest']);

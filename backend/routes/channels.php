@@ -7,14 +7,21 @@ use Illuminate\Support\Facades\Broadcast;
 | Broadcast Channels — CivicTwinAI
 |--------------------------------------------------------------------------
 |
-| Public: traffic — real-time incidents, edge metrics, predictions
+| Public: traffic  — real-time incidents, edge metrics, predictions
+| Public: incidents — incident CRUD events (IncidentCreated, etc.)
 | Private: operator.{id} — operator-specific notifications (future)
 |
 */
 
-// Public channel — mọi người đều có thể lắng nghe
+// Public channel — real-time traffic & graph metrics
 // Events: IncidentCreated, EdgeMetricsUpdated, PredictionReceived
 Broadcast::channel('traffic', function () {
+    return true;
+});
+
+// Public channel — incident lifecycle events (mobile app)
+// Events: IncidentCreated, IncidentUpdated, IncidentResolved
+Broadcast::channel('incidents', function () {
     return true;
 });
 

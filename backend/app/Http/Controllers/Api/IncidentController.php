@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Incident;
 use App\Jobs\CallAIPrediction;
+use App\Events\IncidentCreated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,9 @@ class IncidentController extends Controller
                 [$edgeArray, $incident->id]
             );
         }
+
+        // Broadcast realtime event to all connected clients
+        IncidentCreated::dispatch($incident);
 
         // Dispatch AI prediction job for medium+ severity
         if (in_array($validated['severity'], ['medium', 'high', 'critical'])) {

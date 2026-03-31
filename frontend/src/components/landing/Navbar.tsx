@@ -54,7 +54,7 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const isOperatorOrAdmin = user?.roles?.some((r: string) =>
-    ["traffic_operator", "city_admin", "super_admin"].includes(r)
+    ["traffic_operator", "city_admin", "super_admin", "emergency", "urban_planner"].includes(r)
   );
 
   const { scrollYProgress } = useScroll();
@@ -171,7 +171,9 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
                           onClick={() => {
                             if (!notif.read) markAsRead(notif.id);
                             if (notif.link) router.push(notif.link);
-                            else router.push("/alerts");
+                            else if (user?.roles?.includes('emergency')) router.push('/emergency/incidents');
+                            else if (isOperatorOrAdmin) router.push('/dashboard/incidents');
+                            else router.push('/alerts');
                           }}
                           className={`px-4 py-3.5 gap-3 rounded-none cursor-pointer focus:!bg-secondary/80 hover:!bg-secondary/80 transition-colors ${notif.read ? "!opacity-60" : ""}`}
                         >
@@ -201,7 +203,11 @@ export default function Navbar({ showScrollProgress = false }: { showScrollProgr
               <DropdownMenuSeparator className="!bg-secondary m-0" />
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  onClick={() => router.push("/alerts")}
+                  onClick={() => {
+                    if (user?.roles?.includes('emergency')) router.push('/emergency/incidents');
+                    else if (isOperatorOrAdmin) router.push('/dashboard/incidents');
+                    else router.push('/alerts');
+                  }}
                   className="px-4 py-2.5 rounded-none cursor-pointer justify-center gap-1.5 text-xs font-semibold !text-blue-400 focus:!bg-secondary/80 hover:!bg-secondary/80"
                 >
                   {t('navbar.viewAllAlerts')}

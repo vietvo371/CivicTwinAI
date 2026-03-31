@@ -141,7 +141,7 @@ export default function IncidentDetailPage() {
   return (
     <div className="animate-in fade-in duration-500">
       {/* ─── HERO MAP SECTION ─── */}
-      <div className="relative w-full h-[45vh] min-h-[350px] -mt-6 -mx-6 bg-slate-900 overflow-hidden" style={{ width: 'calc(100% + 3rem)' }}>
+      <div className="relative w-full h-[45vh] min-h-[350px] -mt-6 -mx-6 bg-muted overflow-hidden" style={{ width: 'calc(100% + 3rem)' }}>
         <div ref={mapRef} className="absolute inset-0 z-0 w-full h-full" />
 
         {/* Gradient overlay bottom */}
