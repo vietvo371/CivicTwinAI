@@ -36,7 +36,12 @@ export {
   listItemStyles,
   avatarStyles,
   dividerStyle,
+  aegisStyles,
 } from './components';
+
+// Export new core components
+export { AegisCard } from '../components/common/AegisCard';
+export { AegisButton } from '../components/common/AegisButton';
 
 // Re-export wp & hp for convenience
 export { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';

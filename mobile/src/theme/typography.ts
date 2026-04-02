@@ -2,26 +2,16 @@ import { Platform } from 'react-native';
 
 export const typography = {
   fontFamily: Platform.select({
-    ios: 'SF Pro Display',
+    ios: 'Inter', // Prefer Inter if available
     android: 'Roboto',
+    default: 'System',
   }),
   fontWeights: {
-    regular: Platform.select({
-      ios: '400',
-      android: 'normal',
-    }),
-    medium: Platform.select({
-      ios: '500',
-      android: '500',
-    }),
-    semiBold: Platform.select({
-      ios: '600',
-      android: '600',
-    }),
-    bold: Platform.select({
-      ios: '700',
-      android: 'bold',
-    }),
+    regular: '400' as const,
+    medium: '500' as const,
+    semiBold: '600' as const,
+    bold: '700' as const,
+    extraBold: '800' as const,
   },
   sizes: {
     '2xs': 10,
@@ -38,15 +28,16 @@ export const typography = {
   },
   lineHeights: {
     none: 1,
-    tight: 1.25,
-    snug: 1.375,
+    tight: 1.1,
+    snug: 1.25,
     normal: 1.5,
     relaxed: 1.625,
     loose: 2,
   },
   letterSpacing: {
-    tighter: -0.8,
-    tight: -0.4,
+    tighter: -1.2,
+    tight: -0.6,
+    snug: -0.2,
     normal: 0,
     wide: 0.4,
     wider: 0.8,
@@ -62,38 +53,38 @@ export const createTextStyle = (
   fontFamily: typography.fontFamily,
   fontSize: typography.sizes[size],
   fontWeight: typography.fontWeights[weight],
-  lineHeight: typography.sizes[size] * typography.lineHeights[lineHeight],
+  lineHeight: Math.round(typography.sizes[size] * typography.lineHeights[lineHeight]),
 });
 
 // Common text styles
 export const textStyles = {
-  // Headers
+  // Headers (Snappy & Impactful)
   h1: {
-    ...createTextStyle('6xl', 'bold', 'tight'),
-    letterSpacing: typography.letterSpacing.tight,
+    ...createTextStyle('6xl', 'extraBold', 'tight'),
+    letterSpacing: typography.letterSpacing.tighter,
   },
   h2: {
-    ...createTextStyle('5xl', 'bold', 'tight'),
-    letterSpacing: typography.letterSpacing.tight,
+    ...createTextStyle('5xl', 'extraBold', 'tight'),
+    letterSpacing: typography.letterSpacing.tighter,
   },
   h3: {
     ...createTextStyle('4xl', 'bold', 'snug'),
     letterSpacing: typography.letterSpacing.tight,
   },
   h4: {
-    ...createTextStyle('3xl', 'semiBold', 'snug'),
+    ...createTextStyle('3xl', 'bold', 'snug'),
     letterSpacing: typography.letterSpacing.tight,
   },
   h5: {
     ...createTextStyle('2xl', 'semiBold', 'snug'),
-    letterSpacing: typography.letterSpacing.tight,
+    letterSpacing: typography.letterSpacing.snug,
   },
   h6: {
     ...createTextStyle('xl', 'semiBold', 'normal'),
-    letterSpacing: typography.letterSpacing.tight,
+    letterSpacing: typography.letterSpacing.snug,
   },
 
-  // Body text
+  // Body text (Readable & Precise)
   bodyLarge: {
     ...createTextStyle('lg', 'regular', 'relaxed'),
     letterSpacing: typography.letterSpacing.normal,
@@ -107,18 +98,18 @@ export const textStyles = {
     letterSpacing: typography.letterSpacing.normal,
   },
 
-  // Labels
+  // Labels (Functional)
   labelLarge: {
     ...createTextStyle('lg', 'medium', 'normal'),
-    letterSpacing: typography.letterSpacing.wide,
+    letterSpacing: typography.letterSpacing.snug,
   },
   labelMedium: {
     ...createTextStyle('md', 'medium', 'normal'),
-    letterSpacing: typography.letterSpacing.wide,
+    letterSpacing: typography.letterSpacing.snug,
   },
   labelSmall: {
     ...createTextStyle('sm', 'medium', 'normal'),
-    letterSpacing: typography.letterSpacing.wide,
+    letterSpacing: typography.letterSpacing.snug,
   },
 
   // Special cases
@@ -131,12 +122,12 @@ export const textStyles = {
     letterSpacing: typography.letterSpacing.normal,
   },
   overline: {
-    ...createTextStyle('xs', 'medium', 'normal'),
+    ...createTextStyle('xs', 'bold', 'normal'),
     letterSpacing: typography.letterSpacing.widest,
-    textTransform: 'uppercase',
+    textTransform: 'uppercase' as const,
   },
 
-  // Numbers
+  // Numbers (Tabular for dashboard alignment)
   numbers: {
     ...createTextStyle('2xl', 'bold', 'none'),
     letterSpacing: typography.letterSpacing.tight,

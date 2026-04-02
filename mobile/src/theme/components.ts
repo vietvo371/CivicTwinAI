@@ -385,6 +385,27 @@ export const avatarStyles = StyleSheet.create({
   },
 });
 
+export const aegisStyles = StyleSheet.create({
+  glass: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  card: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.md,
+  },
+  button: {
+    borderRadius: theme.borderRadius.md,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.primary,
+  },
+});
+
 export default {
   containerStyles,
   cardStyles,
@@ -396,4 +417,5 @@ export default {
   listItemStyles,
   avatarStyles,
   dividerStyle,
+  aegisStyles,
 };

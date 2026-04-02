@@ -5,10 +5,10 @@ import {
 import { Platform } from 'react-native';
 
 /**
- * Responsive System - Based on Fintech Best Practices
+ * Responsive System - CivicTwinAI Snappy UI
  * 
- * Using percentage-based measurements for true cross-device compatibility
- * Similar to: Binance, Coinbase, Revolut mobile apps
+ * Using percentage-based measurements for true cross-device compatibility.
+ * Optimized for high-density dashboards and real-time maps.
  */
 
 export const responsive = {
