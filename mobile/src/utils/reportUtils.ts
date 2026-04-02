@@ -138,3 +138,18 @@ export const getResponseTimeRemaining = (report: Report): number | null => {
     const diff = deadline.getTime() - now.getTime();
     return Math.floor(diff / (1000 * 60 * 60)); // Convert to hours
 };
+
+/**
+ * Format date string to readable format
+ * @param dateString - ISO date string
+ * @returns Formatted date string (DD/MM/YYYY)
+ */
+export const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+

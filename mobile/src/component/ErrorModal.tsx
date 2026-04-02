@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -84,11 +84,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
     >
       <View style={styles.modalRoot}>
         {/* Rapid Blur/Dark Overlay */}
-        {Platform.OS === 'ios' ? (
-          <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={5} />
-        ) : (
-          <Animated.View style={[styles.overlay, overlayStyle]} />
-        )}
+        <Animated.View style={[styles.overlay, overlayStyle]} />
 
         <Animated.View style={[styles.container, animatedStyle]}>
           <View style={styles.card}>

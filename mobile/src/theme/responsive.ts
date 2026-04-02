@@ -52,6 +52,8 @@ export const BORDER_RADIUS = {
   lg: wp('4%'),        // ~16px
   xl: wp('5%'),        // ~20px
   '2xl': wp('6%'),     // ~24px
+  '3xl': wp('8%'),     // ~32px
+  '4xl': wp('10%'),    // ~40px
   full: 9999,          // Circular
 };
 

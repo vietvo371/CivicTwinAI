@@ -117,7 +117,7 @@ export const buttonStyles = StyleSheet.create({
 });
 
 // Text Styles (Fintech-optimized readability)
-export const textStyles = StyleSheet.create({
+export const componentTextStyles = StyleSheet.create({
   h1: {
     fontSize: theme.typography.fontSize['5xl'],
     fontWeight: theme.typography.fontWeight.bold,
@@ -410,7 +410,7 @@ export default {
   containerStyles,
   cardStyles,
   buttonStyles,
-  textStyles,
+  componentTextStyles,
   inputStyles,
   badgeStyles,
   iconContainerStyles,

@@ -14,17 +14,19 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, COLORS, SPACING, FONT_SIZE, BORDER_RADIUS } from '../../theme';
 
 interface AegisButtonProps {
-  title: string;
+  title?: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   icon?: string;
+  iconSize?: number;
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   gradient?: string[];
   fullWidth?: boolean;
+  circular?: boolean;
 }
 
 /**
@@ -34,6 +36,7 @@ interface AegisButtonProps {
  * - Linear Gradient support
  * - Snappy scale-down animation
  * - Loading & Disabled states
+ * - Circular mode for FABs and center tab buttons
  */
 export const AegisButton: React.FC<AegisButtonProps> = ({
   title,
@@ -41,12 +44,14 @@ export const AegisButton: React.FC<AegisButtonProps> = ({
   variant = 'primary',
   size = 'md',
   icon,
+  iconSize,
   loading = false,
   disabled = false,
   style,
   textStyle,
   gradient,
   fullWidth = false,
+  circular = false,
 }) => {
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -112,6 +117,8 @@ export const AegisButton: React.FC<AegisButtonProps> = ({
         styles.container,
         vStyles.container,
         styles[size],
+        circular && styles.circular,
+        circular && styles[`circular_${size}`],
         fullWidth && styles.fullWidth,
         style,
         { opacity },
@@ -124,14 +131,16 @@ export const AegisButton: React.FC<AegisButtonProps> = ({
           {icon && (
             <Icon
               name={icon}
-              size={size === 'sm' ? 16 : 20}
+              size={iconSize || (size === 'sm' ? 16 : 20)}
               color={vStyles.text.color}
-              style={styles.icon}
+              style={[styles.icon, !title && { marginRight: 0 }]}
             />
           )}
-          <Text style={[styles.text, styles[`text_${size}`], vStyles.text, textStyle]}>
-            {title}
-          </Text>
+          {title && (
+            <Text style={[styles.text, styles[`text_${size}`], vStyles.text, textStyle]}>
+              {title}
+            </Text>
+          )}
         </View>
       )}
     </LinearGradient>
@@ -160,6 +169,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
   },
+  circular: {
+    paddingHorizontal: 0,
+    borderRadius: 999,
+    aspectRatio: 1, // Force 1:1 ratio
+  },
   innerLayout: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,6 +193,18 @@ const styles = StyleSheet.create({
   lg: {
     height: 56,
     paddingHorizontal: SPACING.xl,
+  },
+  circular_sm: {
+    width: 36,
+    height: 36,
+  },
+  circular_md: {
+    width: 48,
+    height: 48,
+  },
+  circular_lg: {
+    width: 56,
+    height: 56,
   },
   text: {
     fontWeight: theme.typography.fontWeight.semibold,

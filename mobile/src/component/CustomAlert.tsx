@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { 
   useSharedValue, 
@@ -96,11 +96,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     >
       <View style={styles.modalRoot}>
         {/* Rapid Blur/Dark Overlay */}
-        {Platform.OS === 'ios' ? (
-          <BlurView style={StyleSheet.absoluteFill} blurType="dark" blurAmount={5} />
-        ) : (
-          <Animated.View style={[styles.overlay, overlayStyle]} />
-        )}
+        <Animated.View style={[styles.overlay, overlayStyle]} />
 
         <Animated.View style={[styles.container, animatedStyle]}>
           <View style={styles.card}>

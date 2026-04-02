@@ -7,7 +7,7 @@
  */
 
 export { theme, COLORS } from './colors';
-export { typography, textStyles as typographyStyles, createTextStyle } from './typography';
+export { typography, textStyles, createTextStyle } from './typography';
 export { 
   responsive,
   FONT_SIZE,
@@ -29,7 +29,7 @@ export {
   containerStyles,
   cardStyles,
   buttonStyles,
-  textStyles,
+  componentTextStyles,
   inputStyles,
   badgeStyles,
   iconContainerStyles,

@@ -93,6 +93,8 @@ export const theme = {
     lg: 16,
     xl: 20,
     '2xl': 24,
+    '3xl': 32,
+    '4xl': 40,
     full: 9999,
   },
   

@@ -80,9 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [ReportController::class, 'index']);
         Route::post('/', [ReportController::class, 'store']);
         Route::get('my', [ReportController::class, 'my']);
-        // Route::get('nearby', [ReportController::class, 'nearby']); 
-        // Route::get('trending', [ReportController::class, 'trending']);
-        // Route::get('stats', [ReportController::class, 'stats']);
+        Route::get('nearby', [ReportController::class, 'nearby']); 
+        Route::get('trending', [ReportController::class, 'trending']);
+        Route::get('stats', [ReportController::class, 'stats']);
         Route::get('{id}', [ReportController::class, 'show']);
         Route::post('{id}/view', [ReportController::class, 'view']);
         // Route::put('{id}', [ReportController::class, 'update']);

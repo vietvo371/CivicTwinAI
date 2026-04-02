@@ -6,8 +6,8 @@ import {
   ViewStyle,
   Animated,
   Platform,
+  Text,
 } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
 import { theme, COLORS, SPACING, BORDER_RADIUS } from '../../theme';
 
 interface AegisCardProps {
@@ -18,6 +18,7 @@ interface AegisCardProps {
   padding?: keyof typeof SPACING | number;
   borderRadius?: keyof typeof BORDER_RADIUS | number;
   activeOpacity?: number;
+  showHudAccents?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ interface AegisCardProps {
  * Features:
  * - Glassmorphism support
  * - Dynamic elevation
+ * - Technical HUD accents (⌞ ⌟)
  * - Snappy scale animation on press
  */
 export const AegisCard: React.FC<AegisCardProps> = ({
@@ -36,6 +38,7 @@ export const AegisCard: React.FC<AegisCardProps> = ({
   padding = 'md',
   borderRadius = 'md',
   activeOpacity = 0.9,
+  showHudAccents = false,
 }) => {
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -77,6 +80,23 @@ export const AegisCard: React.FC<AegisCardProps> = ({
     }
   };
 
+  const HudAccents = () => (
+    <>
+      <View style={[styles.hudCorner, { top: 6, left: 6 }]}>
+        <Text style={styles.hudBracket}>⌞</Text>
+      </View>
+      <View style={[styles.hudCorner, { top: 6, right: 6 }]}>
+        <Text style={styles.hudBracket}>⌟</Text>
+      </View>
+      <View style={[styles.hudCorner, { bottom: 6, left: 6 }]}>
+        <Text style={styles.hudBracket}>⌜</Text>
+      </View>
+      <View style={[styles.hudCorner, { bottom: 6, right: 6 }]}>
+        <Text style={styles.hudBracket}>⌝</Text>
+      </View>
+    </>
+  );
+
   const CardContent = (
     <Animated.View
       style={[
@@ -87,14 +107,7 @@ export const AegisCard: React.FC<AegisCardProps> = ({
         onPress && { transform: [{ scale: scaleAnim }] },
       ]}
     >
-      {variant === 'glass' && (
-        <BlurView
-          style={[StyleSheet.absoluteFill, { borderRadius: br }]}
-          blurType="light"
-          blurAmount={10}
-          reducedTransparencyFallbackColor="white"
-        />
-      )}
+      {(variant === 'glass' || showHudAccents) && <HudAccents />}
       <View style={styles.content}>{children}</View>
     </Animated.View>
   );
@@ -130,9 +143,10 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   glass: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    ...theme.shadows.xs,
   },
   elevated: {
     ...theme.shadows.md,
@@ -141,6 +155,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1.5,
     borderColor: COLORS.border,
+  },
+  hudCorner: {
+    position: 'absolute',
+    zIndex: 2,
+    opacity: 0.25,
+  },
+  hudBracket: {
+    fontSize: 10,
+    color: COLORS.primary,
+    fontWeight: '900',
   },
 });
 

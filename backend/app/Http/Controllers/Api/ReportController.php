@@ -220,4 +220,67 @@ class ReportController extends Controller
         
         return ApiResponse::success(null, 'api.viewed');
     }
+
+    public function stats()
+    {
+        $stats = [
+            'tong_phan_anh' => Incident::count(),
+            'da_giai_quyet' => Incident::where('status', 'resolved')->count(),
+            'dang_xu_ly' => Incident::whereIn('status', ['open', 'investigating'])->count(),
+            'ty_le_giai_quyet' => Incident::count() > 0 
+                ? (Incident::where('status', 'resolved')->count() / Incident::count()) * 100 
+                : 0,
+        ];
+
+        return ApiResponse::success($stats, 'api.stats_retrieved');
+    }
+
+    public function nearby(Request $request)
+    {
+        $lat = $request->get('vi_do');
+        $lng = $request->get('kinh_do');
+        $radius = $request->get('radius', 5000); // 5km default
+
+        $query = Incident::with(['reporter'])
+            ->select([
+                '*',
+                DB::raw('ST_X(location::geometry) as longitude'),
+                DB::raw('ST_Y(location::geometry) as latitude'),
+            ]);
+
+        if ($lat && $lng && DB::connection()->getDriverName() === 'pgsql') {
+            $query->whereRaw(
+                'ST_DWithin(location, ST_SetSRID(ST_Point(?, ?), 4326), ?)',
+                [$lng, $lat, $radius / 111320] // Convert meters to degrees approximately
+            );
+        }
+
+        $incidents = $query->latest()->limit(20)->get();
+        
+        $mappedItems = $incidents->map(function($incident) {
+            return $this->mapIncidentToReport($incident);
+        });
+
+        return ApiResponse::success($mappedItems, 'api.nearby_reports_retrieved');
+    }
+
+    public function trending()
+    {
+        $query = Incident::with(['reporter'])
+            ->select([
+                '*',
+                DB::raw('ST_X(location::geometry) as longitude'),
+                DB::raw('ST_Y(location::geometry) as latitude'),
+            ])
+            ->orderByRaw("CAST(JSON_EXTRACT_PATH_TEXT(metadata, 'views') AS INTEGER) DESC")
+            ->limit(10);
+
+        $incidents = $query->get();
+        
+        $mappedItems = $incidents->map(function($incident) {
+            return $this->mapIncidentToReport($incident);
+        });
+
+        return ApiResponse::success($mappedItems, 'api.trending_reports_retrieved');
+    }
 }
