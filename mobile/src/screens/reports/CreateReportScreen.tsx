@@ -39,7 +39,7 @@ const PRIORITIES = [
   { value: 'critical', label: 'Khẩn cấp', color: '#F43F5E' },
 ];
 
-/** Sau upload media: giữ URI thiết bị để gửi `images[]` lên POST /incidents (cùng API với web). */
+/** Sau upload media: giữ URI thiết bị để gửi `images[]` khi tạo phản ánh. */
 type IncidentFormMedia = Media & {
   local_uri: string;
   local_type?: string;
@@ -49,6 +49,22 @@ type IncidentFormMedia = Media & {
 /** BE phải trả object; `[]` truthy từng làm app coi là có data. */
 function isVisionDataObject(data: unknown): data is Record<string, unknown> {
   return data !== null && typeof data === 'object' && !Array.isArray(data);
+}
+
+/** Tiêu đề gửi lên server: «Danh mục» - «địa chỉ» (hoặc tọa độ nếu chưa có địa chỉ). */
+function buildMobileIncidentTitle(
+  danh_muc: string,
+  dia_chi: string,
+  vi_do: number,
+  kinh_do: number,
+): string {
+  const categoryLabel = CATEGORIES.find((c) => c.value === danh_muc)?.label || 'Khác';
+  const loc =
+    dia_chi && String(dia_chi).trim() !== ''
+      ? String(dia_chi).trim()
+      : `${Number(vi_do).toFixed(5)}, ${Number(kinh_do).toFixed(5)}`;
+  const raw = `${categoryLabel} - ${loc}`;
+  return raw.length > 200 ? `${raw.slice(0, 197)}...` : raw;
 }
 
 const CreateReportScreen = () => {
@@ -94,7 +110,6 @@ const CreateReportScreen = () => {
   const categoryBackdropAnim = useRef(new Animated.Value(0)).current;
 
   const [formData, setFormData] = useState<any>({
-    tieu_de: '',
     mo_ta: '',
     danh_muc: 'accident',
     vi_do: 10.7769,
@@ -113,8 +128,8 @@ const CreateReportScreen = () => {
       if (raw) {
         try {
           const saved = JSON.parse(raw) as Partial<any>;
-          if (saved.tieu_de || saved.mo_ta || saved.dia_chi) {
-            const { the_tags: _removed, ...rest } = saved;
+          if (saved.mo_ta || saved.dia_chi) {
+            const { the_tags: _removed, tieu_de: _oldTitle, ...rest } = saved;
             setFormData((prev: any) => ({ ...prev, ...rest, media_ids: [] }));
             setDraftRestored(true);
             setTimeout(() => setDraftRestored(false), 4000);
@@ -129,7 +144,6 @@ const CreateReportScreen = () => {
   useEffect(() => {
     if (!isMounted.current) return;
     const saveable = {
-      tieu_de: formData.tieu_de,
       mo_ta: formData.mo_ta,
       dia_chi: formData.dia_chi,
       danh_muc: formData.danh_muc,
@@ -176,10 +190,9 @@ const CreateReportScreen = () => {
         danh_muc: data?.type || prev.danh_muc,
         uu_tien: data?.severity || prev.uu_tien,
         dia_chi: data?.location || prev.dia_chi,
-        tieu_de: data?.title || prev.tieu_de,
       }));
 
-      setAiFilledFields(['danh_muc', 'uu_tien', 'tieu_de', 'dia_chi']);
+      setAiFilledFields(['danh_muc', 'uu_tien', 'dia_chi']);
       setSuccessMessage('AI đã phân tích và điền thông tin thành công!');
       setShowSuccessModal(true);
     } catch (error) {
@@ -192,18 +205,6 @@ const CreateReportScreen = () => {
   const mapPriorityLevel = (priority: string): string => {
     const validPriorities = ['low', 'medium', 'high', 'critical'];
     return validPriorities.includes(priority.toLowerCase()) ? priority.toLowerCase() : 'medium';
-  };
-
-  /** Tiêu đề tối thiểu 10 ký tự (validate form) — sinh từ mô tả vision. */
-  const deriveTitleFromVision = (vision: { description?: string }): string => {
-    const desc = (vision.description || '').trim();
-    if (!desc) return '';
-    const first = (desc.split(/[.!?\n]/)[0] || desc).trim();
-    let title = first.length >= 10 ? first.slice(0, 200) : desc.slice(0, 200);
-    if (title.length < 10) {
-      title = `${desc.slice(0, 72)} — phản ánh giao thông`;
-    }
-    return title.slice(0, 200).trim();
   };
 
   const mediaWorkflowAnimating =
@@ -302,7 +303,7 @@ const CreateReportScreen = () => {
       setMediaWfAiDone(false);
       setMediaWfUploadDone(false);
       setMediaWfFinishing(false);
-      // —— Bước 1: Modal + gọi thật POST /ai/analyze-image (ảnh đầu — cùng API với web) ——
+      // —— Bước 1: phân tích ảnh đầu (vision) ——
       setUploadingMedia(false);
       setAiAnalyzing(true);
       setUploadProgress(8);
@@ -364,7 +365,6 @@ const CreateReportScreen = () => {
         const vDesc =
           typeof visionPayload.description === 'string' ? visionPayload.description.trim() : '';
 
-        const derivedTitle = deriveTitleFromVision({ description: vDesc });
         if (vType && allowedTypes.includes(vType)) {
           filledFields.push('danh_muc');
         }
@@ -373,9 +373,6 @@ const CreateReportScreen = () => {
         }
         if (vDesc) {
           filledFields.push('mo_ta');
-        }
-        if (derivedTitle) {
-          filledFields.push('tieu_de');
         }
 
         setFormData((prev: any) => {
@@ -388,9 +385,6 @@ const CreateReportScreen = () => {
           }
           if (vDesc) {
             next.mo_ta = vDesc;
-          }
-          if (derivedTitle) {
-            next.tieu_de = derivedTitle;
           }
           return next;
         });
@@ -423,7 +417,7 @@ const CreateReportScreen = () => {
             `AI đã phân tích ảnh${confPct ? ` (${confPct} tin cậy)` : ''} và điền form.\n\n` +
               `📁 Danh mục: ${categoryLabel}\n` +
               `⚠️ Mức độ: ${priorityLabel}\n\n` +
-              `Bạn kiểm tra lại tiêu đề, mô tả rồi gửi phản ánh.`,
+              `Tiêu đề khi gửi gồm loại sự cố và địa điểm bạn chọn. Hãy xem lại mô tả và vị trí trước khi gửi.`,
           );
         }
         if (__DEV__) {
@@ -432,7 +426,6 @@ const CreateReportScreen = () => {
             danh_muc: vType,
             uu_tien: vSev,
             mo_ta_len: vDesc.length,
-            tieu_de_preview: derivedTitle?.slice(0, 80),
             confidence: visionPayload.confidence,
           });
         }
@@ -442,11 +435,11 @@ const CreateReportScreen = () => {
 
       // —— Bước 2: Tải toàn bộ ảnh lên media (preview + gửi incident sau) ——
       setUploadProgress(44);
-      setUploadStatus(`Đang tải 0/${totalAssets} ảnh lên máy chủ...`);
+      setUploadStatus(`Đang tải 0/${totalAssets} ảnh...`);
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = assets[i];
-        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} ảnh lên máy chủ...`);
+        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} ảnh...`);
         setUploadProgress(44 + Math.round(((i + 1) / totalAssets) * 48));
 
         try {
@@ -583,7 +576,6 @@ const CreateReportScreen = () => {
   };
 
   const [errors, setErrors] = useState<{
-    tieu_de?: string;
     mo_ta?: string;
     dia_chi?: string;
   }>({});
@@ -661,12 +653,6 @@ const CreateReportScreen = () => {
   const validateForm = () => {
     const newErrors: typeof errors = {};
 
-    if (!formData.tieu_de.trim()) {
-      newErrors.tieu_de = 'Vui lòng nhập tiêu đề';
-    } else if (formData.tieu_de.length < 10) {
-      newErrors.tieu_de = 'Tiêu đề phải có ít nhất 10 ký tự';
-    }
-
     if (!formData.mo_ta.trim()) {
       newErrors.mo_ta = 'Vui lòng nhập mô tả';
     } else if (formData.mo_ta.length < 20) {
@@ -689,7 +675,15 @@ const CreateReportScreen = () => {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append('title', formData.tieu_de);
+      fd.append(
+        'title',
+        buildMobileIncidentTitle(
+          formData.danh_muc,
+          formData.dia_chi,
+          formData.vi_do,
+          formData.kinh_do,
+        ),
+      );
       fd.append('type', formData.danh_muc);
       fd.append('severity', formData.uu_tien);
       fd.append('description', formData.mo_ta);
@@ -698,7 +692,7 @@ const CreateReportScreen = () => {
       fd.append('latitude', formData.vi_do.toString());
       fd.append('longitude', formData.kinh_do.toString());
 
-      // Cùng contract backend với web: multipart `images[]` (web dùng `image` hoặc sau này `images[]`)
+      // Multipart `images[]` kèm báo cáo
       uploadedMedia.slice(0, 5).forEach((m) => {
         fd.append('images[]', {
           uri: m.local_uri,
@@ -728,7 +722,6 @@ const CreateReportScreen = () => {
 
     // Reset form data
     setFormData({
-      tieu_de: '',
       mo_ta: '',
       danh_muc: 'accident',
       vi_do: 10.7769,
@@ -884,7 +877,6 @@ const CreateReportScreen = () => {
             setDraftRestored(false);
             AsyncStorage.removeItem(DRAFT_KEY);
             setFormData({
-              tieu_de: '',
               mo_ta: '',
               danh_muc: 'accident',
               vi_do: 10.7769,
@@ -919,10 +911,10 @@ const CreateReportScreen = () => {
             </View>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Bước 1: chọn ảnh — AI đọc ảnh đầu và gợi ý nội dung form. Bước 2: ảnh được tải lên máy chủ.
+            Thêm ảnh: AI đọc ảnh đầu tiên để gợi ý nội dung; mọi ảnh bạn chọn sẽ được đính kèm khi gửi phản ánh.
           </Text>
 
-          {/* AI Vision Analysis Results (Web-style) */}
+          {/* Kết quả phân tích ảnh (AI) */}
           {aiVisionResult && (
             <Animated.View style={styles.aiVisionCard}>
               <LinearGradient
@@ -1038,7 +1030,7 @@ const CreateReportScreen = () => {
           <View style={styles.uploadInfoRow}>
             <Icon name="information-outline" size={16} color={theme.colors.textSecondary} />
             <Text style={styles.uploadInfo}>
-              Tối đa 5 ảnh (JPG, PNG). Ảnh đầu được gửi tới API phân tích ảnh (giống web), sau đó mọi ảnh được upload.
+              Tối đa 5 ảnh (JPG, PNG). Ảnh đầu tiên được AI đọc để gợi ý; các ảnh còn lại chỉ đính kèm báo cáo.
             </Text>
           </View>
           </AegisCard>
@@ -1113,37 +1105,8 @@ const CreateReportScreen = () => {
             </TouchableOpacity>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Chỉnh sửa sau khi AI điền, hoặc nhập tay. AI Parse gợi ý thêm từ mô tả chữ.
+            Khi gửi, tiêu đề được tạo từ danh mục và địa chỉ. Viết mô tả rõ ràng; chạm AI Parse nếu muốn gợi ý từ đoạn chữ.
           </Text>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputWithBadge}>
-              <InputCustom
-                label="Tiêu đề"
-                placeholder="Nhập tiêu đề phản ánh"
-                value={formData.tieu_de}
-                onChangeText={(text) => {
-                  setFormData({ ...formData, tieu_de: text });
-                  // Remove from AI filled fields when manually edited
-                  if (aiFilledFields.includes('tieu_de')) {
-                    setAiFilledFields(prev => prev.filter(f => f !== 'tieu_de'));
-                  }
-                }}
-                error={errors.tieu_de}
-                leftIcon="format-title"
-                maxLength={200}
-                containerStyle={styles.input}
-              />
-              {aiFilledFields.includes('tieu_de') && (
-                <View style={styles.aiFieldIndicator}>
-                  <Icon name="robot" size={12} color={theme.colors.primary} />
-                </View>
-              )}
-            </View>
-            <View style={styles.charCountRow}>
-              <Text style={styles.charCount}>{formData.tieu_de.length}/200</Text>
-            </View>
-          </View>
 
           <View style={styles.inputGroup}>
             <View style={styles.inputWithBadge}>
@@ -1174,6 +1137,24 @@ const CreateReportScreen = () => {
             <View style={styles.charCountRow}>
               <Text style={styles.charCount}>{formData.mo_ta.length}/1000</Text>
             </View>
+          </View>
+
+          <View style={styles.generatedTitlePreviewBox}>
+            <View style={styles.generatedTitlePreviewHeader}>
+              <Icon name="format-title" size={18} color={theme.colors.primary} />
+              <Text style={styles.generatedTitlePreviewHeading}>Tiêu đề khi gửi</Text>
+            </View>
+            <Text style={styles.generatedTitlePreviewHint}>
+              Cập nhật theo danh mục (trên) và địa chỉ (mục Vị trí).
+            </Text>
+            <Text style={styles.generatedTitlePreviewBody} numberOfLines={4}>
+              {buildMobileIncidentTitle(
+                formData.danh_muc,
+                formData.dia_chi,
+                formData.vi_do,
+                formData.kinh_do,
+              )}
+            </Text>
           </View>
           </AegisCard>
         </AegisEntrance>
@@ -1622,7 +1603,7 @@ const CreateReportScreen = () => {
                 {!mediaWfAiDone
                   ? 'AI đang đọc ảnh — thường mất vài giây, vui lòng đợi.'
                   : !mediaWfUploadDone
-                    ? 'Đang tải ảnh lên máy chủ — giữ kết nối mạng ổn định.'
+                    ? 'Đang tải ảnh — vui lòng đợi và giữ mạng ổn định.'
                     : mediaWfFinishing
                       ? 'Chuẩn bị bảng tóm tắt cho bạn...'
                       : ''}
@@ -1952,6 +1933,37 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: theme.colors.white,
     ...theme.shadows.sm,
+  },
+  generatedTitlePreviewBox: {
+    marginTop: SPACING.xs,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: theme.colors.primary + '0C',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '28',
+  },
+  generatedTitlePreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: SPACING.xs,
+  },
+  generatedTitlePreviewHeading: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  generatedTitlePreviewHint: {
+    fontSize: FONT_SIZE.xs,
+    color: theme.colors.textSecondary,
+    marginBottom: SPACING.sm,
+    lineHeight: 18,
+  },
+  generatedTitlePreviewBody: {
+    fontSize: FONT_SIZE.sm,
+    color: theme.colors.text,
+    fontWeight: '600',
+    lineHeight: 22,
   },
   aiFilledBadge: {
     flexDirection: 'row',

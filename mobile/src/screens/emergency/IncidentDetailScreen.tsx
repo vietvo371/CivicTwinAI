@@ -1,19 +1,90 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, Platform,
+  ActivityIndicator, Alert, Platform, StatusBar, Image,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import MapboxGL from '@rnmapbox/maps';
 import {
   theme, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, wp, hp
 } from '../../theme';
 import PageHeader from '../../component/PageHeader';
 import { incidentService, Incident, UpdateIncidentData } from '../../services/incidentService';
 import { RootStackParamList } from '../../navigation/types';
+import { ApiResponse } from '../../types/api/common';
+import env from '../../config/env';
+import { useAuth } from '../../contexts/AuthContext';
+
+MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
 
 type IncidentDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
+
+/**
+ * Log payload BE cho màn chi tiết sự cố khẩn cấp.
+ * Xem ở terminal đang chạy Metro (yarn start / npx react-native start), lọc "[EmergencyIncident BE]".
+ * Bật/tắt: env.LOG_REPORT_DETAIL_PAYLOAD trong env.ts
+ */
+function logEmergencyIncidentFromBackend(
+  incidentId: number,
+  envelope: ApiResponse<Incident> | undefined,
+) {
+  if (!env.LOG_REPORT_DETAIL_PAYLOAD) return;
+  const tag = '[EmergencyIncident BE]';
+  const line = () => console.warn(`${tag} ────────────────────────────────────────`);
+  console.warn(`${tag} (Metro) GET /incidents/${incidentId}`);
+
+  if (!envelope) {
+    console.warn(`${tag} (undefined response)`);
+    line();
+    return;
+  }
+
+  console.warn(`${tag} success:`, envelope.success);
+  console.warn(`${tag} message:`, envelope.message ?? '(none)');
+
+  const d = envelope.data as unknown as Record<string, unknown> | null | undefined;
+  if (!d) {
+    console.warn(`${tag} data:`, d);
+    line();
+    return;
+  }
+
+  console.warn(`${tag} data keys (${Object.keys(d).length}):`, Object.keys(d).sort().join(', '));
+
+  const sum: Record<string, unknown> = {};
+  const arr = (k: string) => (Array.isArray((d as any)[k]) ? ((d as any)[k] as unknown[]).length : null);
+  sum.predictions_len = arr('predictions');
+  sum.recommendations_len = arr('recommendations');
+  sum.affected_edge_ids_len = arr('affected_edge_ids');
+  sum.has_location = !!(d as any).location;
+  sum.has_metadata = !!(d as any).metadata;
+  console.warn(`${tag} nested summary:`, sum);
+
+  line();
+  try {
+    const json = JSON.stringify(envelope, null, 2);
+    const chunkSize = 8000;
+    if (json.length <= chunkSize) {
+      console.warn(`${tag} full JSON:\n${json}`);
+    } else {
+      for (let i = 0, part = 1; i < json.length; i += chunkSize, part += 1) {
+        console.warn(
+          `${tag} full JSON phần ${part}/${Math.ceil(json.length / chunkSize)}:\n${json.slice(
+            i,
+            i + chunkSize,
+          )}`,
+        );
+      }
+    }
+  } catch (e) {
+    console.warn(`${tag} JSON.stringify failed`, e);
+    console.warn(`${tag} data (raw):`, d);
+  }
+  line();
+  console.warn(`${tag} ========== end ==========`);
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -103,18 +174,38 @@ const IncidentDetailScreen = () => {
   const route      = useRoute<IncidentDetailRouteProp>();
   const navigation = useNavigation();
   const { id }     = route.params;
+  const insets = useSafeAreaInsets();
+  const { isOperator, isEmergency } = useAuth();
+  const canActOnIncident = isOperator || isEmergency;
 
   const [incident, setIncident]   = useState<Incident | null>(null);
   const [loading, setLoading]     = useState(true);
   const [dispatching, setDispatching] = useState(false);
 
   const fetchIncident = useCallback(async () => {
+    if (env.LOG_REPORT_DETAIL_PAYLOAD) {
+      console.warn('[EmergencyIncident BE] bắt đầu fetch id=', id, '— xem log ở terminal Metro');
+    }
     try {
       setLoading(true);
       const res = await incidentService.getIncident(id);
+      logEmergencyIncidentFromBackend(id, res);
       if (res.success) setIncident(res.data);
-    } catch {
+    } catch (error: unknown) {
+      const err = error as { message?: string; response?: { data?: unknown; status?: number } };
       Alert.alert('Lỗi', 'Không thể tải thông tin sự cố.');
+      if (env.LOG_REPORT_DETAIL_PAYLOAD) {
+        console.warn('[EmergencyIncident BE] LỖI fetch:', err?.message);
+        console.warn('[EmergencyIncident BE] HTTP status:', err?.response?.status);
+        try {
+          console.warn(
+            '[EmergencyIncident BE] response.data:',
+            JSON.stringify(err?.response?.data, null, 2),
+          );
+        } catch {
+          console.warn('[EmergencyIncident BE] response.data (raw):', err?.response?.data);
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -199,6 +290,15 @@ const IncidentDetailScreen = () => {
   const status     = STATUS_MAP[incident.status]       || STATUS_MAP.open;
   const typeInfo   = TYPE_MAP[incident.type]           || TYPE_MAP.other;
 
+  const metadataImages: string[] =
+    incident.metadata && Array.isArray((incident.metadata as any).images)
+      ? ((incident.metadata as any).images as string[])
+      : [];
+  const metadataEntries: Array<[string, unknown]> =
+    incident.metadata && typeof incident.metadata === 'object'
+      ? Object.entries(incident.metadata).filter(([key]) => key !== 'images')
+      : [];
+
   const isOpen          = incident.status === 'open';
   const isInvestigating = incident.status === 'investigating';
   const isResolved      = ['resolved', 'closed'].includes(incident.status);
@@ -232,15 +332,26 @@ const IncidentDetailScreen = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <PageHeader 
-        title={`Chi tiết #${incident.id}`}
-        subtitle={typeInfo.label}
-        variant="default"
-        showNotification={true}
-      />
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
+        <View style={styles.headerShell}>
+          <PageHeader
+            title={`Chi tiết #${incident.id}`}
+            subtitle={typeInfo.label}
+            variant="default"
+            showNotification={true}
+            style={styles.pageHeaderInner}
+          />
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
 
         {/* ── Hero: Badges + Title + Meta ── */}
         <View style={[styles.heroCard, { borderLeftColor: severity.color, borderLeftWidth: 4 }]}>
@@ -264,7 +375,9 @@ const IncidentDetailScreen = () => {
           </View>
 
           {/* Title */}
-          <Text style={styles.heroTitle}>{incident.title}</Text>
+          <Text style={styles.heroTitle} numberOfLines={2}>
+            {incident.title}
+          </Text>
 
           {/* Meta */}
           <View style={styles.metaRow}>
@@ -289,6 +402,45 @@ const IncidentDetailScreen = () => {
           )}
         </View>
 
+        {/* ── Map Preview (nếu BE có tọa độ) ── */}
+        {incident.location && typeof incident.location.lat === 'number' && typeof incident.location.lng === 'number' && (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>BẢN ĐỒ</Text>
+            <View style={styles.mapPreviewWrap}>
+              <MapboxGL.MapView
+                style={styles.mapPreview}
+                styleURL={MapboxGL.StyleURL.Street}
+                logoEnabled={false}
+                attributionEnabled={false}
+                scrollEnabled={false}
+                zoomEnabled={false}
+                pitchEnabled={false}
+                rotateEnabled={false}
+              >
+                <MapboxGL.Camera
+                  zoomLevel={15}
+                  centerCoordinate={[incident.location.lng, incident.location.lat]}
+                />
+
+                <MapboxGL.PointAnnotation
+                  id={`incident-location-${incident.id}`}
+                  coordinate={[incident.location.lng, incident.location.lat]}
+                >
+                  <View style={[styles.markerContainer, { borderColor: severity.color }]} pointerEvents="none">
+                    <Icon name={typeInfo.icon} size={16} color={severity.color} />
+                  </View>
+                </MapboxGL.PointAnnotation>
+              </MapboxGL.MapView>
+            </View>
+
+            <Text style={styles.mapCaption}>
+              {incident.location_name
+                ? incident.location_name
+                : `${incident.location.lat.toFixed(5)}, ${incident.location.lng.toFixed(5)}`}
+            </Text>
+          </View>
+        )}
+
         {/* ── Incident Details ── */}
         {incident.description ? (
           <View style={styles.card}>
@@ -296,6 +448,27 @@ const IncidentDetailScreen = () => {
             <Text style={styles.descText}>{incident.description}</Text>
           </View>
         ) : null}
+
+        {/* Attached images from BE (metadata.images) */}
+        {metadataImages.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>ẢNH ĐÍNH KÈM</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.mediaScroll}
+            >
+              {metadataImages.map((url, idx) => (
+                <Image
+                  key={`${url}-${idx}`}
+                  source={{ uri: url }}
+                  style={styles.mediaImage}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* ── Reporter & Assigned ── */}
         <View style={styles.twoColRow}>
@@ -344,58 +517,76 @@ const IncidentDetailScreen = () => {
         </View>
 
         {/* ── Quick Actions ── */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>QUICK ACTIONS</Text>
+        {canActOnIncident ? (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>HÀNH ĐỘNG NHANH</Text>
 
-          {/* Dispatch - primary action */}
-          {!isResolved && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.dispatchBtn]}
-              onPress={handleDispatch}
-              disabled={dispatching}
-            >
-              {dispatching ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Icon name="phone-in-talk" size={20} color="#fff" />
-                  <Text style={styles.actionBtnText}>Điều phối đơn vị</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-
-          {/* Secondary actions row */}
-          <View style={styles.secondaryActions}>
-            {isOpen && (
-              <TouchableOpacity
-                style={[styles.secondaryBtn, { borderColor: '#F59E0B20', backgroundColor: '#F59E0B08' }]}
-                onPress={() => handleUpdateStatus('investigating')}
-              >
-                <Icon name="progress-clock" size={16} color="#F59E0B" />
-                <Text style={[styles.secondaryBtnText, { color: '#F59E0B' }]}>Bắt đầu xử lý</Text>
-              </TouchableOpacity>
-            )}
-            {(isOpen || isInvestigating) && (
-              <TouchableOpacity
-                style={[styles.secondaryBtn, { borderColor: '#10B98120', backgroundColor: '#10B98108' }]}
-                onPress={() => handleUpdateStatus('resolved')}
-              >
-                <Icon name="check-circle-outline" size={16} color="#10B981" />
-                <Text style={[styles.secondaryBtnText, { color: '#10B981' }]}>Đánh dấu xong</Text>
-              </TouchableOpacity>
-            )}
+            {/* Dispatch - primary action */}
             {!isResolved && (
               <TouchableOpacity
-                style={[styles.secondaryBtn, { borderColor: '#6B728020', backgroundColor: '#6B728008' }]}
-                onPress={() => handleUpdateStatus('closed')}
+                style={[styles.actionBtn, styles.dispatchBtn]}
+                onPress={handleDispatch}
+                disabled={dispatching}
               >
-                <Icon name="close-circle-outline" size={16} color="#6B7280" />
-                <Text style={[styles.secondaryBtnText, { color: '#6B7280' }]}>Đóng sự cố</Text>
+                {dispatching ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Icon name="phone-in-talk" size={20} color="#fff" />
+                    <Text style={styles.actionBtnText}>Điều phối đơn vị</Text>
+                  </>
+                )}
               </TouchableOpacity>
             )}
+
+            {/* Secondary actions row */}
+            <View style={styles.secondaryActions}>
+              {isOpen && (
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryBtn,
+                    { borderColor: '#F59E0B20', backgroundColor: '#F59E0B08' },
+                  ]}
+                  onPress={() => handleUpdateStatus('investigating')}
+                >
+                  <Icon name="progress-clock" size={16} color="#F59E0B" />
+                  <Text style={[styles.secondaryBtnText, { color: '#F59E0B' }]}>Bắt đầu xử lý</Text>
+                </TouchableOpacity>
+              )}
+              {(isOpen || isInvestigating) && (
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryBtn,
+                    { borderColor: '#10B98120', backgroundColor: '#10B98108' },
+                  ]}
+                  onPress={() => handleUpdateStatus('resolved')}
+                >
+                  <Icon name="check-circle-outline" size={16} color="#10B981" />
+                  <Text style={[styles.secondaryBtnText, { color: '#10B981' }]}>Đánh dấu xong</Text>
+                </TouchableOpacity>
+              )}
+              {!isResolved && (
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryBtn,
+                    { borderColor: '#6B728020', backgroundColor: '#6B728008' },
+                  ]}
+                  onPress={() => handleUpdateStatus('closed')}
+                >
+                  <Icon name="close-circle-outline" size={16} color="#6B7280" />
+                  <Text style={[styles.secondaryBtnText, { color: '#6B7280' }]}>Đóng sự cố</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>CHỈ XEM</Text>
+            <Text style={styles.viewOnlyText}>
+              Bạn đang ở chế độ xem. Các thao tác điều phối/cập nhật trạng thái chỉ dành cho tài khoản có quyền.
+            </Text>
+          </View>
+        )}
 
         {/* ── AI Insights Row ── */}
         {( (incident.recommendations && incident.recommendations.length > 0) || (incident.predictions && incident.predictions.length > 0) ) && (
@@ -444,7 +635,7 @@ const IncidentDetailScreen = () => {
 
         {/* ── Timeline ── */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>TIMELINE</Text>
+          <Text style={styles.cardLabel}>DÒNG THỜI GIAN</Text>
           {timelineEvents.map((event, idx) => (
             <View key={event.key} style={styles.timelineRow}>
               {/* Dot + line */}
@@ -477,10 +668,10 @@ const IncidentDetailScreen = () => {
         </View>
 
         {/* ── Metadata ── */}
-        {incident.metadata && Object.keys(incident.metadata).length > 0 && (
+        {metadataEntries.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardLabel}>DỮ LIỆU BỔ SUNG</Text>
-            {Object.entries(incident.metadata).map(([key, value]) => (
+            {metadataEntries.map(([key, value]) => (
               <View key={key} style={styles.metadataRow}>
                 <Text style={styles.metadataKey}>{key}</Text>
                 <Text style={styles.metadataValue}>{String(value)}</Text>
@@ -500,6 +691,19 @@ const IncidentDetailScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+  topWhiteArea: {
+    backgroundColor: theme.colors.white,
+  },
+  headerShell: {
+    backgroundColor: theme.colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
+  },
+  pageHeaderInner: {
+    backgroundColor: theme.colors.transparent,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl },
   loadingText: { marginTop: SPACING.md, color: theme.colors.textSecondary, fontSize: FONT_SIZE.sm },
   emptyText:   { marginTop: SPACING.md, color: theme.colors.textSecondary, fontSize: FONT_SIZE.md },
@@ -515,6 +719,55 @@ const styles = StyleSheet.create({
   // Scroll
   scroll: { flex: 1 },
   scrollContent: { padding: SCREEN_PADDING.horizontal, paddingTop: SPACING.md, paddingBottom: 60 },
+
+  // Citizen/operator view-only hint
+  viewOnlyText: {
+    fontSize: FONT_SIZE.sm,
+    color: theme.colors.textSecondary,
+    lineHeight: 20,
+  },
+
+  // Media (attached images)
+  mediaScroll: { marginTop: SPACING.sm, marginBottom: SPACING.sm },
+  mediaImage: {
+    width: wp('70%'),
+    height: wp('45%'),
+    borderRadius: BORDER_RADIUS.lg,
+    marginRight: SPACING.md,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+  },
+
+  // Map preview
+  mapPreviewWrap: {
+    width: '100%',
+    height: 190,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.backgroundSecondary,
+    marginBottom: SPACING.sm,
+  },
+  mapPreview: {
+    flex: 1,
+  },
+  mapCaption: {
+    fontSize: FONT_SIZE.xs,
+    color: theme.colors.textSecondary,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  markerContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: theme.colors.white,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   // AI Sections
   aiInsightsContainer: {
