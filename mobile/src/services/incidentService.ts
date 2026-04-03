@@ -57,4 +57,13 @@ export const incidentService = {
         const response = await api.patch<ApiResponse<Incident>>(`/incidents/${id}`, data);
         return response.data;
     },
+
+    createIncident: async (formData: FormData): Promise<ApiResponse<Incident>> => {
+        const response = await api.post<ApiResponse<Incident>>('/incidents', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    },
 };

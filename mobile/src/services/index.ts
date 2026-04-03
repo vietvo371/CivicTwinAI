@@ -5,3 +5,5 @@ export { mediaService } from './mediaService';
 export { mapService } from './mapService';
 export { notificationService } from './notificationService';
 export { userService } from './userService';
+export { aiService } from './aiService';
+export { incidentService } from './incidentService';

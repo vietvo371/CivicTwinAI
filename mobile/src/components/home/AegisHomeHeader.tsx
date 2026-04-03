@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     }),
   },
   mainHeader: {
-    paddingTop: Platform.OS === 'ios' ? 74 : 54,
+    paddingTop: Platform.OS === 'ios' ? 12 : 8,
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xl,
   },
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
   brandGreeting: {
     flex: 1,

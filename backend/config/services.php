@@ -44,6 +44,11 @@ return [
         'api_key' => env('GROQ_API_KEY', ''),
     ],
 
+    /** Reverse geocoding (GeocodeController) — token public Mapbox; ưu tiên MAPBOX_ACCESS_TOKEN, fallback MAPBOX_TOKEN */
+    'mapbox' => [
+        'access_token' => env('MAPBOX_ACCESS_TOKEN', env('MAPBOX_TOKEN', '')),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

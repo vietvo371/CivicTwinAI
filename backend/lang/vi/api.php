@@ -11,6 +11,7 @@ return [
     'created' => 'Tạo thành công',
     'deleted' => 'Xóa thành công',
     'server_error' => 'Lỗi máy chủ',
+    'geocode_fallback_coordinates' => 'Chỉ lấy được tọa độ; hãy thử chọn điểm trên bản đồ hoặc nhập địa chỉ tay.',
 
     // Auth
     'login_success' => 'Đăng nhập thành công',
@@ -57,4 +58,24 @@ return [
     // Admin
     'stats_retrieved' => 'Thống kê hệ thống',
     'logs_retrieved' => 'Nhật ký hệ thống',
+
+    // Mobile reports (citizen DTO → incidents)
+    'reports_retrieved' => 'Danh sách phản ánh',
+    'my_reports_retrieved' => 'Phản ánh của bạn',
+    'report_retrieved' => 'Chi tiết phản ánh',
+    'report_created' => 'Tạo phản ánh thành công',
+    'report_updated' => 'Cập nhật phản ánh thành công',
+    'report_stats_retrieved' => 'Thống kê phản ánh',
+    'nearby_reports_retrieved' => 'Phản ánh lân cận',
+    'trending_reports_retrieved' => 'Phản ánh đang được quan tâm',
+    'viewed' => 'Đã ghi nhận lượt xem',
+    'vote_recorded' => 'Đã ghi nhận bình chọn',
+    'rating_recorded' => 'Đã ghi nhận đánh giá',
+    'comment_added' => 'Đã thêm bình luận',
+
+    // AI vision (analyze-image)
+    'ai_image_analysis_completed' => 'Phân tích ảnh hoàn tất.',
+    'ai_image_unclear' => 'Ảnh chưa đủ rõ để tự điền form.',
+    'ai_vision_unclear_description' => 'Không nhận diện được tình huống giao thông từ ảnh (AI không trả dữ liệu hoặc ảnh mờ/quá xa).',
+    'ai_vision_user_hint' => 'Hãy xóa ảnh này và chụp lại: gần hơn, đủ sáng, thấy rõ đường hoặc phương tiện / sự cố.',
 ];

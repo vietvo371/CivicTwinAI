@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, StyleSheet, TouchableOpacity, View, Text, Animated, Platform } from "react-native";
+import { Modal, StyleSheet, TouchableOpacity, View, Text, Animated, Platform, Pressable } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, wp } from "../theme";
 
@@ -87,16 +87,21 @@ const ModalCustom = ({
             onRequestClose={() => setIsModalVisible(false)}
             statusBarTranslucent
         >
-            <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
-                <TouchableOpacity
+            {/* Không animate opacity cả màn: opacity=0 vẫn nuốt touch → cảm giác màn hình khoá sau modal loading/AI */}
+            <View style={styles.modalRoot}>
+                <Pressable
                     style={StyleSheet.absoluteFill}
-                    activeOpacity={1}
+                    accessibilityRole="button"
+                    accessibilityLabel="Đóng"
                     onPress={() => setIsModalVisible(false)}
                 />
                 <Animated.View
                     style={[
                         styles.modalContent,
-                        { transform: [{ scale: scaleAnim }] }
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                        },
                     ]}
                 >
                     {/* Icon */}
@@ -139,13 +144,13 @@ const ModalCustom = ({
                         )}
                     </View>
                 </Animated.View>
-            </Animated.View>
+            </View>
         </Modal>
     )
 }
 
 const styles = StyleSheet.create({
-    modalContainer: {
+    modalRoot: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',

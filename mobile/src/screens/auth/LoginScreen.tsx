@@ -78,7 +78,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         email: email,
         password: password,
       });
-
+      console.log('result', result);
       if (result.success) {
         // Role-based navigation sync with LoadingScreen.tsx
         const roles = result.user?.roles || [];
