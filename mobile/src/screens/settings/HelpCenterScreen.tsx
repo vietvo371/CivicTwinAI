@@ -1,6 +1,6 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PageHeader from '../../component/PageHeader';
@@ -16,6 +16,7 @@ interface HelpItem {
 
 const HelpCenterScreen = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
 
     const handleContactSupport = () => {
         Linking.openURL('mailto:support@cityresq360.com?subject=Hỗ trợ CityResQ360');
@@ -82,8 +83,11 @@ const HelpCenterScreen = () => {
     ];
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <PageHeader title="Trung tâm trợ giúp" variant="default" />
+        <SafeAreaView style={styles.container} edges={[]}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
+            <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
+                <PageHeader title="Trung tâm trợ giúp" variant="default" />
+            </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* Header Section */}

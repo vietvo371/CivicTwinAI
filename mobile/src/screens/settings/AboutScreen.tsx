@@ -1,6 +1,6 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Image, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PageHeader from '../../component/PageHeader';
@@ -8,6 +8,7 @@ import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, SCREEN_PADDING } f
 
 const AboutScreen = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
 
     const appInfo = {
         name: 'CityResQ360',
@@ -37,8 +38,11 @@ const AboutScreen = () => {
     ];
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <PageHeader title="Về ứng dụng" variant="default" />
+        <SafeAreaView style={styles.container} edges={[]}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
+            <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
+                <PageHeader title="Về ứng dụng" variant="default" />
+            </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 {/* App Logo & Info */}

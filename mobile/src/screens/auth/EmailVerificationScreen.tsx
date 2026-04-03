@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -240,6 +241,7 @@ const EmailVerificationScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       <View style={styles.backgroundContainer}>
         <View style={styles.decorativeCircle1} />
         <View style={styles.decorativeCircle2} />
@@ -451,7 +453,7 @@ const styles = StyleSheet.create({
   },
   decorativeCircle1: {
     position: 'absolute',
-    top: -50,
+    top: 0,
     right: -50,
     width: 150,
     height: 150,
