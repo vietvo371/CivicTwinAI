@@ -8,8 +8,8 @@ import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, hp } from '..
 import { useNotifications, Notification as WSNotification } from '../../hooks/useNotifications';
 import { notificationService } from '../../services/notificationService';
 import { Notification as APINotification } from '../../types/api/notification';
+import { isUuid } from '../../utils/isUuid';
 
-// Unified notification type
 interface UnifiedNotification {
   id: string;
   type: string;
@@ -19,6 +19,44 @@ interface UnifiedNotification {
   read: boolean;
   data?: any;
   source: 'api' | 'websocket';
+}
+
+/** Ghép thông báo realtime (id giả) với bản ghi API (UUID) theo incident / report. */
+function resolveServerNotificationId(
+  item: UnifiedNotification,
+  apiList: APINotification[],
+): string | null {
+  const meta = item.data as Record<string, unknown> | undefined;
+  if (!meta) {
+    return null;
+  }
+  const incidentId =
+    meta.incident_id ??
+    meta.report_id ??
+    meta.id ??
+    (meta.metadata as Record<string, unknown> | undefined)?.id ??
+    (meta.metadata as Record<string, unknown> | undefined)?.incident_id;
+  if (incidentId == null || incidentId === '') {
+    return null;
+  }
+  const want = String(incidentId);
+
+  const found = apiList.find(n => {
+    const d = n.data as Record<string, unknown> | undefined;
+    if (!d) {
+      return false;
+    }
+    const candidates = [
+      d.incident_id,
+      d.id,
+      d.report_id,
+      (d.metadata as Record<string, unknown> | undefined)?.id,
+      (d.metadata as Record<string, unknown> | undefined)?.incident_id,
+    ];
+    return candidates.some(c => c != null && String(c) === want);
+  });
+
+  return found && isUuid(String(found.id)) ? String(found.id) : null;
 }
 
 const NotificationsScreen = () => {
@@ -157,18 +195,29 @@ const NotificationsScreen = () => {
     if (!item.read) {
       console.log('📖 Marking single notification as read...');
       
-      // WebSocket source handling
       if (item.source === 'websocket') {
         if (wsHook?.markAsRead) {
           const wsId = item.id.replace('ws-', '');
           wsHook.markAsRead(wsId);
         }
-      } 
-      
-      // API source — Laravel notifications dùng UUID (string), không dùng parseInt
+        const serverId = resolveServerNotificationId(item, apiNotifications);
+        if (serverId) {
+          try {
+            setApiNotifications(prev =>
+              prev.map(n =>
+                String(n.id) === serverId ? { ...n, da_doc: true, read: true } : n,
+              ),
+            );
+            await notificationService.markAsRead(serverId);
+          } catch (error) {
+            console.error('❌ Error marking server notification as read:', error);
+          }
+        }
+      }
+
       if (item.source === 'api' && item.id.startsWith('api-')) {
         const apiIdStr = item.id.slice('api-'.length);
-        if (apiIdStr.length > 0) {
+        if (isUuid(apiIdStr)) {
           try {
             setApiNotifications(prev =>
               prev.map(n =>
@@ -185,18 +234,18 @@ const NotificationsScreen = () => {
       }
     }
 
-    // Navigate to report/incident detail
-    const isReportNotification = item.type === 'report_status' || 
-                                  item.type === 'report_status_update';
+    const isReportNotification =
+      item.type === 'report_status' || item.type === 'report_status_update';
     const isIncidentNotification = item.type === 'incident_created';
-    
-    if ((isReportNotification || isIncidentNotification) && item.data?.id) {
-      console.log('🚀 Navigating to Detail with ID:', item.data.id);
-      navigation.navigate('IncidentDetail' as any, { 
-        id: item.data.id
-      } as any);
-    } else {
-      console.log('⚠️ No detail data to navigate to. Type:', item.type, 'Data:', item.data);
+
+    const detailId =
+      item.data?.id ??
+      item.data?.incident_id ??
+      item.data?.report_id ??
+      item.data?.metadata?.id;
+
+    if ((isReportNotification || isIncidentNotification) && detailId != null && detailId !== '') {
+      navigation.navigate('IncidentDetail' as any, { id: detailId } as any);
     }
   };
 

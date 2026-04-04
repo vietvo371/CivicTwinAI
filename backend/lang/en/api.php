@@ -78,4 +78,13 @@ return [
     'ai_image_unclear' => 'The photo is not clear enough to auto-fill the form.',
     'ai_vision_unclear_description' => 'Could not detect a traffic situation from the image (empty AI response or photo too dark/far).',
     'ai_vision_user_hint' => 'Remove this photo and take another: closer, well lit, with the road or incident clearly visible.',
+
+    // Notifications (database UUID)
+    'notifications_retrieved' => 'Notifications retrieved',
+    'unread_notifications_retrieved' => 'Unread notifications retrieved',
+    'unread_count_retrieved' => 'Unread count retrieved',
+    'notification_read' => 'Marked as read',
+    'notifications_read' => 'All notifications marked as read',
+    'notification_not_found' => 'Notification not found',
+    'notification_invalid_id' => 'Invalid notification id (UUID required)',
 ];

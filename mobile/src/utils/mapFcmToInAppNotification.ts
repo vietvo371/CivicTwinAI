@@ -18,7 +18,7 @@ export function mapRemoteMessageToInAppNotification(remoteMessage: any): Notific
 
   return {
     id: `fcm-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-    type: 'fcm_push',
+    type: typeof d.type === 'string' ? d.type : 'fcm_push',
     title,
     message: body,
     data: { ...d, _fcm: remoteMessage },

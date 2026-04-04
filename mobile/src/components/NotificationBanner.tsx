@@ -6,6 +6,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { theme } from '../theme/colors';
 import { setFcmForegroundHandler } from '../realtime/fcmForegroundBridge';
 import { mapRemoteMessageToInAppNotification } from '../utils/mapFcmToInAppNotification';
+import { navigateToIncidentDetailFromInAppNotification } from '../navigation/navigateFromPushNotification';
 
 export const NotificationBanner = () => {
   const { notifications, markAsRead, prependNotification } = useNotifications();
@@ -84,6 +85,16 @@ export const NotificationBanner = () => {
         markAsRead(latestNotification.id);
       }
     });
+  };
+
+  const onToastContentPress = () => {
+    if (latestNotification) {
+      navigateToIncidentDetailFromInAppNotification(
+        latestNotification.type,
+        latestNotification.data,
+      );
+    }
+    hideToast();
   };
 
   if (!latestNotification) return null;
@@ -171,7 +182,7 @@ export const NotificationBanner = () => {
         },
       ]}
     >
-      <TouchableOpacity
+      <View
         style={[
           styles.toast,
           {
@@ -179,8 +190,6 @@ export const NotificationBanner = () => {
             borderColor: config.borderColor,
           },
         ]}
-        activeOpacity={0.9}
-        onPress={hideToast}
       >
         {/* Progress bar */}
         <View style={styles.progressContainer}>
@@ -198,20 +207,27 @@ export const NotificationBanner = () => {
           />
         </View>
 
-        {/* Toast content */}
         <View style={styles.content}>
-          <View style={styles.iconContainer}>
-            <Icon name={config.icon} size={24} color={config.iconColor} />
-          </View>
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.title} numberOfLines={1}>
-              {latestNotification.title}
-            </Text>
-            <Text style={styles.message} numberOfLines={3}>
-              {latestNotification.message}
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.tapArea}
+            activeOpacity={0.92}
+            onPress={onToastContentPress}
+            accessibilityRole="button"
+            accessibilityLabel="Mở chi tiết thông báo"
+          >
+            <View style={styles.iconContainer}>
+              <Icon name={config.icon} size={24} color={config.iconColor} />
+            </View>
+
+            <View style={styles.textContainer}>
+              <Text style={styles.title} numberOfLines={1}>
+                {latestNotification.title}
+              </Text>
+              <Text style={styles.message} numberOfLines={3}>
+                {latestNotification.message}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.closeButton}
@@ -221,7 +237,7 @@ export const NotificationBanner = () => {
             <Icon name="close" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
@@ -250,8 +266,15 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
-    paddingTop: 12,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 8,
+  },
+  tapArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginRight: 4,
   },
   iconContainer: {
     marginRight: 12,
@@ -259,7 +282,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    marginRight: 8,
+    paddingRight: 4,
   },
   title: {
     fontSize: 15,

@@ -1,4 +1,5 @@
 import api from '../utils/Api';
+import { isUuid } from '../utils/isUuid';
 import { ApiResponse } from '../types/api/common';
 import { Notification, NotificationFilterParams } from '../types/api/notification';
 
@@ -19,7 +20,11 @@ export const notificationService = {
     },
 
     markAsRead: async (id: string | number): Promise<ApiResponse<any>> => {
-        const segment = encodeURIComponent(String(id));
+        const raw = String(id);
+        if (!isUuid(raw)) {
+            return { success: false, message: 'invalid_notification_id', data: null } as ApiResponse<any>;
+        }
+        const segment = encodeURIComponent(raw);
         const response = await api.patch<ApiResponse<any>>(`/notifications/${segment}/read`);
         return response.data;
     },
@@ -30,7 +35,11 @@ export const notificationService = {
     },
 
     deleteNotification: async (id: string | number): Promise<ApiResponse<void>> => {
-        const segment = encodeURIComponent(String(id));
+        const raw = String(id);
+        if (!isUuid(raw)) {
+            return { success: false, message: 'invalid_notification_id', data: undefined } as ApiResponse<void>;
+        }
+        const segment = encodeURIComponent(raw);
         const response = await api.delete<ApiResponse<void>>(`/notifications/${segment}`);
         return response.data;
     },

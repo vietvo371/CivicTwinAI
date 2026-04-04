@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import { useAuth } from '../contexts/AuthContext';
 import { notificationService } from '../services/notificationService';
+import { isUuid } from '../utils/isUuid';
 
 export interface Notification {
   id: string;
@@ -258,9 +259,15 @@ export const useNotifications = () => {
     // Listen to notification sent event
     listen(userChannel, 'notification.sent', (data) => {
       console.log('🔔 Notification sent:', data);
-      
+
+      const serverId = data?.notification_id ?? data?.uuid;
+      const id =
+        serverId != null && isUuid(String(serverId))
+          ? String(serverId)
+          : `notif-${data?.id ?? Date.now()}`;
+
       const notification: Notification = {
-        id: `notif-${data.id || Date.now()}`,
+        id,
         type: data.type || 'report_status',
         title: data.title || data.tieu_de || 'Thông báo mới',
         message: data.message || data.noi_dung || '',

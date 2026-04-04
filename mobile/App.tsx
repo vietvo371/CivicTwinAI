@@ -23,6 +23,7 @@ import AlertServiceConnector from './src/component/AlertServiceConnector';
 import NotificationService from './src/components/NotificationService';
 import { ErrorModalProvider } from './src/utils/ErrorModalManager';
 import { notifyFcmForeground } from './src/realtime/fcmForegroundBridge';
+import { scheduleNavigateToIncidentDetailFromPush } from './src/navigation/navigateFromPushNotification';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -31,8 +32,8 @@ const App = () => {
     notifyFcmForeground(remoteMessage);
   }, []);
 
-  const handleNotificationOpened = useCallback((notification: any) => {
-    console.log('Người dùng mở thông báo:', notification);
+  const handleNotificationOpened = useCallback((remoteMessage: any) => {
+    scheduleNavigateToIncidentDetailFromPush(remoteMessage);
   }, []);
 
   const navigationTheme: Theme = {

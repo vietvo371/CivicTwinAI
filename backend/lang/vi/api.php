@@ -78,4 +78,13 @@ return [
     'ai_image_unclear' => 'Ảnh chưa đủ rõ để tự điền form.',
     'ai_vision_unclear_description' => 'Không nhận diện được tình huống giao thông từ ảnh (AI không trả dữ liệu hoặc ảnh mờ/quá xa).',
     'ai_vision_user_hint' => 'Hãy xóa ảnh này và chụp lại: gần hơn, đủ sáng, thấy rõ đường hoặc phương tiện / sự cố.',
+
+    // Notifications (database UUID)
+    'notifications_retrieved' => 'Đã lấy danh sách thông báo',
+    'unread_notifications_retrieved' => 'Đã lấy thông báo chưa đọc',
+    'unread_count_retrieved' => 'Đã lấy số thông báo chưa đọc',
+    'notification_read' => 'Đã đánh dấu đã đọc',
+    'notifications_read' => 'Đã đánh dấu tất cả đã đọc',
+    'notification_not_found' => 'Không tìm thấy thông báo',
+    'notification_invalid_id' => 'Mã thông báo không hợp lệ (cần UUID)',
 ];
