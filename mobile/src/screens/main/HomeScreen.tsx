@@ -61,7 +61,7 @@ interface StatsData {
 const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
-  const { unreadCount, registerRefreshCallback } = useNotifications();
+  const { registerRefreshCallback } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const [statsData, setStatsData] = useState<StatsData | null>(null);
   const [recentReports, setRecentReports] = useState<Report[]>([]);
@@ -217,8 +217,6 @@ const HomeScreen = () => {
 
       <AegisHomeHeader
         user={user}
-        unreadCount={unreadCount}
-        onNotificationPress={() => navigation.navigate('Notifications')}
         onProfilePress={() => navigation.navigate('Profile')}
         logs={nearbyIncidents.map(incident => `[ALERT] ${incident.title || 'Sự cố mới'}`)}
       />

@@ -341,7 +341,7 @@ const IncidentDetailScreen = () => {
             title={`Chi tiết #${incident.id}`}
             subtitle={typeInfo.label}
             variant="default"
-            showNotification={true}
+            showNotification={false}
             style={styles.pageHeaderInner}
           />
         </View>

@@ -1173,6 +1173,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: theme.colors.white,
   },
   searchContainer: {
     marginTop: SPACING.sm,

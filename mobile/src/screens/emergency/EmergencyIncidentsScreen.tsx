@@ -24,7 +24,6 @@ import {
     SCREEN_PADDING,
     ICON_SIZE,
 } from '../../theme';
-import NotificationBellButton from '../../component/NotificationBellButton';
 import env from '../../config/env';
 import { incidentService, Incident, IncidentFilterParams } from '../../services/incidentService';
 import { useWebSocket } from '../../contexts/WebSocketContext';
@@ -370,7 +369,7 @@ const EmergencyIncidentsScreen = () => {
     }, [loading, activeFilter]);
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.safeTop} edges={['top']}>
             <StatusBar barStyle="dark-content" />
             <PageHeader 
                 title="Sự cố & Điều phối" 
@@ -379,42 +378,47 @@ const EmergencyIncidentsScreen = () => {
                 showNotification={true}
             />
 
-            {/* Open count banner */}
-            {openCount > 0 && (
-                <View style={styles.openBanner}>
-                    <View style={styles.openBannerContent}>
-                        <Icon name="alert-circle" size={16} color="#EF4444" />
-                        <Text style={styles.openBannerText}>
-                            {openCount} sự cố chưa xử lý — cần hành động ngay
-                        </Text>
+            <View style={styles.body}>
+                {openCount > 0 && (
+                    <View style={styles.openBanner}>
+                        <View style={styles.openBannerContent}>
+                            <Icon name="alert-circle" size={16} color="#EF4444" />
+                            <Text style={styles.openBannerText}>
+                                {openCount} sự cố chưa xử lý — cần hành động ngay
+                            </Text>
+                        </View>
                     </View>
-                </View>
-            )}
+                )}
 
-            {renderFilterTabs()}
+                {renderFilterTabs()}
 
-            <FlatList
-                data={sortedIncidents}
-                renderItem={renderIncidentCard}
-                keyExtractor={item => item.id.toString()}
-                contentContainerStyle={styles.listContent}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={() => fetchIncidents(true)}
-                        colors={['#EF4444']}
-                        tintColor={'#EF4444'}
-                    />
-                }
-                ListEmptyComponent={renderEmpty}
-                showsVerticalScrollIndicator={false}
-            />
+                <FlatList
+                    data={sortedIncidents}
+                    renderItem={renderIncidentCard}
+                    keyExtractor={item => item.id.toString()}
+                    contentContainerStyle={styles.listContent}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={() => fetchIncidents(true)}
+                            colors={['#EF4444']}
+                            tintColor={'#EF4444'}
+                        />
+                    }
+                    ListEmptyComponent={renderEmpty}
+                    showsVerticalScrollIndicator={false}
+                />
+            </View>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    safeTop: {
+        flex: 1,
+        backgroundColor: theme.colors.white,
+    },
+    body: {
         flex: 1,
         backgroundColor: '#F8FAFC',
     },

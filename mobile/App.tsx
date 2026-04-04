@@ -14,6 +14,7 @@ import Toast from 'react-native-toast-message';
 import MainNavigator from './src/navigation/MainTabNavigator';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { WebSocketProvider } from './src/contexts/WebSocketContext';
+import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import { NotificationBanner } from './src/components/NotificationBanner';
 import { theme } from './src/theme/colors';
 import './src/i18n'; // Initialize i18n
@@ -90,15 +91,16 @@ const App = () => {
             />
             <AuthProvider>
               <WebSocketProvider>
-                <StatusBar
-                  barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-                  backgroundColor={theme.colors.background}
-                />
-                <NavigationContainer theme={navigationTheme} ref={navigationRef}>
-                  <MainNavigator />
-                </NavigationContainer>
-                {/* NotificationBanner phải nằm BÊN TRONG WebSocketProvider để nhận context */}
-                <NotificationBanner />
+                <NotificationsProvider>
+                  <StatusBar
+                    barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+                    backgroundColor={theme.colors.background}
+                  />
+                  <NavigationContainer theme={navigationTheme} ref={navigationRef}>
+                    <MainNavigator />
+                  </NavigationContainer>
+                  <NotificationBanner />
+                </NotificationsProvider>
               </WebSocketProvider>
             </AuthProvider>
           </AlertProvider>

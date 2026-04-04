@@ -13,20 +13,16 @@ import {
   SPACING,
   FONT_SIZE,
   BORDER_RADIUS,
-  ICON_SIZE,
   textStyles,
-  wp,
-  hp,
 } from '../../theme';
+import NotificationBellButton from '../../component/NotificationBellButton';
 import { User } from '../../types/api/auth';
 import { AegisEntrance, AIPulseLED } from '../common/AegisAnimated';
 import { AIActivityStream } from './AIActivityStream';
 
 interface AegisHomeHeaderProps {
   user: User | null;
-  unreadCount: number;
   onProfilePress: () => void;
-  onNotificationPress: () => void;
   aiStatus?: 'active' | 'warning' | 'alert';
   logs?: string[];
 }
@@ -40,9 +36,7 @@ interface AegisHomeHeaderProps {
  */
 export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
   user,
-  unreadCount,
   onProfilePress,
-  onNotificationPress,
   aiStatus = 'active',
   logs,
 }) => {
@@ -83,14 +77,7 @@ export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
           {/* Action Row: Notifications + Profile */}
           <AegisEntrance delay={500} direction="right">
             <View style={styles.actionRow}>
-              <TouchableOpacity onPress={onNotificationPress} style={styles.iconBtn}>
-                <Icon name="bell-outline" size={24} color={COLORS.text} />
-                {unreadCount > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+              <NotificationBellButton style={styles.iconBtn} color={COLORS.text} />
 
               <TouchableOpacity onPress={onProfilePress} style={styles.profileBtn}>
                 <View style={styles.avatarBorder}>
@@ -184,24 +171,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.borderLight,
-  },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: COLORS.error,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.white,
-  },
-  badgeText: {
-    color: COLORS.white,
-    fontSize: 9,
-    fontWeight: '900',
   },
   profileBtn: {
     marginLeft: 2,
