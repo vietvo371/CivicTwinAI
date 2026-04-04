@@ -40,8 +40,17 @@ export const reportService = {
         return response.data;
     },
 
+    /** Chỉ gửi field mà `ReportController::update` validate — tránh gửi thừa (tags, media_ids, la_cong_khai BE chưa xử lý khi PUT). */
     updateReport: async (id: number, data: Partial<CreateReportRequest>): Promise<ApiResponse<Report>> => {
-        const response = await api.put<ApiResponse<Report>>(`/reports/${id}`, data);
+        const payload: Record<string, string | number> = {};
+        if (data.tieu_de !== undefined) payload.tieu_de = data.tieu_de;
+        if (data.mo_ta !== undefined) payload.mo_ta = data.mo_ta;
+        if (data.danh_muc !== undefined) payload.danh_muc = data.danh_muc;
+        if (data.uu_tien !== undefined && data.uu_tien !== null) payload.uu_tien = data.uu_tien;
+        if (data.vi_do !== undefined) payload.vi_do = data.vi_do;
+        if (data.kinh_do !== undefined) payload.kinh_do = data.kinh_do;
+        if (data.dia_chi !== undefined) payload.dia_chi = data.dia_chi;
+        const response = await api.put<ApiResponse<Report>>(`/reports/${id}`, payload);
         return response.data;
     },
 

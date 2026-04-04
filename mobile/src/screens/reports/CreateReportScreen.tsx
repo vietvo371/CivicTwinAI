@@ -13,59 +13,20 @@ import { AegisEntrance } from '../../components/common/AegisAnimated';
 import { theme, COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, wp, hp, AegisCard } from '../../theme';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { aiService, incidentService, mapService, mediaService } from '../../services';
-import { Media } from '../../types/api/report';
 import env from '../../config/env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  CATEGORIES,
+  PRIORITIES,
+  buildMobileIncidentTitle,
+  isVisionDataObject,
+  type IncidentFormMedia,
+} from './citizenReportFormShared';
 
 const DRAFT_KEY = '@civictwin_report_draft';
 
 // Initialize Mapbox
 MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
-
-// Category options matching API for Incidents
-const CATEGORIES = [
-  { value: 'accident', label: 'Tai nạn', icon: 'car-emergency', color: '#F43F5E' },
-  { value: 'congestion', label: 'Ùn tắc', icon: 'traffic-light', color: '#F59E0B' },
-  { value: 'construction', label: 'Công trình', icon: 'hard-hat', color: '#10B981' },
-  { value: 'weather', label: 'Thời tiết', icon: 'weather-pouring', color: '#3B82F6' },
-  { value: 'other', label: 'Khác', icon: 'dots-horizontal', color: '#6B7280' },
-];
-
-// Priority options matching API for Incidents
-const PRIORITIES = [
-  { value: 'low', label: 'Thấp', color: '#10B981' },
-  { value: 'medium', label: 'Trung bình', color: '#3B82F6' },
-  { value: 'high', label: 'Cao', color: '#F59E0B' },
-  { value: 'critical', label: 'Khẩn cấp', color: '#F43F5E' },
-];
-
-/** Sau upload media: giữ URI thiết bị để gửi `images[]` khi tạo phản ánh. */
-type IncidentFormMedia = Media & {
-  local_uri: string;
-  local_type?: string;
-  local_name?: string;
-};
-
-/** BE phải trả object; `[]` truthy từng làm app coi là có data. */
-function isVisionDataObject(data: unknown): data is Record<string, unknown> {
-  return data !== null && typeof data === 'object' && !Array.isArray(data);
-}
-
-/** Tiêu đề gửi lên server: «Danh mục» - «địa chỉ» (hoặc tọa độ nếu chưa có địa chỉ). */
-function buildMobileIncidentTitle(
-  danh_muc: string,
-  dia_chi: string,
-  vi_do: number,
-  kinh_do: number,
-): string {
-  const categoryLabel = CATEGORIES.find((c) => c.value === danh_muc)?.label || 'Khác';
-  const loc =
-    dia_chi && String(dia_chi).trim() !== ''
-      ? String(dia_chi).trim()
-      : `${Number(vi_do).toFixed(5)}, ${Number(kinh_do).toFixed(5)}`;
-  const raw = `${categoryLabel} - ${loc}`;
-  return raw.length > 200 ? `${raw.slice(0, 197)}...` : raw;
-}
 
 const CreateReportScreen = () => {
   const navigation = useNavigation();
@@ -2640,5 +2601,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+export const citizenReportScreenStyles = styles;
 
 export default CreateReportScreen;

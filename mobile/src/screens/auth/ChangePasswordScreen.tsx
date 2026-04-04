@@ -78,7 +78,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation,
 
     setLoading(true);
     try {
-      // CityResQ360 API format - theo API docs
+      // CivicTwinAI API format - theo API docs
       const response = await api.post('/auth/reset-password', {
         email: identifier,
         token: token,

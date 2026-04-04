@@ -19,23 +19,23 @@ const HelpCenterScreen = () => {
     const insets = useSafeAreaInsets();
 
     const handleContactSupport = () => {
-        Linking.openURL('mailto:support@cityresq360.com?subject=Hỗ trợ CityResQ360');
+        Linking.openURL('mailto:support@civictwinai.com?subject=Hỗ trợ CivicTwinAI');
     };
 
     const handleOpenFAQ = () => {
-        Linking.openURL('https://cityresq360.com/faq');
+        Linking.openURL('https://civictwinai.com/faq');
     };
 
     const handleOpenGuide = () => {
-        Linking.openURL('https://cityresq360.com/guide');
+        Linking.openURL('https://civictwinai.com/guide');
     };
 
     const handleOpenCommunity = () => {
-        Linking.openURL('https://community.cityresq360.com');
+        Linking.openURL('https://community.civictwinai.com');
     };
 
     const handleReportBug = () => {
-        Linking.openURL('mailto:bugs@cityresq360.com?subject=Báo lỗi CityResQ360');
+        Linking.openURL('mailto:bugs@civictwinai.com?subject=Báo lỗi CivicTwinAI');
     };
 
     const helpItems: HelpItem[] = [
@@ -77,9 +77,9 @@ const HelpCenterScreen = () => {
     ];
 
     const quickLinks = [
-        { title: 'Chính sách bảo mật', url: 'https://cityresq360.com/privacy' },
-        { title: 'Điều khoản sử dụng', url: 'https://cityresq360.com/terms' },
-        { title: 'Quy định cộng đồng', url: 'https://cityresq360.com/community-guidelines' },
+        { title: 'Chính sách bảo mật', url: 'https://civictwinai.com/privacy' },
+        { title: 'Điều khoản sử dụng', url: 'https://civictwinai.com/terms' },
+        { title: 'Quy định cộng đồng', url: 'https://civictwinai.com/community-guidelines' },
     ];
 
     return (
@@ -144,11 +144,11 @@ const HelpCenterScreen = () => {
                     <Text style={styles.contactTitle}>Liên hệ trực tiếp</Text>
                     <View style={styles.contactItem}>
                         <Icon name="email" size={ICON_SIZE.md} color={theme.colors.primary} />
-                        <Text style={styles.contactText}>support@cityresq360.com</Text>
+                        <Text style={styles.contactText}>support@civictwinai.com</Text>
                     </View>
                     <View style={styles.contactItem}>
                         <Icon name="phone" size={ICON_SIZE.md} color={theme.colors.primary} />
-                        <Text style={styles.contactText}>1900-xxxx (8:00 - 22:00)</Text>
+                        <Text style={styles.contactText}>1900-xxxx (8:00 - 22:00) - Sẽ cập nhật sau</Text>
                     </View>
                 </View>
             </ScrollView>

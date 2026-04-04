@@ -11,7 +11,7 @@ const AboutScreen = () => {
     const insets = useSafeAreaInsets();
 
     const appInfo = {
-        name: 'CityResQ360',
+        name: 'CivicTwinAI',
         version: '1.0.0',
         buildNumber: '100',
         description: 'Ứng dụng báo cáo và quản lý sự cố đô thị thông minh',
@@ -25,16 +25,16 @@ const AboutScreen = () => {
     ];
 
     const teamMembers = [
-        { name: 'Phát triển', email: 'dev@cityresq360.com' },
-        { name: 'Hỗ trợ', email: 'support@cityresq360.com' },
-        { name: 'Kinh doanh', email: 'business@cityresq360.com' },
+        { name: 'Phát triển', email: 'dev@civictwinai.com' },
+        { name: 'Hỗ trợ', email: 'support@civictwinai.com' },
+        { name: 'Kinh doanh', email: 'business@civictwinai.com' },
     ];
 
     const socialLinks = [
-        { icon: 'facebook', name: 'Facebook', url: 'https://facebook.com/cityresq360' },
-        { icon: 'twitter', name: 'Twitter', url: 'https://twitter.com/cityresq360' },
-        { icon: 'instagram', name: 'Instagram', url: 'https://instagram.com/cityresq360' },
-        { icon: 'youtube', name: 'YouTube', url: 'https://youtube.com/@cityresq360' },
+        { icon: 'facebook', name: 'Facebook', url: 'https://facebook.com/civictwinai' },
+        { icon: 'twitter', name: 'Twitter', url: 'https://twitter.com/civictwinai' },
+        { icon: 'instagram', name: 'Instagram', url: 'https://instagram.com/civictwinai' },
+        { icon: 'youtube', name: 'YouTube', url: 'https://youtube.com/@civictwinai' },
     ];
 
     return (
@@ -123,14 +123,14 @@ const AboutScreen = () => {
                 <View style={styles.legalSection}>
                     <TouchableOpacity
                         style={styles.legalLink}
-                        onPress={() => Linking.openURL('https://cityresq360.com/privacy')}
+                        onPress={() => Linking.openURL('https://civictwinai.com/privacy')}
                     >
                         <Text style={styles.legalText}>Chính sách bảo mật</Text>
                     </TouchableOpacity>
                     <Text style={styles.legalDivider}>•</Text>
                     <TouchableOpacity
                         style={styles.legalLink}
-                        onPress={() => Linking.openURL('https://cityresq360.com/terms')}
+                        onPress={() => Linking.openURL('https://civictwinai.com/terms')}
                     >
                         <Text style={styles.legalText}>Điều khoản sử dụng</Text>
                     </TouchableOpacity>
@@ -138,7 +138,7 @@ const AboutScreen = () => {
 
                 {/* Copyright */}
                 <Text style={styles.copyright}>
-                    © 2025 CityResQ360. All rights reserved.
+                    © 2025 CivicTwinAI. All rights reserved.
                 </Text>
             </ScrollView>
         </SafeAreaView>

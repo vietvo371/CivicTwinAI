@@ -153,3 +153,14 @@ export const formatDate = (dateString: string): string => {
     return `${day}/${month}/${year}`;
 };
 
+/** Trạng thái 0–1: còn có thể chỉnh sửa nội dung trước khi xử lý */
+export const canCitizenEditReport = (trangThai: number): boolean =>
+    trangThai === 0 || trangThai === 1;
+
+/**
+ * Xóa: cho phép khi chưa vào xử lý / hoàn thành (0,1) hoặc đã từ chối (4).
+ * Trạng thái 2,3: không hiển thị xóa để tránh mâu thuẫn với quy trình xử lý.
+ */
+export const canCitizenDeleteReport = (trangThai: number): boolean =>
+    trangThai === 0 || trangThai === 1 || trangThai === 4;
+

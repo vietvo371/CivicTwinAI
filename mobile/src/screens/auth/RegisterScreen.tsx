@@ -419,7 +419,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           Đăng ký tài khoản
         </Text>
         <Text style={styles.formSubtitle}>
-          Tham gia CityResQ360 để góp phần xây dựng thành phố thông minh
+          Tham gia CivicTwinAI để góp phần xây dựng thành phố thông minh
         </Text>
         {renderStepIndicator()}
       </View>
@@ -486,7 +486,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={styles.welcomeText}
               entering={FadeInDown.duration(800).delay(200).springify()}
             >
-              Chào mừng đến với CityResQ360
+              Chào mừng đến với CivicTwinAI
             </Animated.Text>
 
             <Animated.Text

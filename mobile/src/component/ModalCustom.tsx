@@ -14,6 +14,8 @@ interface ModalCustomProps {
     actionText?: string;
     closeText?: string;
     type?: 'info' | 'warning' | 'error' | 'success' | 'confirm';
+    /** false: chạm nền không đóng (tránh kẹt màn hình khi bắt buộc chọn nút hành động) */
+    dismissOnBackdropPress?: boolean;
 }
 
 const ModalCustom = ({
@@ -26,7 +28,8 @@ const ModalCustom = ({
     onPressAction,
     actionText = 'Xác nhận',
     closeText = 'Hủy',
-    type = 'confirm'
+    type = 'confirm',
+    dismissOnBackdropPress = true,
 }: ModalCustomProps) => {
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,7 +87,9 @@ const ModalCustom = ({
             animationType="none"
             transparent={true}
             visible={isModalVisible}
-            onRequestClose={() => setIsModalVisible(false)}
+            onRequestClose={() => {
+                if (dismissOnBackdropPress) setIsModalVisible(false);
+            }}
             statusBarTranslucent
         >
             {/* Không animate opacity cả màn: opacity=0 vẫn nuốt touch → cảm giác màn hình khoá sau modal loading/AI */}
@@ -93,7 +98,9 @@ const ModalCustom = ({
                     style={StyleSheet.absoluteFill}
                     accessibilityRole="button"
                     accessibilityLabel="Đóng"
-                    onPress={() => setIsModalVisible(false)}
+                    onPress={() => {
+                        if (dismissOnBackdropPress) setIsModalVisible(false);
+                    }}
                 />
                 <Animated.View
                     style={[
