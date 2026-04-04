@@ -13,17 +13,17 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles, HasApiTokens, SoftDeletes;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     protected $guard_name = 'sanctum';
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'avatar', 'is_active', 'last_login_at',
-        'provider', 'provider_id',
+        'provider', 'provider_id', 'fcm_token',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'fcm_token',
     ];
 
     protected function casts(): array
@@ -36,4 +36,3 @@ class User extends Authenticatable
         ];
     }
 }
-

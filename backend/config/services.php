@@ -55,4 +55,15 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firebase Cloud Messaging (server → device)
+    |--------------------------------------------------------------------------
+    | Bật FCM_ENABLED=true và đặt FIREBASE_CREDENTIALS=đường dẫn tới service account JSON
+    | (cùng project với app React Native Firebase). Xem config/firebase.php.
+    */
+    'fcm' => [
+        'enabled' => (bool) env('FCM_ENABLED', false),
+    ],
+
 ];

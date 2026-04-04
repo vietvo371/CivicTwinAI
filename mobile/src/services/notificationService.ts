@@ -18,8 +18,9 @@ export const notificationService = {
         return response.data;
     },
 
-    markAsRead: async (id: number): Promise<ApiResponse<any>> => {
-        const response = await api.patch<ApiResponse<any>>(`/notifications/${id}/read`);
+    markAsRead: async (id: string | number): Promise<ApiResponse<any>> => {
+        const segment = encodeURIComponent(String(id));
+        const response = await api.patch<ApiResponse<any>>(`/notifications/${segment}/read`);
         return response.data;
     },
 
@@ -28,8 +29,9 @@ export const notificationService = {
         return response.data;
     },
 
-    deleteNotification: async (id: number): Promise<ApiResponse<void>> => {
-        const response = await api.delete<ApiResponse<void>>(`/notifications/${id}`);
+    deleteNotification: async (id: string | number): Promise<ApiResponse<void>> => {
+        const segment = encodeURIComponent(String(id));
+        const response = await api.delete<ApiResponse<void>>(`/notifications/${segment}`);
         return response.data;
     },
 

@@ -5,11 +5,12 @@
  * @format
  */
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StatusBar, useColorScheme, Platform } from 'react-native';
 import { NavigationContainer, Theme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
 import MainNavigator from './src/navigation/MainTabNavigator';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { WebSocketProvider } from './src/contexts/WebSocketContext';
@@ -25,18 +26,34 @@ import { ErrorModalProvider } from './src/utils/ErrorModalManager';
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
-  // Xử lý thông báo khi app đang mở
-  const handleNotification = (notification: any) => {
-    console.log('Xử lý thông báo trong app:', notification);
-    // Bạn có thể thêm logic xử lý thông báo tùy chỉnh ở đây
-  };
+  const handleNotification = useCallback((remoteMessage: any) => {
+    const n = remoteMessage?.notification;
+    const d = remoteMessage?.data ?? {};
+    const title =
+      (typeof n?.title === 'string' && n.title) ||
+      (typeof d.title === 'string' && d.title) ||
+      'Thông báo';
+    const body =
+      (typeof n?.body === 'string' && n.body) ||
+      (typeof d.body === 'string' && d.body) ||
+      '';
 
-  // Xử lý khi người dùng mở thông báo
-  const handleNotificationOpened = (notification: any) => {
+    if (!body && title === 'Thông báo') {
+      return;
+    }
+
+    Toast.show({
+      type: 'info',
+      text1: title,
+      text2: body || undefined,
+      visibilityTime: 4500,
+      topOffset: Platform.OS === 'ios' ? 55 : 40,
+    });
+  }, []);
+
+  const handleNotificationOpened = useCallback((notification: any) => {
     console.log('Người dùng mở thông báo:', notification);
-    // Bạn có thể điều hướng đến màn hình cụ thể dựa trên notification data
-    // Ví dụ: navigationRef.current?.navigate('NotificationDetail', { data: notification.data });
-  };
+  }, []);
 
   const navigationTheme: Theme = {
     dark: isDarkMode,
@@ -106,6 +123,7 @@ const App = () => {
           </AlertProvider>
         </ErrorModalProvider>
       </SafeAreaProvider>
+      <Toast />
     </GestureHandlerRootView>
   );
 };

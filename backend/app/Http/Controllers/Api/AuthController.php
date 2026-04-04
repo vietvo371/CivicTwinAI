@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use App\Helpers\ApiResponse;
 
 class AuthController extends Controller
 {
@@ -94,17 +93,13 @@ class AuthController extends Controller
     public function updateFcmToken(Request $request): JsonResponse
     {
         $request->validate([
-            'fcm_token' => 'required|string'
+            'fcm_token' => 'present|nullable|string|max:4096',
         ]);
-        
-        // Ensure Users migration has fcm_token later or save in metadata. 
-        // We will assume it has fcm_token or we can save it to an array column if available.
-        // For now, let's gracefully accept it.
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'fcm_token')) {
-                $request->user()->update(['fcm_token' => $request->fcm_token]);
-            }
-        } catch (\Exception $e) {}
+
+        $raw = $request->input('fcm_token');
+        $request->user()->update([
+            'fcm_token' => ($raw === null || $raw === '') ? null : $raw,
+        ]);
 
         return ApiResponse::success(null, 'api.fcm_token_updated');
     }
@@ -125,7 +120,7 @@ class AuthController extends Controller
         }
 
         $user->update([
-            'password' => Hash::make($request->new_password)
+            'password' => Hash::make($request->new_password),
         ]);
 
         return ApiResponse::success(null, 'api.password_changed');

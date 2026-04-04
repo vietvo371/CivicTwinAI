@@ -133,7 +133,7 @@ const NotificationsScreen = () => {
     }
     
     // Mark API notifications in local state
-    setApiNotifications(prev => prev.map(n => ({ ...n, da_doc: true })));
+    setApiNotifications(prev => prev.map(n => ({ ...n, da_doc: true, read: true })));
     
     // 2. Perform API Call
     try {
@@ -165,18 +165,22 @@ const NotificationsScreen = () => {
         }
       } 
       
-      // API source handling
-      const apiIdStr = item.id.replace('api-', '');
-      if (item.source === 'api' || !isNaN(Number(apiIdStr))) {
-        try {
-          const apiId = parseInt(apiIdStr);
-          // Mark in local state optimistically
-          setApiNotifications(prev =>
-            prev.map(n => n.id === apiId ? { ...n, da_doc: true } : n)
-          );
-          await notificationService.markAsRead(apiId);
-        } catch (error) {
-          console.error('❌ Error marking as read:', error);
+      // API source — Laravel notifications dùng UUID (string), không dùng parseInt
+      if (item.source === 'api' && item.id.startsWith('api-')) {
+        const apiIdStr = item.id.slice('api-'.length);
+        if (apiIdStr.length > 0) {
+          try {
+            setApiNotifications(prev =>
+              prev.map(n =>
+                String(n.id) === apiIdStr
+                  ? { ...n, da_doc: true, read: true }
+                  : n,
+              ),
+            );
+            await notificationService.markAsRead(apiIdStr);
+          } catch (error) {
+            console.error('❌ Error marking as read:', error);
+          }
         }
       }
     }

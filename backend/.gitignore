@@ -3,6 +3,11 @@
 .env
 .env.backup
 .env.production
+
+# Firebase Admin SDK — chứa private key, không commit
+*-firebase-adminsdk-*.json
+firebase-adminsdk*.json
+service-account.json
 .phpactor.json
 .phpunit.result.cache
 /.fleet
