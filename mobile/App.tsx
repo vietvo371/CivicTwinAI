@@ -22,33 +22,13 @@ import { AlertProvider } from './src/services/AlertService';
 import AlertServiceConnector from './src/component/AlertServiceConnector';
 import NotificationService from './src/components/NotificationService';
 import { ErrorModalProvider } from './src/utils/ErrorModalManager';
+import { notifyFcmForeground } from './src/realtime/fcmForegroundBridge';
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
   const handleNotification = useCallback((remoteMessage: any) => {
-    const n = remoteMessage?.notification;
-    const d = remoteMessage?.data ?? {};
-    const title =
-      (typeof n?.title === 'string' && n.title) ||
-      (typeof d.title === 'string' && d.title) ||
-      'Thông báo';
-    const body =
-      (typeof n?.body === 'string' && n.body) ||
-      (typeof d.body === 'string' && d.body) ||
-      '';
-
-    if (!body && title === 'Thông báo') {
-      return;
-    }
-
-    Toast.show({
-      type: 'info',
-      text1: title,
-      text2: body || undefined,
-      visibilityTime: 4500,
-      topOffset: Platform.OS === 'ios' ? 55 : 40,
-    });
+    notifyFcmForeground(remoteMessage);
   }, []);
 
   const handleNotificationOpened = useCallback((notification: any) => {

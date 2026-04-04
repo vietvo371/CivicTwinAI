@@ -13,7 +13,8 @@ interface WebSocketContextType {
    * Silent no-op nếu WebSocket chưa ready hoặc disabled.
    */
   listen: (channel: string, event: string, callback: (data: any) => void) => void;
-  subscribePusher: (channel: string, event: string, callback: (data: any) => void) => void;
+  /** Trả về hàm gỡ bind sự kiện Pusher (tránh rò listener khi unmount). */
+  subscribePusher: (channel: string, event: string, callback: (data: any) => void) => () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -88,9 +89,13 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const subscribePusher = (channel: string, event: string, callback: (data: any) => void) => {
-    if (!wsReady.current) return;
-    try { WebSocketService.subscribePusher(channel, event, callback); } catch { /* ignore */ }
+  const subscribePusher = (channel: string, event: string, callback: (data: any) => void): (() => void) => {
+    if (!wsReady.current) return () => {};
+    try {
+      return WebSocketService.subscribePusher(channel, event, callback);
+    } catch {
+      return () => {};
+    }
   };
 
   return (

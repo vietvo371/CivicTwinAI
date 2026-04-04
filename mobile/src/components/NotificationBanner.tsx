@@ -1,37 +1,31 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, StatusBar } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNotifications } from '../hooks/useNotifications';
 import { theme } from '../theme/colors';
+import { setFcmForegroundHandler } from '../realtime/fcmForegroundBridge';
+import { mapRemoteMessageToInAppNotification } from '../utils/mapFcmToInAppNotification';
 
 export const NotificationBanner = () => {
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, prependNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(1)).current;
-  
+
   const latestNotification = notifications.find(n => !n.read);
 
-  // DEBUG: Component mounted
   useEffect(() => {
-    console.log('🎨 NotificationBanner component mounted');
-    return () => console.log('🎨 NotificationBanner component unmounted');
-  }, []);
-
-  // DEBUG: Log notifications
-  useEffect(() => {
-    console.log('🎨 NotificationBanner - Total notifications:', notifications.length);
-    console.log('🎨 NotificationBanner - Latest unread:', latestNotification?.id);
-    if (notifications.length > 0) {
-      console.log('🎨 All notifications:', JSON.stringify(notifications, null, 2));
-    }
-  }, [notifications.length]);
+    setFcmForegroundHandler(msg => {
+      const n = mapRemoteMessageToInAppNotification(msg);
+      if (n) prependNotification(n);
+    });
+    return () => setFcmForegroundHandler(null);
+  }, [prependNotification]);
 
   useEffect(() => {
     if (latestNotification) {
-      console.log('🎨 Showing notification banner:', latestNotification.title);
       showToast();
     }
   }, [latestNotification?.id]);
@@ -146,6 +140,13 @@ export const NotificationBanner = () => {
           icon: 'map-marker-alert',
           iconColor: '#8B5CF6',
           borderColor: '#8B5CF6',
+        };
+      case 'fcm_push':
+        return {
+          backgroundColor: theme.colors.infoLight,
+          icon: 'bell-ring',
+          iconColor: theme.colors.info,
+          borderColor: theme.colors.info,
         };
       default:
         return {

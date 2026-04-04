@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, UserRole } from '../types/api/auth';
 import { authService } from '../services/authService';
 import NotificationTokenService from '../services/NotificationTokenService';
-import PushNotificationHelper from '../utils/PushNotificationHelper';
 import { resetTo } from '../navigation/NavigationService';
 
 // ============================================================================
@@ -64,22 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     initializeApp();
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const unsubscribe = PushNotificationHelper.onTokenRefresh(async (newToken) => {
-      try {
-        await NotificationTokenService.updateTokenOnRefresh(newToken);
-      } catch (error) {
-        console.log('FCM token refresh error:', error);
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [user]);
 
   const initializeApp = async () => {
     try {

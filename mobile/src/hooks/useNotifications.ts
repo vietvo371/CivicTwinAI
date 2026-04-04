@@ -5,7 +5,7 @@ import { notificationService } from '../services/notificationService';
 
 export interface Notification {
   id: string;
-  type: 'report_status' | 'points_updated' | 'new_nearby_report' | 'incident_created';
+  type: 'report_status' | 'points_updated' | 'new_nearby_report' | 'incident_created' | 'fcm_push';
   title: string;
   message: string;
   data?: any;
@@ -49,6 +49,15 @@ export const useNotifications = () => {
     console.log('🔄 Triggering refresh callbacks:', refreshCallbacks.length);
     refreshCallbacks.forEach(callback => callback());
   }, []);
+
+  const prependNotification = useCallback(
+    (notification: Notification) => {
+      setNotifications(prev => [notification, ...prev]);
+      fetchUnreadCount();
+      triggerRefresh();
+    },
+    [fetchUnreadCount, triggerRefresh],
+  );
 
   // Fetch unread count on mount and when user changes
   useEffect(() => {
@@ -151,9 +160,9 @@ export const useNotifications = () => {
       console.error('❌ Failed to register Echo listeners:', error);
     }
     
-    // Method 2: Pusher API trực tiếp (backup method)
+    let unsubscribePusherReport: (() => void) | undefined;
     try {
-      subscribePusher('user-reports', 'report.status.updated', (data: any) => {
+      unsubscribePusherReport = subscribePusher('user-reports', 'report.status.updated', (data: any) => {
         console.log('📩 [Pusher] Received report.status.updated:', data);
         handleReportStatusUpdate(data);
       });
@@ -265,9 +274,10 @@ export const useNotifications = () => {
       triggerRefresh();
     });
 
-    // Cleanup
     return () => {
+      unsubscribePusherReport?.();
       unsubscribe(userChannel);
+      unsubscribe(publicChannel);
       unsubscribe(trafficChannel);
     };
   }, [isConnected, user?.id]);
@@ -298,6 +308,7 @@ export const useNotifications = () => {
     markAllAsRead,
     clearAll,
     registerRefreshCallback,
+    prependNotification,
   };
 };
 
