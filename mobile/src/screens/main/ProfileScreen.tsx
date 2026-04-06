@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, StatusBar, RefreshControl, ActivityIndicator, FlatList, Modal, Animated, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, StatusBar, RefreshControl, ActivityIndicator, FlatList, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -11,7 +11,6 @@ import {
   ICON_SIZE,
   SCREEN_PADDING,
   wp,
-  hp,
 } from '../../theme';
 import ModalCustom from '../../component/ModalCustom';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -20,16 +19,15 @@ import { reportService } from '../../services/reportService';
 import { User } from '../../types/api/auth';
 import { Report } from '../../types/api/report';
 import ReportCard from '../../components/reports/ReportCard';
-import { AlertService } from '../../services/AlertService';
 import {
   getStatusText,
-  getStatusColor,
-  getReportTags,
-  isReportUrgent
+  canCitizenEditReport,
+  canCitizenDeleteReport,
 } from '../../utils/reportUtils';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { user: contextUser, signOut } = useAuth();
   const [user, setUser] = useState<User | null>(contextUser);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -47,6 +45,7 @@ const ProfileScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalReportCount, setTotalReportCount] = useState(0);
 
   // Animation refs for menu modal
   const slideAnim = useRef(new Animated.Value(500)).current; // Start off-screen
@@ -55,7 +54,6 @@ const ProfileScreen = () => {
   const fetchProfile = useCallback(async () => {
     try {
       const profileData = await authService.getProfile();
-      console.log('Profile data:', profileData);
       setUser(profileData);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -78,7 +76,7 @@ const ProfileScreen = () => {
         sort_by: 'created_at',
         sort_order: 'desc'
       });
-
+      console.log('response:', response);
       if (response.success && response.data) {
         const reportsData = (response.data as any).data || response.data;
         console.log('reportsData:', reportsData);
@@ -93,6 +91,9 @@ const ProfileScreen = () => {
           const meta = response.meta || response.data;
           setCurrentPage((meta as any).current_page || page);
           setTotalPages((meta as any).last_page || 1);
+          if (page === 1 && typeof (meta as any).total === 'number') {
+            setTotalReportCount((meta as any).total);
+          }
         }
       }
     } catch (error) {
@@ -107,12 +108,18 @@ const ProfileScreen = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (contextUser) {
+      setUser(contextUser);
+    }
+  }, [contextUser]);
+
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
       fetchProfile();
       fetchMyReports(1);
-    }, [])
+    }, [fetchProfile, fetchMyReports])
   );
 
   const onRefresh = () => {
@@ -239,17 +246,27 @@ const ProfileScreen = () => {
   };
 
   const handleEditReport = (report: Report) => {
-    // Only allow editing if status is pending (0) or confirmed (1)
-    if (report.trang_thai <= 1) {
-      (navigation as any).navigate('EditReport', { id: report.id });
-    } else {
+    if (!canCitizenEditReport(report.trang_thai)) {
       setInfoModalTitle('Không thể chỉnh sửa');
-      setInfoModalMessage('Phản ánh này đang được xử lý hoặc đã hoàn thành nên không thể chỉnh sửa.');
+      setInfoModalMessage(
+        `Phản ánh đang ở trạng thái "${getStatusText(report.trang_thai)}". Chỉ có thể sửa khi còn Tiếp nhận hoặc Đã xác minh.`
+      );
       setShowInfoModal(true);
+      return;
     }
+    (navigation as any).navigate('EditReport', { id: report.id });
   };
 
-  const handleDeleteReport = (reportId: number) => {
+  const handleDeleteReport = (reportId: number, trangThai: number) => {
+    if (!canCitizenDeleteReport(trangThai)) {
+      setOpenMenuReportId(null);
+      setInfoModalTitle('Không thể xóa');
+      setInfoModalMessage(
+        `Phản ánh đang xử lý hoặc đã hoàn thành không thể xóa (trạng thái: "${getStatusText(trangThai)}").`
+      );
+      setShowInfoModal(true);
+      return;
+    }
     setSelectedReportId(reportId);
     setShowDeleteModal(true);
   };
@@ -260,9 +277,8 @@ const ProfileScreen = () => {
     try {
       const response = await reportService.deleteReport(selectedReportId);
       if (response.success) {
-        // Remove from list
         setMyReports(prev => prev.filter(r => r.id !== selectedReportId));
-        // Update user stats
+        setTotalReportCount(prev => Math.max(0, prev - 1));
         if (user) {
           setUser({ ...user });
         }
@@ -285,56 +301,68 @@ const ProfileScreen = () => {
     }
   };
 
-  const formatPoints = (points: number) => {
-    return points.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const renderReportItem = ({ item }: { item: Report }) => {
+    const canEdit = canCitizenEditReport(item.trang_thai);
+    const canDelete = canCitizenDeleteReport(item.trang_thai);
+    return (
+      <View style={styles.reportCardWrapper}>
+        <ReportCard
+          report={item}
+          onPress={() => handleReportPress(item)}
+          renderAction={() => (
+            <View style={styles.menuContainer}>
+              <TouchableOpacity
+                style={styles.menuIconButton}
+                onPress={() => setOpenMenuReportId(openMenuReportId === item.id ? null : item.id)}
+              >
+                <Icon name="dots-vertical" size={24} color={theme.colors.text} />
+              </TouchableOpacity>
+
+              {openMenuReportId === item.id && (
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                    style={[styles.menuOption, !canEdit && styles.menuOptionDisabled]}
+                    onPress={() => {
+                      setOpenMenuReportId(null);
+                      handleEditReport(item);
+                    }}
+                  >
+                    <Icon
+                      name="pencil"
+                      size={20}
+                      color={canEdit ? theme.colors.primary : theme.colors.textSecondary}
+                    />
+                    <Text style={[styles.menuOptionText, !canEdit && styles.menuOptionTextDisabled]}>
+                      Sửa
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.menuDivider} />
+
+                  <TouchableOpacity
+                    style={[styles.menuOption, !canDelete && styles.menuOptionDisabled]}
+                    onPress={() => {
+                      setOpenMenuReportId(null);
+                      handleDeleteReport(item.id, item.trang_thai);
+                    }}
+                  >
+                    <Icon
+                      name="delete"
+                      size={20}
+                      color={canDelete ? theme.colors.error : theme.colors.textSecondary}
+                    />
+                    <Text style={[styles.menuOptionText, !canDelete && styles.menuOptionTextDisabled]}>
+                      Xóa
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    );
   };
-
-  const renderReportItem = ({ item }: { item: Report }) => (
-    <View style={styles.reportCardWrapper}>
-      <ReportCard
-        report={item}
-        onPress={() => handleReportPress(item)}
-        renderAction={() => (
-          <View style={styles.menuContainer}>
-            <TouchableOpacity
-              style={styles.menuIconButton}
-              onPress={() => setOpenMenuReportId(openMenuReportId === item.id ? null : item.id)}
-            >
-              <Icon name="dots-vertical" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-
-            {openMenuReportId === item.id && (
-              <View style={styles.dropdownMenu}>
-                <TouchableOpacity
-                  style={styles.menuOption}
-                  onPress={() => {
-                    setOpenMenuReportId(null);
-                    handleEditReport(item);
-                  }}
-                >
-                  <Icon name="pencil" size={20} color={theme.colors.primary} />
-                  <Text style={styles.menuOptionText}>Sửa</Text>
-                </TouchableOpacity>
-
-                <View style={styles.menuDivider} />
-
-                <TouchableOpacity
-                  style={styles.menuOption}
-                  onPress={() => {
-                    setOpenMenuReportId(null);
-                    handleDeleteReport(item.id);
-                  }}
-                >
-                  <Icon name="delete" size={20} color={theme.colors.error} />
-                  <Text style={styles.menuOptionText}>Xóa</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      />
-    </View>
-  );
 
   const renderEmpty = () => (
     <View style={styles.emptyState}>
@@ -371,11 +399,14 @@ const ProfileScreen = () => {
         </View>
       ) : (
         <View style={styles.headerContainer}>
-          {/* Colored Background */}
-          <View style={styles.headerBackground}>
-            {/* Settings Button */}
+          <View
+            style={[
+              styles.headerBackground,
+              { paddingTop: insets.top + SPACING.sm },
+            ]}
+          >
             <TouchableOpacity
-              style={styles.settingsButton}
+              style={[styles.settingsButton, { top: insets.top + SPACING.sm }]}
               onPress={() => setShowMenuModal(true)}
             >
               <Icon name="cog-outline" size={24} color={theme.colors.white} />
@@ -405,7 +436,9 @@ const ProfileScreen = () => {
           {/* Floating Stats Card */}
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{myReports.length}</Text>
+              <Text style={styles.statValue}>
+                {totalReportCount > 0 ? totalReportCount : myReports.length}
+              </Text>
               <Text style={styles.statLabel}>Báo cáo</Text>
             </View>
             <View style={styles.divider} />
@@ -427,8 +460,8 @@ const ProfileScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
 
       {reportsLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
@@ -588,8 +621,7 @@ const styles = StyleSheet.create({
   },
   headerBackground: {
     backgroundColor: theme.colors.primary,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    paddingBottom: SPACING['3xl'] + SPACING.lg, // Extra padding for floating card overlap
+    paddingBottom: SPACING['3xl'] + SPACING.lg,
     paddingHorizontal: SCREEN_PADDING.horizontal,
     alignItems: 'center',
     borderBottomLeftRadius: BORDER_RADIUS['2xl'],
@@ -597,7 +629,6 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + SPACING.md : SPACING.xl,
     right: SCREEN_PADDING.horizontal,
     padding: SPACING.xs,
     zIndex: 10,
@@ -761,6 +792,12 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontWeight: '500',
   },
+  menuOptionDisabled: {
+    opacity: 0.45,
+  },
+  menuOptionTextDisabled: {
+    color: theme.colors.textSecondary,
+  },
   menuDivider: {
     height: 1,
     backgroundColor: theme.colors.borderLight,
@@ -852,7 +889,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: SCREEN_PADDING.horizontal,
-    paddingTop: SPACING.xl,
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,

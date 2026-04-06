@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BlurView } from '@react-native-community/blur';
+
 
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -15,7 +15,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const getOnboardingData = (t: any) => [
   {
     id: 1,
-    title: 'Chào mừng đến CityResQ360',
+    title: 'Chào mừng đến với CivicTwinAI',
     description: 'Hệ thống báo cáo và xử lý sự cố đô thị thông minh, kết nối người dân và chính quyền',
     image: require('../../assets/images/started/welcom.jpg'),
   },
@@ -79,7 +79,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
 
       <View style={styles.overlay} />
 
-      <BlurView blurType="dark" blurAmount={70} style={styles.blurContainer}>
+      <View style={styles.blurContainer}>
         <SafeAreaView style={styles.safeArea}>
           {/* Top part - Marquee cards */}
           <Animated.View
@@ -135,7 +135,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
             </AnimatedPressable>
           </View>
         </SafeAreaView>
-      </BlurView>
+      </View>
     </View>
   );
 }
@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
   },
   blurContainer: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   safeArea: {
     flex: 1,
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     fontFamily: theme.typography.fontFamily,
-    color: theme.colors.textDarkLight,
+    color: theme.colors.textLight,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.colors.textDarkLight,
+    backgroundColor: theme.colors.textLight,
   },
   paginationDotActive: {
     width: 24,
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     alignSelf: 'stretch',
-    ...theme.shadows.yellow,
+    ...theme.shadows.md,
   },
   buttonText: {
     fontSize: 18,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import PageHeader from '../../component/PageHeader';
 import InputCustom from '../../component/InputCustom';
@@ -11,6 +11,7 @@ import { authService } from '../../services/authService';
 
 const ChangePasswordLoggedInScreen = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
     const [loading, setLoading] = useState(false);
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -106,8 +107,11 @@ const ChangePasswordLoggedInScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <PageHeader title="Đổi mật khẩu" variant="default" />
+        <SafeAreaView style={styles.container} edges={[]}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
+            <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
+                <PageHeader title="Đổi mật khẩu" variant="default" />
+            </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.formSection}>

@@ -7,7 +7,7 @@
  */
 
 export { theme, COLORS } from './colors';
-export { typography, textStyles as typographyStyles, createTextStyle } from './typography';
+export { typography, textStyles, createTextStyle } from './typography';
 export { 
   responsive,
   FONT_SIZE,
@@ -29,14 +29,19 @@ export {
   containerStyles,
   cardStyles,
   buttonStyles,
-  textStyles,
+  componentTextStyles,
   inputStyles,
   badgeStyles,
   iconContainerStyles,
   listItemStyles,
   avatarStyles,
   dividerStyle,
+  aegisStyles,
 } from './components';
+
+// Export new core components
+export { AegisCard } from '../components/common/AegisCard';
+export { AegisButton } from '../components/common/AegisButton';
 
 // Re-export wp & hp for convenience
 export { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';

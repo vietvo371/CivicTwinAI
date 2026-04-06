@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PageHeader from '../../component/PageHeader';
@@ -26,6 +26,7 @@ const LANGUAGES: Language[] = [
 
 const LanguageSettingsScreen = () => {
     const navigation = useNavigation();
+    const insets = useSafeAreaInsets();
     const [selectedLanguage, setSelectedLanguage] = useState('vi');
 
     React.useEffect(() => {
@@ -55,8 +56,11 @@ const LanguageSettingsScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <PageHeader title="Ngôn ngữ" variant="default" />
+        <SafeAreaView style={styles.container} edges={[]}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
+            <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
+                <PageHeader title="Ngôn ngữ" variant="default" />
+            </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.section}>

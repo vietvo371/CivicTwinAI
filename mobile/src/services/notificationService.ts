@@ -1,4 +1,5 @@
 import api from '../utils/Api';
+import { isUuid } from '../utils/isUuid';
 import { ApiResponse } from '../types/api/common';
 import { Notification, NotificationFilterParams } from '../types/api/notification';
 
@@ -18,8 +19,13 @@ export const notificationService = {
         return response.data;
     },
 
-    markAsRead: async (id: number): Promise<ApiResponse<any>> => {
-        const response = await api.patch<ApiResponse<any>>(`/notifications/${id}/read`);
+    markAsRead: async (id: string | number): Promise<ApiResponse<any>> => {
+        const raw = String(id);
+        if (!isUuid(raw)) {
+            return { success: false, message: 'invalid_notification_id', data: null } as ApiResponse<any>;
+        }
+        const segment = encodeURIComponent(raw);
+        const response = await api.patch<ApiResponse<any>>(`/notifications/${segment}/read`);
         return response.data;
     },
 
@@ -28,8 +34,13 @@ export const notificationService = {
         return response.data;
     },
 
-    deleteNotification: async (id: number): Promise<ApiResponse<void>> => {
-        const response = await api.delete<ApiResponse<void>>(`/notifications/${id}`);
+    deleteNotification: async (id: string | number): Promise<ApiResponse<void>> => {
+        const raw = String(id);
+        if (!isUuid(raw)) {
+            return { success: false, message: 'invalid_notification_id', data: undefined } as ApiResponse<void>;
+        }
+        const segment = encodeURIComponent(raw);
+        const response = await api.delete<ApiResponse<void>>(`/notifications/${segment}`);
         return response.data;
     },
 

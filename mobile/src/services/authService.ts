@@ -66,8 +66,36 @@ export const authService = {
     throw new Error('Cập nhật thông tin thất bại');
   },
 
-  changePassword: async (data: ChangePasswordRequest): Promise<void> => {
-    await api.post('/auth/change-password', data);
+  changePassword: async (data: any): Promise<void> => {
+    // Backend expects: current_password, new_password, new_password_confirmation
+    // Mobile code may send different keys (e.g. mat_khau_cu/mat_khau_moi... or password/new naming).
+    let payload: Record<string, any>;
+
+    if (data?.mat_khau_cu && data?.mat_khau_moi) {
+      payload = {
+        current_password: data.mat_khau_cu,
+        new_password: data.mat_khau_moi,
+        new_password_confirmation:
+          data.mat_khau_moi_confirmation ?? data.new_password_confirmation ?? data.password_confirmation,
+      };
+    } else if (data?.current_password && data?.password) {
+      payload = {
+        current_password: data.current_password,
+        new_password: data.password,
+        new_password_confirmation: data.password_confirmation ?? data.new_password_confirmation,
+      };
+    } else if (data?.current_password && data?.new_password) {
+      payload = {
+        current_password: data.current_password,
+        new_password: data.new_password,
+        new_password_confirmation: data.new_password_confirmation,
+      };
+    } else {
+      // Fallback: pass-through (in case payload already matches backend format)
+      payload = data;
+    }
+
+    await api.post('/auth/change-password', payload);
   },
 
   requestPasswordReset: async (email: string): Promise<void> => {
@@ -91,5 +119,11 @@ export const authService = {
     }
 
     throw new Error('Làm mới token thất bại');
+  },
+
+  // NOTE: BE reset/OTP/email verify chưa được triển khai đồng bộ trong dự án hiện tại.
+  // Stub này chỉ để TypeScript compile được; nếu gọi thật sẽ báo chưa implement.
+  verifyEmail: async (_code: string): Promise<void> => {
+    throw new Error('Verify email endpoint is not implemented on backend yet');
   },
 };

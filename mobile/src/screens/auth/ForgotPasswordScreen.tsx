@@ -9,6 +9,7 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
+  StatusBar,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, SlideInDown } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -105,6 +106,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       {/* Background */}
       <View style={styles.backgroundContainer}>
         {/* Decorative Elements */}
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
   },
   decorativeCircle1: {
     position: 'absolute',
-    top: hp('-6%'),
+    top: 0,
     right: wp('-10%'),
     width: wp('30%'),
     height: wp('30%'),

@@ -2,24 +2,59 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Incident;
-use App\Jobs\CallAIPrediction;
 use App\Events\IncidentCreated;
+use App\Helpers\ApiResponse;
+use App\Http\Controllers\Controller;
+use App\Jobs\CallAIPrediction;
+use App\Models\Incident;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Helpers\ApiResponse;
 
 class IncidentController extends Controller
 {
+    private const MAX_INCIDENT_IMAGES = 5;
+
+    /**
+     * Thu thập ảnh từ multipart: field `image` (1 file) và/hoặc `images[]` (tối đa 5).
+     * Web và mobile dùng chung POST /incidents, không tách endpoint hay field riêng.
+     *
+     * @return list<string> URL công khai lưu vào metadata.images
+     */
+    private function collectIncidentImageUrls(Request $request): array
+    {
+        $urls = [];
+        $max = self::MAX_INCIDENT_IMAGES;
+
+        $files = [];
+        if ($request->hasFile('image')) {
+            $files[] = $request->file('image');
+        }
+        $batch = $request->file('images');
+        if ($batch !== null) {
+            $batch = is_array($batch) ? $batch : [$batch];
+            foreach ($batch as $f) {
+                if ($f && $f->isValid()) {
+                    $files[] = $f;
+                }
+            }
+        }
+
+        foreach (array_slice($files, 0, $max) as $file) {
+            $path = $file->store('incidents', 'public');
+            $urls[] = url('storage/'.$path);
+        }
+
+        return array_values(array_unique($urls));
+    }
+
     public function publicList(Request $request): JsonResponse
     {
         $query = Incident::select([
-                'id', 'title', 'type', 'severity', 'status', 'created_at',
-                DB::raw('ST_X(location::geometry) as longitude'),
-                DB::raw('ST_Y(location::geometry) as latitude'),
-            ])
+            'id', 'title', 'type', 'severity', 'status', 'created_at',
+            DB::raw('ST_X(location::geometry) as longitude'),
+            DB::raw('ST_Y(location::geometry) as latitude'),
+        ])
             ->whereNotNull('location')
             ->where('status', '!=', 'resolved')
             ->latest();
@@ -71,12 +106,14 @@ class IncidentController extends Controller
             'affected_edge_ids' => 'nullable|array',
             'affected_edge_ids.*' => 'integer|exists:edges,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            'images' => 'nullable|array|max:'.self::MAX_INCIDENT_IMAGES,
+            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
+        $imageUrls = $this->collectIncidentImageUrls($request);
         $metadata = [];
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('incidents', 'public');
-            $metadata['images'] = [url('storage/' . $path)];
+        if ($imageUrls !== []) {
+            $metadata['images'] = $imageUrls;
         }
 
         $incident = Incident::create([
@@ -101,7 +138,7 @@ class IncidentController extends Controller
 
         // Set affected edges
         if ($isPostgres && ! empty($validated['affected_edge_ids'])) {
-            $edgeArray = '{' . implode(',', $validated['affected_edge_ids']) . '}';
+            $edgeArray = '{'.implode(',', $validated['affected_edge_ids']).'}';
             DB::statement(
                 'UPDATE incidents SET affected_edge_ids = ? WHERE id = ?',
                 [$edgeArray, $incident->id]

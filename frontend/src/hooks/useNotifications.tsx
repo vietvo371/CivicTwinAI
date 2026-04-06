@@ -38,6 +38,11 @@ const NotificationContext = createContext<NotificationContextType>({
 
 const MAX_NOTIFICATIONS = 50;
 
+/** Khớp Laravel `Str::isUuid` — chỉ id này mới PATCH `/notifications/{id}/read`. */
+function isNotificationUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const counterRef = useRef(0);
@@ -67,15 +72,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const markAsRead = useCallback(async (id: string) => {
-    // Optimistic Update
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    
-    // API Call
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+
+    const cleanId = id.replace(/^seed-/, '');
+    if (!isNotificationUuid(cleanId)) {
+      // Thông báo chỉ tồn tại trên client (Echo toast: notif-…), không có bản ghi DB.
+      return;
+    }
+
     try {
-      // Backend expects numeric ID for standard notifications, 
-      // but our ID might be a UUID for DB notifications.
-      // We strip any 'seed-' or other prefixes if they exist.
-      const cleanId = id.replace('seed-', '');
       await api.patch(`/notifications/${cleanId}/read`);
     } catch (error) {
       console.error('Error marking as read:', error);

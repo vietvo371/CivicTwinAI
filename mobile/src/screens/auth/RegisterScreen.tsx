@@ -133,11 +133,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     try {
       // Use signUp from AuthContext
       await signUp({
-        ho_ten: formData.name,
+        // Match BE /auth/register payload
+        name: formData.name,
         email: formData.email,
-        mat_khau: formData.password,
-        mat_khau_confirmation: formData.re_password,
-        so_dien_thoai: formData.phone,
+        phone: formData.phone,
+        password: formData.password,
+        password_confirmation: formData.re_password,
       });
 
       // Reset form before navigating
@@ -159,11 +160,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       console.log('Registration error:', error.response);
       if (error.response?.data?.errors) {
         const fieldMapping: Record<string, string> = {
+          // Map BE validation keys -> this screen input keys
           email: 'email',
-          so_dien_thoai: 'number_phone',
-          ho_ten: 'full_name',
-          mat_khau: 'password',
-          mat_khau_confirmation: 're_password',
+          phone: 'number_phone',
+          name: 'full_name',
+          password: 'password',
+          password_confirmation: 're_password',
         };
 
         const newErrors: Record<string, string> = {};
@@ -417,7 +419,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           Đăng ký tài khoản
         </Text>
         <Text style={styles.formSubtitle}>
-          Tham gia CityResQ360 để góp phần xây dựng thành phố thông minh
+          Tham gia CivicTwinAI để góp phần xây dựng thành phố thông minh
         </Text>
         {renderStepIndicator()}
       </View>
@@ -484,7 +486,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={styles.welcomeText}
               entering={FadeInDown.duration(800).delay(200).springify()}
             >
-              Chào mừng đến với CityResQ360
+              Chào mừng đến với CivicTwinAI
             </Animated.Text>
 
             <Animated.Text

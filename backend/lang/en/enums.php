@@ -25,6 +25,8 @@ return [
         'high' => 'High',
         'critical' => 'Critical',
     ],
+    // Keys = `incidents.status` (DB). HasTranslatedEnums → __("enums.incident_status.*").
+    // Mobile API maps to numeric `trang_thai` in ReportController::mapIncidentToReport: open→0, investigating→2, resolved→3, closed→4.
     'incident_status' => [
         'open' => 'Open',
         'investigating' => 'Investigating',

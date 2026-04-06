@@ -1,71 +1,73 @@
 import { Platform } from 'react-native';
 
 /**
- * Color System - WISE English LMS
- * Primary brand color: #0d90d1 (Blue) - Fintech Style
+ * Color System - CivicTwinAI Digital Twin
+ * Primary brand color: #06B6D4 (Digital Cyan) - High-tech & Proactive
+ * Secondary brand color: #0F172A (Space Navy) - Deep & Reliable
  */
 export const COLORS = {
   // Brand Colors
-  primary: '#0d90d1',
-  primaryLight: '#4db8e8',
-  primaryDark: '#0a6fa8',
-  secondary: '#00D4FF',
-  accent: '#FFD700',
+  primary: '#06B6D4',
+  primaryLight: '#67E8F9',
+  primaryDark: '#0891B2',
+  secondary: '#0F172A',
+  secondaryLight: '#1E293B',
+  accent: '#8B5CF6', // AI Violet
   
   // Background Colors
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8F9FB',
-  backgroundTertiary: '#F0F2F5',
-  backgroundDark: '#1A1D1F',
+  background: '#F8FAFC',
+  backgroundSecondary: '#F1F5F9',
+  backgroundTertiary: '#E2E8F0',
+  backgroundDark: '#020617',
   
-  // Text Colors (Fintech-optimized contrast)
-  text: '#111827',
-  textSecondary: '#6B7280',
-  textTertiary: '#9CA3AF',
-  textLight: '#D1D5DB',
+  // Text Colors (High-contrast Slate)
+  text: '#0F172A',
+  textSecondary: '#475569',
+  textTertiary: '#64748B',
+  textLight: '#94A3B8',
   textWhite: '#FFFFFF',
-  textDark: '#030712',
+  textDark: '#020617',
   
-  // Status Colors
+  // Status Colors (Snappy & Vibrant)
   success: '#10B981',
   successLight: '#D1FAE5',
   error: '#EF4444',
   errorLight: '#FEE2E2',
   warning: '#F59E0B',
   warningLight: '#FEF3C7',
-  info: '#3B82F6',
-  infoLight: '#DBEAFE',
+  info: '#0EA5E9',
+  infoLight: '#E0F2FE',
   
   // UI Elements
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
-  borderDark: '#D1D5DB',
-  disabled: '#9CA3AF',
-  disabledBackground: '#F3F4F6',
+  border: '#E2E8F0',
+  borderLight: '#F1F5F9',
+  borderDark: '#CBD5E1',
+  disabled: '#94A3B8',
+  disabledBackground: '#F1F5F9',
   
-  // Card & Surface (Fintech elevation)
+  // Card & Surface (Snappy elevation)
   card: '#FFFFFF',
-  cardHover: '#F9FAFB',
+  cardHover: '#F8FAFC',
   surface: '#FFFFFF',
-  surfaceSecondary: '#FAFBFC',
+  surfaceSecondary: '#F1F5F9',
   surfaceElevated: '#FFFFFF',
   
   // Base Colors
   white: '#FFFFFF',
   black: '#000000',
   transparent: 'transparent',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  overlayLight: 'rgba(0, 0, 0, 0.3)',
+  overlay: 'rgba(2, 6, 23, 0.5)',
+  overlayLight: 'rgba(2, 6, 23, 0.3)',
   
-  // Gradients
-  gradientPrimary: ['#0d90d1', '#4db8e8'],
-  gradientSecondary: ['#00D4FF', '#0EA5E9'],
-  gradientDark: ['#1A1A1A', '#2D2D2D'],
+  // Gradients (Digital Twin Style)
+  gradientPrimary: ['#06B6D4', '#3B82F6'],
+  gradientSecondary: ['#0F172A', '#1E293B'],
+  gradientAI: ['#8B5CF6', '#D946EF'],
 };
 
 /**
  * Main Theme Object
- * Cross-platform design system for iOS & Android
+ * Cross-platform design system for CivicTwinAI
  */
 export const theme = {
   colors: COLORS,
@@ -83,7 +85,7 @@ export const theme = {
     '5xl': 48,
   },
   
-  // Border Radius
+  // Border Radius (Snappy - slightly rounded but precise)
   borderRadius: {
     xs: 4,
     sm: 8,
@@ -91,6 +93,8 @@ export const theme = {
     lg: 16,
     xl: 20,
     '2xl': 24,
+    '3xl': 32,
+    '4xl': 40,
     full: 9999,
   },
   
@@ -128,7 +132,7 @@ export const theme = {
     },
   },
   
-  // Shadows (platform-optimized)
+  // Shadows (Digital Twin Style - crisp and subtle)
   shadows: {
     none: {
       shadowColor: 'transparent',
@@ -138,44 +142,44 @@ export const theme = {
       elevation: 0,
     },
     xs: {
-      shadowColor: COLORS.black,
+      shadowColor: '#0F172A',
       shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
       shadowRadius: 2,
       elevation: 1,
     },
     sm: {
-      shadowColor: COLORS.black,
+      shadowColor: '#0F172A',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 3,
       elevation: 2,
     },
     md: {
-      shadowColor: COLORS.black,
+      shadowColor: '#0F172A',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.1,
       shadowRadius: 6,
       elevation: 4,
     },
     lg: {
-      shadowColor: COLORS.black,
+      shadowColor: '#0F172A',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
-      shadowRadius: 12,
+      shadowRadius: 10,
       elevation: 8,
     },
     xl: {
-      shadowColor: COLORS.black,
+      shadowColor: '#0F172A',
       shadowOffset: { width: 0, height: 12 },
       shadowOpacity: 0.15,
       shadowRadius: 16,
       elevation: 12,
     },
     primary: {
-      shadowColor: COLORS.primary,
+      shadowColor: '#06B6D4',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.25,
       shadowRadius: 8,
       elevation: 6,
     },

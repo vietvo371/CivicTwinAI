@@ -11,6 +11,7 @@ return [
     'created' => 'Created successfully',
     'deleted' => 'Deleted successfully',
     'server_error' => 'Internal server error',
+    'geocode_fallback_coordinates' => 'Only coordinates available; try the map picker or enter the address manually.',
 
     // Auth
     'login_success' => 'Login successful',
@@ -57,4 +58,33 @@ return [
     // Admin
     'stats_retrieved' => 'System statistics retrieved',
     'logs_retrieved' => 'Activity logs retrieved',
+
+    // Mobile reports (citizen DTO → incidents)
+    'reports_retrieved' => 'Reports retrieved',
+    'my_reports_retrieved' => 'Your reports retrieved',
+    'report_retrieved' => 'Report retrieved',
+    'report_created' => 'Report created successfully',
+    'report_updated' => 'Report updated successfully',
+    'report_stats_retrieved' => 'Report statistics retrieved',
+    'nearby_reports_retrieved' => 'Nearby reports retrieved',
+    'trending_reports_retrieved' => 'Trending reports retrieved',
+    'viewed' => 'View recorded',
+    'vote_recorded' => 'Vote recorded',
+    'rating_recorded' => 'Rating recorded',
+    'comment_added' => 'Comment added',
+
+    // AI vision (analyze-image)
+    'ai_image_analysis_completed' => 'Image analysis completed.',
+    'ai_image_unclear' => 'The photo is not clear enough to auto-fill the form.',
+    'ai_vision_unclear_description' => 'Could not detect a traffic situation from the image (empty AI response or photo too dark/far).',
+    'ai_vision_user_hint' => 'Remove this photo and take another: closer, well lit, with the road or incident clearly visible.',
+
+    // Notifications (database UUID)
+    'notifications_retrieved' => 'Notifications retrieved',
+    'unread_notifications_retrieved' => 'Unread notifications retrieved',
+    'unread_count_retrieved' => 'Unread count retrieved',
+    'notification_read' => 'Marked as read',
+    'notifications_read' => 'All notifications marked as read',
+    'notification_not_found' => 'Notification not found',
+    'notification_invalid_id' => 'Invalid notification id (UUID required)',
 ];

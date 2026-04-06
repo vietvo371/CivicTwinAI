@@ -114,10 +114,12 @@ class NotificationTokenService {
    */
   static async unregisterTokenAfterLogout() {
     try {
-      // Gửi empty token hoặc xóa token trên server
-      // Note: Backend requires fcm_token (422 error if empty), so skip this if it fails validation
-      // await authService.updateFcmToken('');
-      console.log('Bỏ qua đồng bộ token rỗng để tránh lỗi 422 (Server yêu cầu bắt buộc)');
+      // Gọi trước khi logout để Bearer token còn hiệu lực; BE chấp nhận "" → null
+      try {
+        await authService.updateFcmToken('');
+      } catch (e) {
+        console.warn('⚠️ Không xóa được FCM token trên server (sẽ xóa local):', e);
+      }
 
       // Xóa token khỏi Firebase
       await PushNotificationHelper.deleteToken();

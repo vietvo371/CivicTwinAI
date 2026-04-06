@@ -1,52 +1,45 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Image, Platform, Modal, Dimensions, ActivityIndicator, PermissionsAndroid, Alert, Animated } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, Modal, ActivityIndicator, PermissionsAndroid, Alert, Animated, StatusBar, Pressable } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapboxGL from '@rnmapbox/maps';
 import Geolocation from 'react-native-geolocation-service';
 import PageHeader from '../../component/PageHeader';
 import InputCustom from '../../component/InputCustom';
-import ButtonCustom from '../../component/ButtonCustom';
 import ModalCustom from '../../component/ModalCustom';
-import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, wp, hp } from '../../theme';
+import { AegisEntrance } from '../../components/common/AegisAnimated';
+import { theme, COLORS, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, wp, hp, AegisCard } from '../../theme';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import { reportService } from '../../services/reportService';
-import { mapService } from '../../services/mapService';
-import { mediaService } from '../../services/mediaService';
-import { CreateReportRequest, Media } from '../../types/api/report';
+import { aiService, incidentService, mapService, mediaService } from '../../services';
 import env from '../../config/env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  CATEGORIES,
+  PRIORITIES,
+  buildMobileIncidentTitle,
+  isVisionDataObject,
+  type IncidentFormMedia,
+} from './citizenReportFormShared';
 
 const DRAFT_KEY = '@civictwin_report_draft';
 
 // Initialize Mapbox
 MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
 
-// Category options matching API
-const CATEGORIES = [
-  { value: 1, label: 'Giao thông', icon: 'car', color: '#EF4444' },
-  { value: 2, label: 'Môi trường', icon: 'leaf', color: '#10B981' },
-  { value: 3, label: 'Cháy nổ', icon: 'fire', color: '#F97316' },
-  { value: 4, label: 'Rác thải', icon: 'delete', color: '#8B5CF6' },
-  { value: 5, label: 'Ngập lụt', icon: 'water', color: '#3B82F6' },
-  { value: 6, label: 'Khác', icon: 'dots-horizontal', color: '#6B7280' },
-];
-
-// Priority options matching API
-const PRIORITIES = [
-  { value: 1, label: 'Bình thường', color: theme.colors.success },
-  { value: 2, label: 'Trung bình', color: theme.colors.info },
-  { value: 3, label: 'Cao', color: theme.colors.warning },
-  { value: 4, label: 'Khẩn cấp', color: theme.colors.error },
-];
-
 const CreateReportScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showAIModal, setShowAIModal] = useState(false);
+  /** Một Modal duy nhất: working = AI + upload, summary = kết quả (tránh 2 Modal RN chồng nhau). */
+  const [mediaWorkflowPhase, setMediaWorkflowPhase] = useState<'idle' | 'working' | 'summary'>('idle');
+  /** Theo dõi từng bước thật — tránh tick % khiến “Hoàn tất” sáng trước khi AI/upload xong. */
+  const [mediaWfAiDone, setMediaWfAiDone] = useState(false);
+  const [mediaWfUploadDone, setMediaWfUploadDone] = useState(false);
+  const [mediaWfFinishing, setMediaWfFinishing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [aiAnalysisMessage, setAiAnalysisMessage] = useState('');
@@ -57,33 +50,35 @@ const CreateReportScreen = () => {
   const [tempLocation, setTempLocation] = useState<number[] | null>(null);
   const [tempAddress, setTempAddress] = useState('');
   const [loadingAddress, setLoadingAddress] = useState(false);
-  const [currentTag, setCurrentTag] = useState('');
-  const [uploadedMedia, setUploadedMedia] = useState<Media[]>([]);
+  const [mapGpsLoading, setMapGpsLoading] = useState(false);
+  const [uploadedMedia, setUploadedMedia] = useState<IncidentFormMedia[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [aiParseLoading, setAiParseLoading] = useState(false);
+  const [aiVisionResult, setAiVisionResult] = useState<any>(null);
   const mapRef = useRef<MapboxGL.MapView>(null);
   const cameraRef = useRef<MapboxGL.Camera>(null);
+  /** Tránh request geocode cũ ghi đè địa chỉ khi có tọa độ mới (GPS + chạm map chồng lên nhau). */
+  const reverseGeocodeSeq = useRef(0);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Animation for category modal
   const categorySlideAnim = useRef(new Animated.Value(500)).current;
   const categoryBackdropAnim = useRef(new Animated.Value(0)).current;
 
-  const [formData, setFormData] = useState<CreateReportRequest>({
-    tieu_de: '',
+  const [formData, setFormData] = useState<any>({
     mo_ta: '',
-    danh_muc: 1,
+    danh_muc: 'accident',
     vi_do: 10.7769,
     kinh_do: 106.7009,
     dia_chi: '',
-    uu_tien: 1,
+    uu_tien: 'medium',
     la_cong_khai: true,
-    the_tags: [],
-    media_ids: []
+    media_ids: [],
   });
   const [draftRestored, setDraftRestored] = useState(false);
   const isMounted = useRef(false);
@@ -93,11 +88,12 @@ const CreateReportScreen = () => {
     AsyncStorage.getItem(DRAFT_KEY).then(raw => {
       if (raw) {
         try {
-          const saved = JSON.parse(raw) as Partial<CreateReportRequest>;
-          if (saved.tieu_de || saved.mo_ta || saved.dia_chi) {
-            setFormData(prev => ({ ...prev, ...saved, media_ids: [] }));
+          const saved = JSON.parse(raw) as Partial<any>;
+          if (saved.mo_ta || saved.dia_chi) {
+            const { the_tags: _removed, tieu_de: _oldTitle, ...rest } = saved;
+            setFormData((prev: any) => ({ ...prev, ...rest, media_ids: [] }));
             setDraftRestored(true);
-            setTimeout(() => setDraftRestored(false), 4000) as unknown as void;
+            setTimeout(() => setDraftRestored(false), 4000);
           }
         } catch { /* ignore corrupt draft */ }
       }
@@ -109,54 +105,81 @@ const CreateReportScreen = () => {
   useEffect(() => {
     if (!isMounted.current) return;
     const saveable = {
-      tieu_de:    formData.tieu_de,
-      mo_ta:      formData.mo_ta,
-      dia_chi:    formData.dia_chi,
-      danh_muc:   formData.danh_muc,
-      uu_tien:    formData.uu_tien,
-      vi_do:      formData.vi_do,
-      kinh_do:    formData.kinh_do,
-      the_tags:   formData.the_tags,
+      mo_ta: formData.mo_ta,
+      dia_chi: formData.dia_chi,
+      danh_muc: formData.danh_muc,
+      uu_tien: formData.uu_tien,
+      vi_do: formData.vi_do,
+      kinh_do: formData.kinh_do,
       la_cong_khai: formData.la_cong_khai,
     };
     AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(saveable));
   }, [formData]);
 
-  const handleAddTag = () => {
-    const currentTags = formData.the_tags || [];
-    if (currentTag.trim() && !currentTags.includes(currentTag.trim())) {
-      setFormData({
-        ...formData,
-        the_tags: [...currentTags, currentTag.trim()]
-      });
-      setCurrentTag('');
+  const handleAIParse = async () => {
+    if (!formData.mo_ta.trim()) {
+      setErrorMessage('Vui lòng nhập mô tả để AI phân tích.');
+      setShowErrorModal(true);
+      return;
     }
+
+    setAiParseLoading(true);
+    try {
+      const response = await aiService.parseReport(formData.mo_ta);
+      const data = response.data;
+      if (__DEV__) {
+        console.log('[CreateReport] parse-report: sẽ áp dụng từ `data`:', {
+          type: data?.type,
+          severity: data?.severity,
+          location: data?.location,
+          title: data?.title,
+          summary_len: data?.summary?.length,
+          error: data?.error,
+        });
+      }
+
+      if (data?.error === 'NOT_ENOUGH_INFO') {
+        setErrorMessage(data.message || 'AI không có đủ thông tin để phân tích.');
+        setShowErrorModal(true);
+        setAiParseLoading(false);
+        return;
+      }
+
+      // Auto-fill form fields from AI response
+      setFormData((prev: any) => ({
+        ...prev,
+        danh_muc: data?.type || prev.danh_muc,
+        uu_tien: data?.severity || prev.uu_tien,
+        dia_chi: data?.location || prev.dia_chi,
+      }));
+
+      setAiFilledFields(['danh_muc', 'uu_tien', 'dia_chi']);
+      setSuccessMessage('AI đã phân tích và điền thông tin thành công!');
+      setShowSuccessModal(true);
+    } catch (error) {
+      setErrorMessage('Lỗi khi AI phân tích mô tả.');
+      setShowErrorModal(true);
+    }
+    setAiParseLoading(false);
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = formData.the_tags || [];
-    setFormData({
-      ...formData,
-      the_tags: currentTags.filter(tag => tag !== tagToRemove)
-    });
+  const mapPriorityLevel = (priority: string): string => {
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    return validPriorities.includes(priority.toLowerCase()) ? priority.toLowerCase() : 'medium';
   };
 
-  const mapPriorityLevel = (priority: string): number => {
-    const priorityMap: { [key: string]: number } = {
-      'low': 1,
-      'medium': 2,
-      'high': 3,
-      'critical': 4,
-      'urgent': 4,
-    };
-    return priorityMap[priority.toLowerCase()] || 2; // Default to medium
-  };
+  const mediaWorkflowAnimating =
+    mediaWorkflowPhase === 'working' &&
+    (!mediaWfAiDone || !mediaWfUploadDone || mediaWfFinishing);
 
-  // Animate loading
+  // Animate loading (giữ chạy suốt working cho đến khi upload xong + bước hoàn tất)
   useEffect(() => {
-    if (uploadingMedia || aiAnalyzing) {
+    let pulseLoop: Animated.CompositeAnimation | null = null;
+    let rotateLoop: Animated.CompositeAnimation | null = null;
+
+    if (mediaWorkflowAnimating) {
       // Pulse animation
-      Animated.loop(
+      pulseLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.2,
@@ -169,21 +192,28 @@ const CreateReportScreen = () => {
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      pulseLoop.start();
 
       // Rotate animation
-      Animated.loop(
+      rotateLoop = Animated.loop(
         Animated.timing(rotateAnim, {
           toValue: 1,
           duration: 2000,
           useNativeDriver: true,
         })
-      ).start();
+      );
+      rotateLoop.start();
     } else {
       pulseAnim.setValue(1);
       rotateAnim.setValue(0);
     }
-  }, [uploadingMedia, aiAnalyzing]);
+
+    return () => {
+      pulseLoop?.stop();
+      rotateLoop?.stop();
+    };
+  }, [mediaWorkflowAnimating]);
 
   // Animate category modal
   useEffect(() => {
@@ -222,129 +252,211 @@ const CreateReportScreen = () => {
   };
 
   const uploadMediaAssets = async (assets: any[]) => {
-    setUploadingMedia(true);
-    setUploadProgress(0);
-    setUploadStatus('Đang chuẩn bị...');
-    
-    const newMedia: Media[] = [];
+    if (!assets?.length) return;
+
+    const newMedia: IncidentFormMedia[] = [];
     const newMediaIds: number[] = [];
-    let aiAnalysisData: any = null;
-
     const totalAssets = assets.length;
-    
-    for (let i = 0; i < assets.length; i++) {
-      const asset = assets[i];
+    const first = assets[0];
+
+    try {
+      setMediaWorkflowPhase('working');
+      setMediaWfAiDone(false);
+      setMediaWfUploadDone(false);
+      setMediaWfFinishing(false);
+      // —— Bước 1: phân tích ảnh đầu (vision) ——
+      setUploadingMedia(false);
+      setAiAnalyzing(true);
+      setUploadProgress(8);
+      setUploadStatus('Đang gửi ảnh cho AI phân tích...');
+
+      let visionPayload: Record<string, unknown> | null = null;
+      let visionBeMessage = '';
       try {
-        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} file...`);
-        setUploadProgress((i / totalAssets) * 50); // 50% for upload
-        
-        console.log('🚀 [API Request] Upload Media:', asset.fileName);
-        const response = await mediaService.uploadMedia(
-          asset,
-          asset.type?.includes('video') ? 'video' : 'image',
-          'phan_anh',
-          'Hình ảnh phản ánh'
-        );
-        console.log('✅ [API Response] Upload Media:', response);
-
-        if (response.success && response.data) {
-          newMedia.push(response.data);
-          newMediaIds.push(response.data.id);
-
-          // Get AI analysis from first uploaded image
-          const mediaData = response.data as any;
-          if (!aiAnalysisData && mediaData.ai_analysis) {
-            aiAnalysisData = mediaData.ai_analysis;
-          }
+        const fd = new FormData();
+        fd.append('image', {
+          uri: first.uri,
+          type: first.type || 'image/jpeg',
+          name: first.fileName || 'photo.jpg',
+        } as any);
+        const visionRes = await aiService.analyzeImage(fd);
+        visionBeMessage = (visionRes?.message as string) || '';
+        if (__DEV__) {
+          const d = visionRes?.data;
+          console.log(
+            '[CreateReport] analyze-image: success=',
+            visionRes?.success,
+            'message=',
+            visionBeMessage || '(none)',
+            'data=',
+            Array.isArray(d) ? `array[len=${d.length}]` : d != null && typeof d === 'object' ? Object.keys(d as object) : String(d),
+          );
         }
-      } catch (error) {
-        console.error('❌ [API Error] Upload Media:', error);
+        if (visionRes.success && isVisionDataObject(visionRes.data)) {
+          visionPayload = visionRes.data as Record<string, unknown>;
+          setUploadProgress(32);
+          setUploadStatus('Đang nhận kết quả từ AI...');
+        } else {
+          if (__DEV__) {
+            console.warn('[CreateReport] analyze-image: bỏ qua data (không phải object JSON — có thể là [] hoặc null).');
+          }
+          setUploadProgress(28);
+        }
+      } catch (e) {
+        console.warn('analyze-image:', e);
+        setUploadStatus('Không phân tích được ảnh — vẫn tải ảnh lên bình thường');
+        await new Promise<void>((r) => setTimeout(r, 500));
       }
-    }
-    
-    setUploadProgress(50);
-    setUploadingMedia(false);
 
-    if (newMedia.length > 0) {
-      setUploadedMedia([...uploadedMedia, ...newMedia]);
-      
-      // Auto-fill form with AI analysis if available
-      if (aiAnalysisData) {
-        // Start AI analysis animation
-        setAiAnalyzing(true);
-        setUploadStatus('🤖 AI đang phân tích ảnh...');
-        setUploadProgress(60);
-        
-        // Simulate AI processing time with progress
-        await new Promise<void>(resolve => setTimeout(resolve, 500));
-        setUploadProgress(70);
-        
-        await new Promise<void>(resolve => setTimeout(resolve, 500));
-        setUploadProgress(85);
-        
-        const categoryLabel = CATEGORIES.find(c => c.value === aiAnalysisData.danh_muc_id)?.label || 'Khác';
-        const priorityLabel = PRIORITIES.find(p => p.value === mapPriorityLevel(aiAnalysisData.muc_do_uu_tien || 'medium'))?.label || 'Trung bình';
-        
-        // Track which fields are auto-filled by AI
+      setUploadProgress(36);
+      setAiAnalyzing(false);
+      setMediaWfAiDone(true);
+      setUploadingMedia(true);
+      setUploadStatus('Đang áp dụng kết quả vào form...');
+      setUploadProgress(40);
+
+      if (visionPayload) {
+        setAiVisionResult(visionPayload);
         const filledFields: string[] = [];
-        
-        setUploadStatus('📝 Đang điền thông tin...');
-        setUploadProgress(95);
-        
-        setFormData(prev => {
-          const newData = {
-            ...prev,
-            media_ids: [...(prev.media_ids || []), ...newMediaIds],
-          };
-          
-          // Only fill if current values are empty
-          if (!prev.tieu_de && aiAnalysisData.tieu_de) {
-            newData.tieu_de = aiAnalysisData.tieu_de;
-            filledFields.push('tieu_de');
-          }
-          if (!prev.mo_ta && aiAnalysisData.mo_ta) {
-            newData.mo_ta = aiAnalysisData.mo_ta;
-            filledFields.push('mo_ta');
-          }
-          if (aiAnalysisData.danh_muc_id) {
-            newData.danh_muc = aiAnalysisData.danh_muc_id;
-            filledFields.push('danh_muc');
-          }
-          if (aiAnalysisData.muc_do_uu_tien) {
-            newData.uu_tien = mapPriorityLevel(aiAnalysisData.muc_do_uu_tien);
-            filledFields.push('uu_tien');
-          }
-          
-          return newData;
-        });
-        
-        setAiFilledFields(filledFields);
-        setUploadProgress(100);
-        setUploadStatus('✅ Hoàn tất!');
+        const allowedTypes = ['accident', 'congestion', 'construction', 'weather', 'other'];
+        const allowedSev = ['low', 'medium', 'high', 'critical'];
 
-        // Prepare AI analysis message
-        const detectedObjects = aiAnalysisData.ai_analysis?.detected_objects || [];
-        const objectsText = detectedObjects.length > 0 
-          ? `\n\n🔍 Phát hiện: ${detectedObjects.slice(0, 5).join(', ')}${detectedObjects.length > 5 ? '...' : ''}` 
-          : '';
-        
-        setAiAnalysisMessage(
-          `AI đã tự động phân tích và điền:\n\n` +
-          `📁 Danh mục: ${categoryLabel}\n` +
-          `⚠️ Mức độ: ${priorityLabel}\n` +
-          `📝 Tiêu đề & Mô tả${objectsText}\n\n` +
-          `Bạn có thể chỉnh sửa nếu cần.`
-        );
-        
-        await new Promise<void>(resolve => setTimeout(resolve, 500));
-        setAiAnalyzing(false);
-        setShowAIModal(true);
+        const vType = typeof visionPayload.type === 'string' ? visionPayload.type : '';
+        const vSev = typeof visionPayload.severity === 'string' ? visionPayload.severity : '';
+        const vDesc =
+          typeof visionPayload.description === 'string' ? visionPayload.description.trim() : '';
+
+        if (vType && allowedTypes.includes(vType)) {
+          filledFields.push('danh_muc');
+        }
+        if (vSev && allowedSev.includes(vSev)) {
+          filledFields.push('uu_tien');
+        }
+        if (vDesc) {
+          filledFields.push('mo_ta');
+        }
+
+        setFormData((prev: any) => {
+          const next = { ...prev };
+          if (vType && allowedTypes.includes(vType)) {
+            next.danh_muc = vType;
+          }
+          if (vSev && allowedSev.includes(vSev)) {
+            next.uu_tien = vSev;
+          }
+          if (vDesc) {
+            next.mo_ta = vDesc;
+          }
+          return next;
+        });
+
+        setAiFilledFields((prev) => {
+          const incoming = new Set(filledFields);
+          const rest = prev.filter((f) => !incoming.has(f));
+          return [...rest, ...filledFields];
+        });
+
+        const categoryLabel = CATEGORIES.find((c: any) => c.value === vType)?.label || 'Khác';
+        const priorityLabel = PRIORITIES.find((p: any) => p.value === vSev)?.label || 'Trung bình';
+        const confPct =
+          visionPayload.confidence != null && !Number.isNaN(Number(visionPayload.confidence))
+            ? `${Math.round(Number(visionPayload.confidence) * 100)}%`
+            : null;
+        const unclear = visionPayload.unclear === true;
+        const userHint =
+          typeof visionPayload.user_hint === 'string' ? visionPayload.user_hint.trim() : '';
+
+        if (unclear) {
+          setAiAnalysisMessage(
+            `⚠️ ${visionBeMessage || 'Ảnh chưa đủ rõ để tự điền form.'}\n\n` +
+              (userHint ? `${userHint}\n\n` : '') +
+              (vDesc ? `📝 Gợi ý trong mô tả: ${vDesc}\n\n` : '') +
+              `👉 Bạn nên xóa ảnh này, chụp lại (gần, sáng, rõ sự cố) rồi thêm lại.`,
+          );
+        } else {
+          setAiAnalysisMessage(
+            `AI đã phân tích ảnh${confPct ? ` (${confPct} tin cậy)` : ''} và điền form.\n\n` +
+              `📁 Danh mục: ${categoryLabel}\n` +
+              `⚠️ Mức độ: ${priorityLabel}\n\n` +
+              `Tiêu đề khi gửi gồm loại sự cố và địa điểm bạn chọn. Hãy xem lại mô tả và vị trí trước khi gửi.`,
+          );
+        }
+        if (__DEV__) {
+          console.log('[CreateReport] Form đã ghi từ vision `data`:', {
+            unclear,
+            danh_muc: vType,
+            uu_tien: vSev,
+            mo_ta_len: vDesc.length,
+            confidence: visionPayload.confidence,
+          });
+        }
       } else {
-        setFormData(prev => ({
+        setAiVisionResult(null);
+      }
+
+      // —— Bước 2: Tải toàn bộ ảnh lên media (preview + gửi incident sau) ——
+      setUploadProgress(44);
+      setUploadStatus(`Đang tải 0/${totalAssets} ảnh...`);
+
+      for (let i = 0; i < totalAssets; i++) {
+        const asset = assets[i];
+        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} ảnh...`);
+        setUploadProgress(44 + Math.round(((i + 1) / totalAssets) * 48));
+
+        try {
+          const response = await mediaService.uploadMedia(
+            asset,
+            asset.type?.includes('video') ? 'video' : 'image',
+            'phan_anh',
+            'Hình ảnh phản ánh',
+          );
+          if (response.success && response.data) {
+            newMedia.push({
+              ...response.data,
+              local_uri: asset.uri,
+              local_type: asset.type || 'image/jpeg',
+              local_name: asset.fileName || `upload_${Date.now()}.jpg`,
+            });
+            newMediaIds.push(response.data.id);
+          }
+        } catch (error) {
+          console.error('Upload Media:', error);
+        }
+      }
+
+      if (newMedia.length > 0) {
+        setUploadedMedia((prev) => [...prev, ...newMedia]);
+        setFormData((prev: any) => ({
           ...prev,
-          media_ids: [...(prev.media_ids || []), ...newMediaIds]
+          media_ids: [...(prev.media_ids || []), ...newMediaIds],
         }));
       }
+
+      setMediaWfUploadDone(true);
+      setUploadingMedia(false);
+      setUploadProgress(100);
+      setUploadStatus('Đã tải xong ảnh');
+
+      if (visionPayload) {
+        setUploadStatus('Đang chuẩn bị hiển thị kết quả AI...');
+        setMediaWfFinishing(true);
+        await new Promise<void>((r) => setTimeout(r, 700));
+        setMediaWfFinishing(false);
+        setMediaWorkflowPhase('summary');
+      } else {
+        setMediaWorkflowPhase('idle');
+      }
+    } catch (error) {
+      console.error('uploadMediaAssets:', error);
+      setMediaWfAiDone(false);
+      setMediaWfUploadDone(false);
+      setMediaWfFinishing(false);
+      setMediaWorkflowPhase('idle');
+      setErrorMessage('Đã xảy ra lỗi khi xử lý ảnh. Vui lòng thử lại.');
+      setShowErrorModal(true);
+    } finally {
+      setUploadingMedia(false);
+      setAiAnalyzing(false);
     }
   };
 
@@ -417,15 +529,14 @@ const CreateReportScreen = () => {
   };
 
   const handleRemoveMedia = (mediaId: number) => {
-    setUploadedMedia(uploadedMedia.filter(m => m.id !== mediaId));
-    setFormData(prev => ({
+    setUploadedMedia(uploadedMedia.filter((m: any) => m.id !== mediaId));
+    setFormData((prev: any) => ({
       ...prev,
-      media_ids: (prev.media_ids || []).filter(id => id !== mediaId)
+      media_ids: (prev.media_ids || []).filter((id: number) => id !== mediaId)
     }));
   };
 
   const [errors, setErrors] = useState<{
-    tieu_de?: string;
     mo_ta?: string;
     dia_chi?: string;
   }>({});
@@ -437,6 +548,15 @@ const CreateReportScreen = () => {
       setTempAddress(formData.dia_chi);
     }
   }, [showMapModal]);
+
+  // Căn camera theo ghim khi mở modal hoặc đổi điểm chọn / GPS trên bản đồ
+  useEffect(() => {
+    if (!showMapModal || !tempLocation || tempLocation.length < 2) return;
+    const timer = setTimeout(() => {
+      cameraRef.current?.flyTo([tempLocation[0], tempLocation[1]], 500);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [showMapModal, tempLocation]);
 
   useEffect(() => {
     const getCurrentLocation = async () => {
@@ -458,20 +578,24 @@ const CreateReportScreen = () => {
         Geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
+            const seq = ++reverseGeocodeSeq.current;
 
-            // Get address for current location
             let address = '';
             try {
               address = await mapService.reverseGeocode(latitude, longitude);
             } catch (error) {
-              console.error('Reverse geocode error:', error);
+              if (__DEV__) {
+                console.warn('Reverse geocode error:', error);
+              }
             }
 
-            setFormData(prev => ({
+            if (seq !== reverseGeocodeSeq.current) return;
+
+            setFormData((prev: any) => ({
               ...prev,
               vi_do: latitude,
               kinh_do: longitude,
-              dia_chi: address
+              dia_chi: address || prev.dia_chi,
             }));
           },
           (error) => {
@@ -489,12 +613,6 @@ const CreateReportScreen = () => {
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
-
-    if (!formData.tieu_de.trim()) {
-      newErrors.tieu_de = 'Vui lòng nhập tiêu đề';
-    } else if (formData.tieu_de.length < 10) {
-      newErrors.tieu_de = 'Tiêu đề phải có ít nhất 10 ký tự';
-    }
 
     if (!formData.mo_ta.trim()) {
       newErrors.mo_ta = 'Vui lòng nhập mô tả';
@@ -516,30 +634,43 @@ const CreateReportScreen = () => {
     }
 
     setLoading(true);
-    console.log('🚀 [API Request] Create Report:', formData);
     try {
-      const response = await reportService.createReport(formData);
-      console.log('✅ [API Response] Create Report:', response);
+      const fd = new FormData();
+      fd.append(
+        'title',
+        buildMobileIncidentTitle(
+          formData.danh_muc,
+          formData.dia_chi,
+          formData.vi_do,
+          formData.kinh_do,
+        ),
+      );
+      fd.append('type', formData.danh_muc);
+      fd.append('severity', formData.uu_tien);
+      fd.append('description', formData.mo_ta);
+      fd.append('source', 'citizen');
+      fd.append('location_name', formData.dia_chi);
+      fd.append('latitude', formData.vi_do.toString());
+      fd.append('longitude', formData.kinh_do.toString());
+
+      // Multipart `images[]` kèm báo cáo
+      uploadedMedia.slice(0, 5).forEach((m) => {
+        fd.append('images[]', {
+          uri: m.local_uri,
+          type: m.local_type || 'image/jpeg',
+          name: m.local_name || 'photo.jpg',
+        } as any);
+      });
+
+      const response = await incidentService.createIncident(fd);
 
       if (response.success) {
-        setSuccessMessage('Phản ánh của bạn đã được tạo thành công!');
+        setSuccessMessage('Báo cáo của bạn đã được gửi thành công!');
         setShowSuccessModal(true);
       }
     } catch (error: any) {
-      console.error('❌ [API Error] Create Report:', error);
-      if (error.response) {
-        console.log('Error Data:', error.response.data);
-        console.log('Error Status:', error.response.status);
-      }
-      let message = 'Không thể tạo phản ánh của bạn. Vui lòng thử lại.';
-
-      if (error.response?.data?.message) {
-        message = error.response.data.message;
-      } else if (error.message) {
-        message = error.message;
-      }
-
-      setErrorMessage(message);
+      console.error('❌ [API Error] Create Incident:', error);
+      setErrorMessage(error.response?.data?.message || 'Không thể tạo báo cáo. Vui lòng thử lại.');
       setShowErrorModal(true);
     } finally {
       setLoading(false);
@@ -549,27 +680,24 @@ const CreateReportScreen = () => {
   const handleSuccessClose = () => {
     AsyncStorage.removeItem(DRAFT_KEY); // Clear draft after submit
     setShowSuccessModal(false);
-    
+
     // Reset form data
     setFormData({
-      tieu_de: '',
       mo_ta: '',
-      danh_muc: 1,
+      danh_muc: 'accident',
       vi_do: 10.7769,
       kinh_do: 106.7009,
       dia_chi: '',
-      uu_tien: 1,
+      uu_tien: 'medium',
       la_cong_khai: true,
-      the_tags: [],
-      media_ids: []
+      media_ids: [],
     });
-    
+
     // Clear uploaded media
     setUploadedMedia([]);
-    setCurrentTag('');
     setErrors({});
     setAiFilledFields([]);
-    
+
     // Navigate back
     navigation.goBack();
   };
@@ -578,29 +706,81 @@ const CreateReportScreen = () => {
     const coords = feature.geometry.coordinates;
     setTempLocation(coords);
 
-    // Reverse Geocoding
     try {
       setLoadingAddress(true);
-      console.log('🚀 [API Request] Reverse Geocode:', { lat: coords[1], long: coords[0] });
+      const seq = ++reverseGeocodeSeq.current;
       const address = await mapService.reverseGeocode(coords[1], coords[0]);
-      console.log('✅ [API Response] Reverse Geocode:', address);
+      if (seq !== reverseGeocodeSeq.current) return;
       setTempAddress(address);
     } catch (error) {
-      console.error('❌ [API Error] Reverse Geocode:', error);
+      if (__DEV__) {
+        console.warn('Reverse Geocode:', error);
+      }
     } finally {
       setLoadingAddress(false);
     }
   };
 
   const confirmLocation = () => {
-    if (tempLocation) {
-      setFormData({
-        ...formData,
-        kinh_do: tempLocation[0],
-        vi_do: tempLocation[1],
-        dia_chi: tempAddress || formData.dia_chi || `Vị trí: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`
-      });
-      setShowMapModal(false);
+    if (!tempLocation || tempLocation.length < 2) return;
+    setFormData((prev: any) => ({
+      ...prev,
+      kinh_do: tempLocation[0],
+      vi_do: tempLocation[1],
+      dia_chi:
+        (tempAddress && tempAddress.trim()) ||
+        prev.dia_chi ||
+        `Vị trí: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`,
+    }));
+    setShowMapModal(false);
+  };
+
+  const handleMyLocationOnMap = async () => {
+    try {
+      setMapGpsLoading(true);
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Quyền vị trí', 'Cần quyền vị trí để đưa ghim về chỗ bạn đang đứng.');
+          return;
+        }
+      } else {
+        const auth = await Geolocation.requestAuthorization('whenInUse');
+        if (auth !== 'granted') {
+          Alert.alert('Quyền vị trí', 'Bật quyền vị trí trong Cài đặt để dùng tính năng này.');
+          return;
+        }
+      }
+
+      Geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const coord: number[] = [longitude, latitude];
+          setTempLocation(coord);
+          setLoadingAddress(true);
+          const seq = ++reverseGeocodeSeq.current;
+          try {
+            const address = await mapService.reverseGeocode(latitude, longitude);
+            if (seq !== reverseGeocodeSeq.current) return;
+            setTempAddress(address);
+          } catch {
+            if (seq !== reverseGeocodeSeq.current) return;
+            setTempAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          } finally {
+            setLoadingAddress(false);
+            setMapGpsLoading(false);
+          }
+        },
+        (error) => {
+          Alert.alert('Không lấy được vị trí', error.message || 'Thử lại sau.');
+          setMapGpsLoading(false);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+      );
+    } catch {
+      setMapGpsLoading(false);
     }
   };
 
@@ -609,42 +789,158 @@ const CreateReportScreen = () => {
     setShowMapModal(true);
   };
 
+  const submitDisabled = loading || uploadingMedia || aiAnalyzing;
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <PageHeader title="Tạo phản ánh mới" variant="default" />
+    <View style={styles.screenRoot}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
+        <View style={styles.headerShell}>
+          <PageHeader
+            title="Báo cáo sự cố"
+            variant="default"
+            showBack={true}
+            showNotification={false}
+            style={styles.pageHeaderInner}
+            rightComponent={
+              <Pressable
+                onPress={handleSubmit}
+                disabled={submitDisabled}
+                style={({ pressed }) => [
+                  styles.headerSendPill,
+                  submitDisabled && styles.headerSendPillDisabled,
+                  pressed && !submitDisabled && styles.headerSendPillPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Gửi phản ánh"
+                accessibilityState={{ disabled: submitDisabled, busy: loading }}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <>
+                    <Icon name="send" size={18} color={COLORS.white} />
+                    <Text style={styles.headerSendPillText}>Gửi</Text>
+                  </>
+                )}
+              </Pressable>
+            }
+          />
+        </View>
+      </View>
 
       {/* Draft Restored Banner */}
       {draftRestored && (
         <View style={styles.draftBanner}>
-          <Icon name="content-save-outline" size={15} color="#6366F1" />
+          <Icon name="content-save-outline" size={18} color={COLORS.primary} />
           <Text style={styles.draftBannerText}>Đã khôi phục bản nháp trước đó của bạn</Text>
           <TouchableOpacity onPress={() => {
             setDraftRestored(false);
             AsyncStorage.removeItem(DRAFT_KEY);
-            setFormData({ tieu_de: '', mo_ta: '', danh_muc: 1, vi_do: 10.7769, kinh_do: 106.7009, dia_chi: '', uu_tien: 1, la_cong_khai: true, the_tags: [], media_ids: [] });
+            setFormData({
+              mo_ta: '',
+              danh_muc: 'accident',
+              vi_do: 10.7769,
+              kinh_do: 106.7009,
+              dia_chi: '',
+              uu_tien: 'medium',
+              la_cong_khai: true,
+              media_ids: [],
+            });
           }}>
-            <Text style={styles.draftBannerDiscard}>Xóa</Text>
+            <Text style={styles.draftBannerDiscard}>Xóa nháp</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: SPACING['5xl'] + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Media Upload */}
-         <View style={styles.card}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionTitleWithIcon}>
-              <Icon name="image-multiple" size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Hình ảnh minh họa</Text>
-            </View>
-            <View style={styles.aiChip}>
-              <Icon name="robot" size={14} color={theme.colors.primary} />
-              <Text style={styles.aiChipText}>AI phân tích</Text>
+        <AegisEntrance delay={120} preset="gentle">
+          <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>HÌNH ẢNH</Text>
+            <View style={styles.livePill}>
+              <View style={styles.liveDot} />
+              <Text style={styles.livePillText}>AI</Text>
             </View>
           </View>
-          <Text style={styles.sectionSubtitle}>Thêm ảnh để AI phân tích và tự động điền thông tin</Text>
+          <Text style={styles.sectionSubtitle}>
+            Thêm ảnh: AI đọc ảnh đầu tiên để gợi ý nội dung; mọi ảnh bạn chọn sẽ được đính kèm khi gửi phản ánh.
+          </Text>
+
+          {/* Kết quả phân tích ảnh (AI) */}
+          {aiVisionResult && (
+            <Animated.View style={styles.aiVisionCard}>
+              <LinearGradient
+                colors={['#10B981', '#3B82F6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.aiVisionGradient}
+              />
+              <View style={styles.aiVisionContent}>
+                <View style={styles.aiVisionHeader}>
+                  <View style={styles.aiVisionTitleRow}>
+                    <View style={styles.aiVisionIconBox}>
+                      <Icon name="eye-outline" size={16} color="#10B981" />
+                    </View>
+                    <Text style={styles.aiVisionTitle}>AI PHÂN TÍCH HÌNH ẢNH</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setAiVisionResult(null)}>
+                    <Icon name="close" size={18} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.aiVisionBadgeRow}>
+                  {aiVisionResult.type && (
+                    <View style={styles.aiResultBadge}>
+                      <Text style={styles.aiResultBadgeText}>{aiVisionResult.type.toUpperCase()}</Text>
+                    </View>
+                  )}
+                  {aiVisionResult.severity && (
+                    <View style={[styles.aiResultBadge, { backgroundColor: '#F43F5E20', borderColor: '#F43F5E40' }]}>
+                      <Text style={[styles.aiResultBadgeText, { color: '#F43F5E' }]}>{aiVisionResult.severity.toUpperCase()}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {aiVisionResult.description && (
+                  <Text style={styles.aiVisionDesc}>{aiVisionResult.description}</Text>
+                )}
+
+                {aiVisionResult.confidence != null && (
+                  <View style={styles.confidenceContainer}>
+                    <View style={styles.confidenceHeader}>
+                      <Text style={styles.confidenceLabel}>Độ tin cậy</Text>
+                      <Text style={styles.confidenceValue}>{Math.round(aiVisionResult.confidence * 100)}%</Text>
+                    </View>
+                    <View style={styles.confidenceBarBg}>
+                      <View
+                        style={[
+                          styles.confidenceBarFill,
+                          { width: `${Math.min(aiVisionResult.confidence * 100, 100)}%` }
+                        ]}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.aiVisionFooter}>
+                  <Icon name="auto-fix" size={14} color="#64748B" />
+                  <Text style={styles.aiVisionFooterText}>AI đã tự động điền các trường thông tin</Text>
+                </View>
+              </View>
+            </Animated.View>
+          )}
 
           <View style={styles.mediaGrid}>
-            {uploadedMedia.map((media, index) => (
+            {uploadedMedia.map((media: any, index: number) => (
               <View key={media.id} style={styles.mediaCard}>
                 <Image
                   source={{ uri: media.thumbnail_url || media.url }}
@@ -694,38 +990,38 @@ const CreateReportScreen = () => {
           </View>
           <View style={styles.uploadInfoRow}>
             <Icon name="information-outline" size={16} color={theme.colors.textSecondary} />
-            <Text style={styles.uploadInfo}>Tối đa 5 ảnh (JPG, PNG). AI sẽ phân tích ảnh đầu tiên.</Text>
+            <Text style={styles.uploadInfo}>
+              Tối đa 5 ảnh (JPG, PNG). Ảnh đầu tiên được AI đọc để gợi ý; các ảnh còn lại chỉ đính kèm báo cáo.
+            </Text>
           </View>
-        </View>
+          </AegisCard>
+        </AegisEntrance>
 
         {/* Category Selection - Select Style */}
-        <View style={styles.card}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionTitleWithIcon}>
-              <Icon name="shape" size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Danh mục</Text>
-            </View>
-            {aiFilledFields.includes('danh_muc') && (
-              <View style={styles.aiFilledBadge}>
-                <Icon name="robot" size={12} color={theme.colors.primary} />
-                <Text style={styles.aiFilledText}>AI chọn</Text>
+        <AegisEntrance delay={220} preset="gentle">
+          <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>DANH MỤC</Text>
+            {aiFilledFields.includes('danh_muc') ? (
+              <View style={styles.categoryBadgeAi}>
+                <Text style={styles.categoryBadgeAiText}>AI</Text>
               </View>
-            )}
+            ) : null}
           </View>
           <Text style={styles.sectionSubtitle}>Chọn danh mục phù hợp với vấn đề</Text>
-          
+
           <TouchableOpacity
             style={styles.categorySelectButton}
             onPress={() => setShowCategoryModal(true)}
             activeOpacity={0.7}
           >
             {(() => {
-              const selectedCategory = CATEGORIES.find(c => c.value === formData.danh_muc);
+              const selectedCategory = CATEGORIES.find((c: any) => c.value === formData.danh_muc);
               return (
                 <>
                   <View style={[
                     styles.categorySelectIcon,
-                    { backgroundColor: selectedCategory ? selectedCategory.color + '15' : theme.colors.backgroundSecondary }
+                    { backgroundColor: selectedCategory ? selectedCategory.color + '15' : COLORS.backgroundSecondary }
                   ]}>
                     <Icon
                       name={selectedCategory?.icon || 'shape'}
@@ -746,52 +1042,32 @@ const CreateReportScreen = () => {
               );
             })()}
           </TouchableOpacity>
-        </View>
+          </AegisCard>
+        </AegisEntrance>
 
         {/* Main Info */}
-        <View style={styles.card}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionTitleWithIcon}>
-              <Icon name="text-box" size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Thông tin chi tiết</Text>
-            </View>
-            {aiFilledFields.length > 0 && (
-              <View style={styles.aiFilledBadge}>
-                <Icon name="check-decagram" size={14} color={theme.colors.success} />
-                <Text style={styles.aiFilledText}>AI đã điền</Text>
-              </View>
-            )}
-          </View>
-          <Text style={styles.sectionSubtitle}>Mô tả rõ ràng về vấn đề bạn gặp phải</Text>
-
-          <View style={styles.inputGroup}>
-            <View style={styles.inputWithBadge}>
-              <InputCustom
-                label="Tiêu đề"
-                placeholder="Nhập tiêu đề phản ánh"
-                value={formData.tieu_de}
-                onChangeText={(text) => {
-                  setFormData({ ...formData, tieu_de: text });
-                  // Remove from AI filled fields when manually edited
-                  if (aiFilledFields.includes('tieu_de')) {
-                    setAiFilledFields(prev => prev.filter(f => f !== 'tieu_de'));
-                  }
-                }}
-                error={errors.tieu_de}
-                leftIcon="format-title"
-                maxLength={200}
-                containerStyle={styles.input}
-              />
-              {aiFilledFields.includes('tieu_de') && (
-                <View style={styles.aiFieldIndicator}>
-                  <Icon name="robot" size={12} color={theme.colors.primary} />
-                </View>
+        <AegisEntrance delay={320} preset="gentle">
+          <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>NỘI DUNG</Text>
+            <TouchableOpacity
+              style={[styles.aiParsePill, aiParseLoading && styles.aiParsePillDisabled]}
+              onPress={handleAIParse}
+              disabled={aiParseLoading || !formData.mo_ta}
+            >
+              {aiParseLoading ? (
+                <ActivityIndicator size="small" color={COLORS.accent} />
+              ) : (
+                <>
+                  <Icon name="auto-fix" size={14} color={COLORS.accent} />
+                  <Text style={styles.aiParsePillText}>AI PARSE</Text>
+                </>
               )}
-            </View>
-            <View style={styles.charCountRow}>
-              <Text style={styles.charCount}>{formData.tieu_de.length}/200</Text>
-            </View>
+            </TouchableOpacity>
           </View>
+          <Text style={styles.sectionSubtitle}>
+            Khi gửi, tiêu đề được tạo từ danh mục và địa chỉ. Viết mô tả rõ ràng; chạm AI Parse nếu muốn gợi ý từ đoạn chữ.
+          </Text>
 
           <View style={styles.inputGroup}>
             <View style={styles.inputWithBadge}>
@@ -824,46 +1100,36 @@ const CreateReportScreen = () => {
             </View>
           </View>
 
-          {/* Tags */}
-          <View style={styles.inputGroup}>
-            <View style={styles.tagInputHeader}>
-              <View style={styles.tagInputTitle}>
-                <Icon name="tag-multiple" size={16} color={theme.colors.textSecondary} />
-                <Text style={styles.tagInputLabel}>Thẻ (Tags) - Tùy chọn</Text>
-              </View>
+          <View style={styles.generatedTitlePreviewBox}>
+            <View style={styles.generatedTitlePreviewHeader}>
+              <Icon name="format-title" size={18} color={theme.colors.primary} />
+              <Text style={styles.generatedTitlePreviewHeading}>Tiêu đề khi gửi</Text>
             </View>
-            <InputCustom
-              placeholder="Nhập thẻ (ví dụ: ngập lụt)"
-              value={currentTag}
-              onChangeText={setCurrentTag}
-              rightIcon="plus-circle"
-              onRightIconPress={handleAddTag}
-              containerStyle={styles.input}
-            />
-            {(formData.the_tags || []).length > 0 && (
-              <View style={styles.tagList}>
-                {(formData.the_tags || []).map((tag, index) => (
-                  <View key={index} style={styles.tagChip}>
-                    <Icon name="pound" size={14} color={theme.colors.primary} />
-                    <Text style={styles.tagText}>{tag}</Text>
-                    <TouchableOpacity onPress={() => handleRemoveTag(tag)} hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}>
-                      <Icon name="close-circle" size={16} color={theme.colors.textSecondary} />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
+            <Text style={styles.generatedTitlePreviewHint}>
+              Cập nhật theo danh mục (trên) và địa chỉ (mục Vị trí).
+            </Text>
+            <Text style={styles.generatedTitlePreviewBody} numberOfLines={4}>
+              {buildMobileIncidentTitle(
+                formData.danh_muc,
+                formData.dia_chi,
+                formData.vi_do,
+                formData.kinh_do,
+              )}
+            </Text>
           </View>
-        </View>
+          </AegisCard>
+        </AegisEntrance>
 
         {/* Location */}
-        <View style={styles.card}>
-          <View style={styles.sectionTitleWithIcon}>
-            <Icon name="map-marker" size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Vị trí sự việc</Text>
+        <AegisEntrance delay={420} preset="gentle">
+          <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>VỊ TRÍ</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>Xác định chính xác vị trí xảy ra sự việc</Text>
-          
+          <Text style={styles.sectionSubtitle}>
+            Đã tự lấy GPS khi mở màn hình (nếu được phép). Chạm &quot;Chọn vị trí trên bản đồ&quot; để chỉnh điểm, rồi Xác nhận — địa chỉ và tọa độ sẽ cập nhật theo ghim.
+          </Text>
+
           <View style={styles.inputGroup}>
             <InputCustom
               label="Địa chỉ"
@@ -894,26 +1160,24 @@ const CreateReportScreen = () => {
               </Text>
             )}
           </View>
-        </View>
+          </AegisCard>
+        </AegisEntrance>
 
         {/* Priority */}
-        <View style={styles.card}>
-          <View style={styles.sectionTitleRow}>
-            <View style={styles.sectionTitleWithIcon}>
-              <Icon name="alert-circle" size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Mức độ ưu tiên</Text>
-            </View>
-            {aiFilledFields.includes('uu_tien') && (
-              <View style={styles.aiFilledBadge}>
-                <Icon name="robot" size={12} color={theme.colors.primary} />
-                <Text style={styles.aiFilledText}>AI đề xuất</Text>
+        <AegisEntrance delay={520} preset="gentle">
+          <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeading}>MỨC ĐỘ</Text>
+            {aiFilledFields.includes('uu_tien') ? (
+              <View style={styles.categoryBadgeAi}>
+                <Text style={styles.categoryBadgeAiText}>AI</Text>
               </View>
-            )}
+            ) : null}
           </View>
           <Text style={styles.sectionSubtitle}>Đánh giá mức độ nghiêm trọng của vấn đề</Text>
-          
+
           <View style={styles.priorityContainer}>
-            {PRIORITIES.map((priority) => {
+            {PRIORITIES.map((priority: any) => {
               const isActive = formData.uu_tien === priority.value;
               const isAiFilled = isActive && aiFilledFields.includes('uu_tien');
               return (
@@ -921,7 +1185,7 @@ const CreateReportScreen = () => {
                   key={priority.value}
                   style={[
                     styles.priorityChip,
-                    isActive && { 
+                    isActive && {
                       backgroundColor: priority.color,
                       borderColor: priority.color,
                     },
@@ -952,65 +1216,18 @@ const CreateReportScreen = () => {
               );
             })}
           </View>
-        </View>
+          </AegisCard>
+        </AegisEntrance>
 
-       
-
-        {/* Settings */}
-        <View style={styles.card}>
-          <View style={styles.sectionTitleWithIcon}>
-            <Icon name="shield-check" size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Quyền riêng tư</Text>
-          </View>
-          <Text style={styles.sectionSubtitle}>Ai có thể xem phản ánh này?</Text>
-          
-          <View style={styles.privacyCard}>
-            <View style={[
-              styles.privacyIconBox,
-              { backgroundColor: formData.la_cong_khai ? theme.colors.success + '15' : theme.colors.warning + '15' }
-            ]}>
-              <Icon 
-                name={formData.la_cong_khai ? "eye" : "eye-off"} 
-                size={24} 
-                color={formData.la_cong_khai ? theme.colors.success : theme.colors.warning}
-              />
+        <AegisEntrance delay={620} preset="gentle">
+          <View style={styles.footerBranding}>
+            <View style={styles.footerLine} />
+            <View style={styles.footerBrandRow}>
+              <Icon name="shield-check" size={14} color={COLORS.primary} />
+              <Text style={styles.footerBrandText}>CIVICTWIN AI • BÁO CÁO CÔNG DÂN</Text>
             </View>
-            <View style={styles.privacyContent}>
-              <Text style={styles.privacyLabel}>
-                {formData.la_cong_khai ? 'Công khai' : 'Riêng tư'}
-              </Text>
-              <Text style={styles.privacyDescription}>
-                {formData.la_cong_khai
-                  ? 'Mọi người đều có thể nhìn thấy'
-                  : 'Chỉ bạn và cơ quan chức năng'}
-              </Text>
-            </View>
-            <Switch
-              value={formData.la_cong_khai}
-              onValueChange={(value) => setFormData({ ...formData, la_cong_khai: value })}
-              trackColor={{ false: theme.colors.border, true: theme.colors.success }}
-              thumbColor={theme.colors.white}
-              ios_backgroundColor={theme.colors.border}
-            />
           </View>
-        </View>
-
-        {/* Submit Button */}
-        <View style={styles.footer}>
-          <View style={styles.submitInfoCard}>
-            <Icon name="information" size={20} color={theme.colors.info} />
-            <Text style={styles.submitInfoText}>
-              Phản ánh của bạn sẽ được gửi đến cơ quan chức năng phù hợp
-            </Text>
-          </View>
-          <ButtonCustom
-            title={loading ? 'Đang gửi...' : 'Gửi phản ánh'}
-            onPress={handleSubmit}
-            disabled={loading || uploadingMedia || aiAnalyzing}
-            icon="send"
-            style={styles.submitButton}
-          />
-        </View>
+        </AegisEntrance>
       </ScrollView>
 
       {/* Map Modal */}
@@ -1046,7 +1263,7 @@ const CreateReportScreen = () => {
                   zoomLevel={15}
                   centerCoordinate={tempLocation || [106.7009, 10.7769]}
                   animationMode="flyTo"
-                  animationDuration={1000}
+                  animationDuration={800}
                 />
                 {tempLocation && (
                   <MapboxGL.PointAnnotation
@@ -1059,6 +1276,20 @@ const CreateReportScreen = () => {
                   </MapboxGL.PointAnnotation>
                 )}
               </MapboxGL.MapView>
+
+              <TouchableOpacity
+                style={styles.mapMyLocationFab}
+                onPress={handleMyLocationOnMap}
+                disabled={mapGpsLoading}
+                activeOpacity={0.85}
+                accessibilityLabel="Vị trí của tôi"
+              >
+                {mapGpsLoading ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <Icon name="crosshairs-gps" size={22} color={theme.colors.primary} />
+                )}
+              </TouchableOpacity>
 
               <View style={styles.addressOverlay}>
                 {loadingAddress ? (
@@ -1099,18 +1330,6 @@ const CreateReportScreen = () => {
         <Text style={styles.modalText}>{errorMessage}</Text>
       </ModalCustom>
 
-      {/* AI Analysis Modal */}
-      <ModalCustom
-        isModalVisible={showAIModal}
-        setIsModalVisible={setShowAIModal}
-        title="🤖 AI đã phân tích ảnh"
-        type="success"
-        isClose={false}
-        actionText="Đồng ý"
-      >
-        <Text style={styles.aiModalText}>{aiAnalysisMessage}</Text>
-      </ModalCustom>
-
       {/* Category Selection Modal - Animated Bottom Sheet */}
       {showCategoryModal && (
         <>
@@ -1149,10 +1368,10 @@ const CreateReportScreen = () => {
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.categoryModalScroll} showsVerticalScrollIndicator={false}>
               <View style={styles.categoryOptionsContainer}>
-                {CATEGORIES.map((category) => {
+                {CATEGORIES.map((category: any) => {
                   const isSelected = formData.danh_muc === category.value;
                   return (
                     <TouchableOpacity
@@ -1204,186 +1423,325 @@ const CreateReportScreen = () => {
         </>
       )}
 
-      {/* AI Loading Modal */}
+      {/* Upload + AI: một Modal (working → summary) — không mở ModalCustom thứ hai */}
       <Modal
-        visible={uploadingMedia || aiAnalyzing}
+        visible={mediaWorkflowPhase !== 'idle'}
         transparent={true}
         animationType="fade"
         statusBarTranslucent
+        onRequestClose={() => {
+          if (mediaWorkflowPhase === 'summary') {
+            setMediaWorkflowPhase('idle');
+          }
+        }}
       >
         <View style={styles.loadingOverlay}>
-          <View style={styles.loadingCard}>
-            <Animated.View
-              style={[
-                styles.loadingIconContainer,
-                {
-                  transform: [
-                    { scale: pulseAnim },
-                    {
-                      rotate: rotateAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg'],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Icon name="robot" size={48} color={theme.colors.primary} />
-            </Animated.View>
+          {mediaWorkflowPhase === 'working' ? (
+            <View style={styles.loadingCard}>
+              <Animated.View
+                style={[
+                  styles.loadingIconContainer,
+                  {
+                    transform: [
+                      { scale: pulseAnim },
+                      {
+                        rotate: rotateAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Icon name="robot" size={48} color={theme.colors.primary} />
+              </Animated.View>
 
-            <Text style={styles.loadingTitle}>
-              {uploadingMedia ? '📤 Đang tải ảnh lên' : '🤖 AI đang phân tích'}
-            </Text>
-            <Text style={styles.loadingStatus}>{uploadStatus}</Text>
+              <Text style={styles.loadingTitle}>
+                {!mediaWfAiDone
+                  ? '🤖 Đang phân tích ảnh'
+                  : !mediaWfUploadDone
+                    ? '📤 Đang tải ảnh lên'
+                    : mediaWfFinishing
+                      ? '✨ Đang hoàn tất'
+                      : 'Đang xử lý'}
+              </Text>
+              <Text style={styles.loadingStatus}>{uploadStatus}</Text>
 
-            {/* Progress Bar */}
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBarBackground}>
-                <Animated.View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${uploadProgress}%`,
-                    },
-                  ]}
-                />
+              <View style={styles.progressBarContainer}>
+                <View style={styles.progressBarBackground}>
+                  <Animated.View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${uploadProgress}%`,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.progressText}>{Math.round(uploadProgress)}%</Text>
               </View>
-              <Text style={styles.progressText}>{Math.round(uploadProgress)}%</Text>
+
+              <View style={styles.stepsContainer}>
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      !mediaWfAiDone && styles.stepDotActive,
+                      mediaWfAiDone && styles.stepDotCompleted,
+                    ]}
+                  >
+                    {mediaWfAiDone ? (
+                      <Icon name="check" size={12} color={theme.colors.white} />
+                    ) : (
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepText,
+                      !mediaWfAiDone && styles.stepTextActive,
+                      mediaWfAiDone && styles.stepTextDone,
+                    ]}
+                  >
+                    Phân tích AI
+                  </Text>
+                </View>
+
+                <View style={styles.stepDivider} />
+
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      mediaWfAiDone && !mediaWfUploadDone && styles.stepDotActive,
+                      mediaWfUploadDone && styles.stepDotCompleted,
+                    ]}
+                  >
+                    {mediaWfUploadDone ? (
+                      <Icon name="check" size={12} color={theme.colors.white} />
+                    ) : mediaWfAiDone ? (
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepText,
+                      mediaWfAiDone && !mediaWfUploadDone && styles.stepTextActive,
+                      mediaWfUploadDone && styles.stepTextDone,
+                    ]}
+                  >
+                    Tải ảnh
+                  </Text>
+                </View>
+
+                <View style={styles.stepDivider} />
+
+                <View style={styles.stepItem}>
+                  <View
+                    style={[
+                      styles.stepDot,
+                      mediaWfUploadDone && mediaWfFinishing && styles.stepDotActive,
+                      mediaWfUploadDone && mediaWfFinishing && styles.stepDotCompleted,
+                    ]}
+                  >
+                    {mediaWfUploadDone && mediaWfFinishing ? (
+                      <ActivityIndicator size="small" color={theme.colors.white} />
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepText,
+                      mediaWfUploadDone && mediaWfFinishing && styles.stepTextActive,
+                    ]}
+                  >
+                    Hiển thị kết quả
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.loadingHint}>
+                {!mediaWfAiDone
+                  ? 'AI đang đọc ảnh — thường mất vài giây, vui lòng đợi.'
+                  : !mediaWfUploadDone
+                    ? 'Đang tải ảnh — vui lòng đợi và giữ mạng ổn định.'
+                    : mediaWfFinishing
+                      ? 'Chuẩn bị bảng tóm tắt cho bạn...'
+                      : ''}
+              </Text>
             </View>
-
-            {/* Progress Steps */}
-            <View style={styles.stepsContainer}>
-              <View style={styles.stepItem}>
-                <View style={[
-                  styles.stepDot,
-                  uploadProgress >= 10 && styles.stepDotActive,
-                  uploadProgress >= 50 && styles.stepDotCompleted,
-                ]}>
-                  {uploadProgress >= 50 ? (
-                    <Icon name="check" size={12} color={theme.colors.white} />
-                  ) : null}
+          ) : (
+            <View style={styles.loadingCard}>
+              <LinearGradient
+                colors={[theme.colors.success + '22', theme.colors.primary + '12']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.mediaSummaryIconRing}
+              >
+                <View style={styles.mediaSummaryIconWrap}>
+                  <Icon name="check-decagram" size={40} color={theme.colors.success} />
                 </View>
-                <Text style={[
-                  styles.stepText,
-                  uploadProgress >= 10 && styles.stepTextActive,
-                ]}>
-                  Tải ảnh
-                </Text>
-              </View>
-
-              <View style={styles.stepDivider} />
-
-              <View style={styles.stepItem}>
-                <View style={[
-                  styles.stepDot,
-                  uploadProgress >= 50 && styles.stepDotActive,
-                  uploadProgress >= 95 && styles.stepDotCompleted,
-                ]}>
-                  {uploadProgress >= 95 ? (
-                    <Icon name="check" size={12} color={theme.colors.white} />
-                  ) : null}
+              </LinearGradient>
+              <Text style={styles.loadingTitle}>Đã phân tích xong</Text>
+              <Text style={styles.mediaSummarySubtitle}>
+                Gợi ý đã được áp dụng vào form — bạn có thể chỉnh lại trước khi gửi.
+              </Text>
+              <ScrollView
+                style={styles.mediaSummaryScroll}
+                showsVerticalScrollIndicator={true}
+                keyboardShouldPersistTaps="handled"
+              >
+                <View style={styles.mediaSummaryMessageBox}>
+                  <Text style={styles.aiModalText}>{aiAnalysisMessage}</Text>
                 </View>
-                <Text style={[
-                  styles.stepText,
-                  uploadProgress >= 50 && styles.stepTextActive,
-                ]}>
-                  Phân tích AI
-                </Text>
-              </View>
-
-              <View style={styles.stepDivider} />
-
-              <View style={styles.stepItem}>
-                <View style={[
-                  styles.stepDot,
-                  uploadProgress >= 95 && styles.stepDotActive,
-                  uploadProgress === 100 && styles.stepDotCompleted,
-                ]}>
-                  {uploadProgress === 100 ? (
-                    <Icon name="check" size={12} color={theme.colors.white} />
-                  ) : null}
-                </View>
-                <Text style={[
-                  styles.stepText,
-                  uploadProgress >= 95 && styles.stepTextActive,
-                ]}>
-                  Hoàn tất
-                </Text>
-              </View>
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.mediaSummaryButton}
+                activeOpacity={0.85}
+                onPress={() => setMediaWorkflowPhase('idle')}
+              >
+                <Text style={styles.mediaSummaryButtonText}>Đã hiểu, tiếp tục</Text>
+              </TouchableOpacity>
             </View>
-
-            <Text style={styles.loadingHint}>Vui lòng đợi trong giây lát...</Text>
-          </View>
+          )}
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  screenRoot: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: COLORS.backgroundSecondary,
   },
-  content: {
-    flex: 1,
-    padding: SCREEN_PADDING.horizontal,
+  topWhiteArea: {
+    backgroundColor: COLORS.white,
   },
-  card: {
-    backgroundColor: theme.colors.white,
-    borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    ...theme.shadows.sm,
+  headerShell: {
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
-  sectionTitle: {
-    fontSize: FONT_SIZE.lg,
+  headerSendPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary,
+  },
+  headerSendPillPressed: {
+    opacity: 0.88,
+  },
+  headerSendPillDisabled: {
+    opacity: 0.4,
+  },
+  headerSendPillText: {
+    fontSize: FONT_SIZE.md,
     fontWeight: '700',
-    color: theme.colors.text,
+    color: COLORS.white,
   },
-  sectionTitleRow: {
+  pageHeaderInner: {
+    backgroundColor: COLORS.transparent,
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+    paddingTop: SPACING.md,
+  },
+  sectionCard: {
+    marginBottom: SPACING.md,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
-  sectionTitleWithIcon: {
+  sectionHeading: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: '800',
+    color: COLORS.text,
+    letterSpacing: 0.5,
+  },
+  livePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+    marginRight: 6,
+  },
+  livePillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.primary,
+  },
+  categoryBadgeAi: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: COLORS.successLight,
+    borderWidth: 1,
+    borderColor: COLORS.success + '35',
+  },
+  categoryBadgeAiText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.success,
+    letterSpacing: 0.5,
+  },
+  aiParsePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.accent + '40',
+    backgroundColor: COLORS.accent + '10',
+  },
+  aiParsePillDisabled: {
+    opacity: 0.45,
+  },
+  aiParsePillText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: COLORS.accent,
+    letterSpacing: 0.3,
   },
   sectionSubtitle: {
     fontSize: FONT_SIZE.sm,
-    color: theme.colors.textSecondary,
+    color: COLORS.textSecondary,
     marginBottom: SPACING.md,
     lineHeight: 20,
-  },
-  aiChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: theme.colors.primary + '10',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
-  },
-  aiChipText: {
-    fontSize: FONT_SIZE.xs,
-    color: theme.colors.primary,
-    fontWeight: '600',
   },
   categorySelectButton: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: COLORS.backgroundSecondary,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   categorySelectIcon: {
     width: 48,
@@ -1537,6 +1895,37 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.white,
     ...theme.shadows.sm,
   },
+  generatedTitlePreviewBox: {
+    marginTop: SPACING.xs,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: theme.colors.primary + '0C',
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '28',
+  },
+  generatedTitlePreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: SPACING.xs,
+  },
+  generatedTitlePreviewHeading: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  generatedTitlePreviewHint: {
+    fontSize: FONT_SIZE.xs,
+    color: theme.colors.textSecondary,
+    marginBottom: SPACING.sm,
+    lineHeight: 18,
+  },
+  generatedTitlePreviewBody: {
+    fontSize: FONT_SIZE.sm,
+    color: theme.colors.text,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
   aiFilledBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1561,11 +1950,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: COLORS.backgroundSecondary,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
-    ...theme.shadows.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   mapButtonIcon: {
     width: 48,
@@ -1595,41 +1983,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     marginLeft: SPACING.xs,
   },
-  tagInputHeader: {
-    marginBottom: SPACING.xs,
-  },
-  tagInputTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  tagInputLabel: {
-    fontSize: FONT_SIZE.sm,
-    color: theme.colors.textSecondary,
-    fontWeight: '500',
-  },
-  tagList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
-  tagChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primary + '10',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
-  },
-  tagText: {
-    fontSize: FONT_SIZE.sm,
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
   priorityContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1640,10 +1993,10 @@ const styles = StyleSheet.create({
     minWidth: '47%',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.sm,
-    backgroundColor: theme.colors.background,
+    backgroundColor: COLORS.backgroundSecondary,
     borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   priorityContent: {
     flexDirection: 'row',
@@ -1815,9 +2168,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     lineHeight: 16,
   },
-  footer: {
-    paddingBottom: SPACING.xl,
-    gap: SPACING.md,
+  footerBranding: {
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.md,
+    alignItems: 'center',
+  },
+  footerLine: {
+    width: 40,
+    height: 1,
+    backgroundColor: COLORS.borderDark,
+    opacity: 0.35,
+    marginBottom: SPACING.md,
+  },
+  footerBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    opacity: 0.55,
+  },
+  footerBrandText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.textTertiary,
+    letterSpacing: 1.5,
   },
   submitInfoCard: {
     flexDirection: 'row',
@@ -1835,10 +2208,6 @@ const styles = StyleSheet.create({
     color: theme.colors.info,
     fontWeight: '500',
     lineHeight: 20,
-  },
-  submitButton: {
-    borderRadius: BORDER_RADIUS.xl,
-    ...theme.shadows.md,
   },
   modalText: {
     textAlign: 'center',
@@ -1895,6 +2264,19 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  mapMyLocationFab: {
+    position: 'absolute',
+    bottom: 88,
+    right: SPACING.md,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    ...theme.shadows.md,
   },
   markerContainer: {
     alignItems: 'center',
@@ -2024,6 +2406,10 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '600',
   },
+  stepTextDone: {
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
   stepDivider: {
     height: 2,
     backgroundColor: theme.colors.border,
@@ -2037,13 +2423,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  mediaSummaryIconRing: {
+    padding: 3,
+    borderRadius: 42,
+    marginBottom: SPACING.md,
+  },
+  mediaSummaryIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mediaSummarySubtitle: {
+    fontSize: FONT_SIZE.sm,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  mediaSummaryMessageBox: {
+    width: '100%',
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  mediaSummaryScroll: {
+    width: '100%',
+    maxHeight: 240,
+    marginBottom: SPACING.lg,
+  },
+  mediaSummaryButton: {
+    width: '100%',
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+  },
+  mediaSummaryButtonText: {
+    color: theme.colors.white,
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+  },
   draftBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: '#6366F110',
+    backgroundColor: COLORS.infoLight,
     borderBottomWidth: 1,
-    borderBottomColor: '#6366F120',
+    borderBottomColor: COLORS.info + '25',
     paddingHorizontal: SCREEN_PADDING.horizontal,
     paddingVertical: SPACING.sm,
   },
@@ -2051,13 +2483,125 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: FONT_SIZE.xs,
     fontWeight: '600',
-    color: '#6366F1',
+    color: COLORS.info,
   },
   draftBannerDiscard: {
     fontSize: FONT_SIZE.xs,
     fontWeight: '700',
     color: theme.colors.error,
   },
+  // AI Vision Styles
+  aiVisionCard: {
+    backgroundColor: theme.colors.white,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#10B98130',
+    ...theme.shadows.md,
+  },
+  aiVisionGradient: {
+    height: 4,
+    width: '100%',
+  },
+  aiVisionContent: {
+    padding: SPACING.md,
+  },
+  aiVisionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  aiVisionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  aiVisionIconBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10B98115',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aiVisionTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 1,
+  },
+  aiVisionBadgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: SPACING.sm,
+  },
+  aiResultBadge: {
+    backgroundColor: '#3B82F615',
+    borderColor: '#3B82F630',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  aiResultBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
+  aiVisionDesc: {
+    fontSize: FONT_SIZE.sm,
+    color: theme.colors.text,
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  confidenceContainer: {
+    marginBottom: SPACING.md,
+  },
+  confidenceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  confidenceLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+  },
+  confidenceValue: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#10B981',
+  },
+  confidenceBarBg: {
+    height: 6,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  confidenceBarFill: {
+    height: '100%',
+    backgroundColor: '#10B981',
+    borderRadius: 3,
+  },
+  aiVisionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  aiVisionFooterText: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+    fontWeight: '500',
+  },
 });
+
+export const citizenReportScreenStyles = styles;
 
 export default CreateReportScreen;

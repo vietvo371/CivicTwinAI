@@ -198,9 +198,10 @@ const ReportDetailScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.safeTop} edges={['top']}>
       <PageHeader title="Chi tiết phản ánh" variant="default" />
 
+      <View style={styles.body}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -363,6 +364,7 @@ const ReportDetailScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      </View>
 
       {/* Rating Modal */}
       <Modal
@@ -426,7 +428,11 @@ const ReportDetailScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeTop: {
+    flex: 1,
+    backgroundColor: theme.colors.white,
+  },
+  body: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },

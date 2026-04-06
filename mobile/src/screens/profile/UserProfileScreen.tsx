@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, StatusBar } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { RootStackParamList } from '../../navigation/types';
@@ -19,7 +19,11 @@ type UserProfileRouteProp = RouteProp<RootStackParamList, 'UserProfile'>;
 const UserProfileScreen = () => {
   const route = useRoute<UserProfileRouteProp>();
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user: authUser, refreshProfile } = useAuth();
+  // AuthContext `user` type hiện không có đầy đủ field tiếng Việt mà screen profile đang dùng.
+  // Cast `any` để tránh lỗi TS khi render UI (BE chưa đồng bộ DTO).
+  const user = authUser as any;
+  const insets = useSafeAreaInsets();
 
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,9 +32,9 @@ const UserProfileScreen = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState({
-    ho_ten: user?.ho_ten || '',
-    so_dien_thoai: user?.so_dien_thoai || '',
-    anh_dai_dien: user?.anh_dai_dien || '',
+    ho_ten: user?.name || '',
+    so_dien_thoai: user?.phone || '',
+    anh_dai_dien: user?.avatar || '',
   });
   const [errors, setErrors] = useState<{
     ho_ten?: string;
@@ -40,9 +44,9 @@ const UserProfileScreen = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        ho_ten: user.ho_ten || '',
-        so_dien_thoai: user.so_dien_thoai || '',
-        anh_dai_dien: user.anh_dai_dien || '',
+        ho_ten: user.name || '',
+        so_dien_thoai: user.phone || '',
+        anh_dai_dien: user.avatar || '',
       });
     }
   }, [user]);
@@ -110,24 +114,29 @@ const UserProfileScreen = () => {
 
     setLoading(true);
     try {
+      // Match BE /profile expected keys: name, phone
       const updateData: any = {};
+      const avatarChanged = formData.anh_dai_dien !== user?.avatar;
 
-      if (formData.ho_ten !== user?.ho_ten) {
-        updateData.ho_ten = formData.ho_ten;
+      if (formData.ho_ten !== user?.name) {
+        updateData.name = formData.ho_ten;
       }
-      if (formData.so_dien_thoai !== user?.so_dien_thoai) {
-        updateData.so_dien_thoai = formData.so_dien_thoai;
-      }
-      if (formData.anh_dai_dien !== user?.anh_dai_dien) {
-        updateData.anh_dai_dien = formData.anh_dai_dien;
+      if (formData.so_dien_thoai !== user?.phone) {
+        updateData.phone = formData.so_dien_thoai;
       }
 
       if (Object.keys(updateData).length === 0) {
+        // BE /profile không lưu avatar. Nếu chỉ avatar đổi thì refresh để revert đúng BE.
+        if (avatarChanged) {
+          await refreshProfile();
+        }
         setIsEditing(false);
         return;
       }
 
       await authService.updateProfile(updateData);
+      // Refresh để đồng bộ UI theo đúng BE (đặc biệt nếu avatar upload không được lưu).
+      await refreshProfile();
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error('Update profile error:', error);
@@ -148,16 +157,18 @@ const UserProfileScreen = () => {
 
   const handleCancel = () => {
     setFormData({
-      ho_ten: user?.ho_ten || '',
-      so_dien_thoai: user?.so_dien_thoai || '',
-      anh_dai_dien: user?.anh_dai_dien || '',
+      ho_ten: user?.name || '',
+      so_dien_thoai: user?.phone || '',
+      anh_dai_dien: user?.avatar || '',
     });
     setErrors({});
     setIsEditing(false);
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={[]}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
+      <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
       <PageHeader
         title="Thông tin cá nhân"
         variant="default"
@@ -169,6 +180,7 @@ const UserProfileScreen = () => {
           ) : null
         }
       />
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Avatar Section */}

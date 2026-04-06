@@ -28,6 +28,10 @@ dist/
 postgres_data/
 redis_data/
 
+# Firebase Admin SDK — chứa private key, không commit
+*-firebase-adminsdk-*.json
+firebase-adminsdk*.json
+service-account.json
 # ML Models (large files)
 ai-service/ml/saved_models/*.pt
 ai-service/ml/saved_models/*.h5
@@ -44,3 +48,4 @@ Thumbs.db
 mobile/android/app/build/
 mobile/ios/Pods/
 mobile/ios/build/
+firebase-service-account.json

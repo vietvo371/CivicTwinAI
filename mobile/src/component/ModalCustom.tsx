@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, StyleSheet, TouchableOpacity, View, Text, Animated, Platform } from "react-native";
+import { Modal, StyleSheet, TouchableOpacity, View, Text, Animated, Platform, Pressable } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, wp } from "../theme";
 
@@ -14,6 +14,8 @@ interface ModalCustomProps {
     actionText?: string;
     closeText?: string;
     type?: 'info' | 'warning' | 'error' | 'success' | 'confirm';
+    /** false: chạm nền không đóng (tránh kẹt màn hình khi bắt buộc chọn nút hành động) */
+    dismissOnBackdropPress?: boolean;
 }
 
 const ModalCustom = ({
@@ -26,7 +28,8 @@ const ModalCustom = ({
     onPressAction,
     actionText = 'Xác nhận',
     closeText = 'Hủy',
-    type = 'confirm'
+    type = 'confirm',
+    dismissOnBackdropPress = true,
 }: ModalCustomProps) => {
     const scaleAnim = useRef(new Animated.Value(0)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,19 +87,28 @@ const ModalCustom = ({
             animationType="none"
             transparent={true}
             visible={isModalVisible}
-            onRequestClose={() => setIsModalVisible(false)}
+            onRequestClose={() => {
+                if (dismissOnBackdropPress) setIsModalVisible(false);
+            }}
             statusBarTranslucent
         >
-            <Animated.View style={[styles.modalContainer, { opacity: fadeAnim }]}>
-                <TouchableOpacity
+            {/* Không animate opacity cả màn: opacity=0 vẫn nuốt touch → cảm giác màn hình khoá sau modal loading/AI */}
+            <View style={styles.modalRoot}>
+                <Pressable
                     style={StyleSheet.absoluteFill}
-                    activeOpacity={1}
-                    onPress={() => setIsModalVisible(false)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Đóng"
+                    onPress={() => {
+                        if (dismissOnBackdropPress) setIsModalVisible(false);
+                    }}
                 />
                 <Animated.View
                     style={[
                         styles.modalContent,
-                        { transform: [{ scale: scaleAnim }] }
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                        },
                     ]}
                 >
                     {/* Icon */}
@@ -139,13 +151,13 @@ const ModalCustom = ({
                         )}
                     </View>
                 </Animated.View>
-            </Animated.View>
+            </View>
         </Modal>
     )
 }
 
 const styles = StyleSheet.create({
-    modalContainer: {
+    modalRoot: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.6)',
         justifyContent: 'center',

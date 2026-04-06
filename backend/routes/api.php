@@ -1,15 +1,25 @@
 <?php
 
+use App\Helpers\ApiResponse;
+use App\Http\Controllers\Api\Admin\SystemController;
+use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\AIAssistController;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EdgeController;
+use App\Http\Controllers\Api\GeocodeController;
 use App\Http\Controllers\Api\IncidentController;
 use App\Http\Controllers\Api\MapController;
 use App\Http\Controllers\Api\MediaController;
-use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\NodeController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PredictionController;
 use App\Http\Controllers\Api\RecommendationController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SensorDataController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\TrafficSimulationController;
+use App\Models\Sensor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,10 +35,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
-    
-    // Socialite Login 
-    Route::get('google/redirect', [\App\Http\Controllers\Api\SocialAuthController::class, 'redirectToGoogle']);
-    Route::get('google/callback', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleGoogleCallback']);
+
+    // Socialite Login
+    Route::get('google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
+    Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
 });
 
 // APIs that don't need authentication (e.g. Map embedding for public)
@@ -51,8 +61,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('profile', [AuthController::class, 'updateProfile']);
 
     // AI Assist (NLP + Vision)
-    Route::post('ai/parse-report', [\App\Http\Controllers\Api\AIAssistController::class, 'parseReport']);
-    Route::post('ai/analyze-image', [\App\Http\Controllers\Api\AIAssistController::class, 'analyzeImage']);
+    Route::post('ai/parse-report', [AIAssistController::class, 'parseReport']);
+    Route::post('ai/analyze-image', [AIAssistController::class, 'analyzeImage']);
+
+    /** Địa chỉ chữ từ tọa độ — gọi từ mobile thay vì Mapbox trực tiếp trên thiết bị */
+    Route::get('geocode/reverse', [GeocodeController::class, 'reverse']);
 
     // Shared Map Data (Nodes, Edges)
     Route::get('nodes', [NodeController::class, 'index']);
@@ -62,9 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('edges/{edge}', [EdgeController::class, 'show']);
     // Sensors listing
     Route::get('sensors', function (Request $request) {
-        $query = \App\Models\Sensor::with('edge');
-        if ($request->has('status')) $query->where('status', $request->status);
-        return \App\Helpers\ApiResponse::success($query->get(), 'api.sensors_retrieved');
+        $query = Sensor::with('edge');
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return ApiResponse::success($query->get(), 'api.sensors_retrieved');
     });
 
     // Mobile specific: Map Data endpoints
@@ -75,21 +91,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('routes', [MapController::class, 'routes']);
     });
 
-    // Mobile specific: Reports endpoints (Citizen View)
+    // -------------------------------------------------------------------------
+    // Mobile — Phản ánh (DTO tiếng Việt) → bảng `incidents`. App: reportService.
+    // Web — Không dùng nhóm này; công dân web dùng POST/GET /incidents (JSON/EN).
+    // -------------------------------------------------------------------------
     Route::prefix('reports')->group(function () {
         Route::get('/', [ReportController::class, 'index']);
         Route::post('/', [ReportController::class, 'store']);
         Route::get('my', [ReportController::class, 'my']);
-        // Route::get('nearby', [ReportController::class, 'nearby']); 
-        // Route::get('trending', [ReportController::class, 'trending']);
-        // Route::get('stats', [ReportController::class, 'stats']);
-        Route::get('{id}', [ReportController::class, 'show']);
-        Route::post('{id}/view', [ReportController::class, 'view']);
-        // Route::put('{id}', [ReportController::class, 'update']);
-        // Route::delete('{id}', [ReportController::class, 'destroy']);
-        // Route::post('{id}/vote', [ReportController::class, 'vote']);
-        // Route::post('{id}/rate', [ReportController::class, 'rate']);
-        // Route::post('{id}/comments', [ReportController::class, 'comment']);
+        Route::get('nearby', [ReportController::class, 'nearby']);
+        Route::get('trending', [ReportController::class, 'trending']);
+        Route::get('stats', [ReportController::class, 'stats']);
+        Route::get('{id}', [ReportController::class, 'show'])->whereNumber('id');
+        Route::put('{id}', [ReportController::class, 'update'])->whereNumber('id');
+        Route::delete('{id}', [ReportController::class, 'destroy'])->whereNumber('id');
+        Route::post('{id}/view', [ReportController::class, 'view'])->whereNumber('id');
+        Route::post('{id}/vote', [ReportController::class, 'vote'])->whereNumber('id');
+        Route::post('{id}/rate', [ReportController::class, 'rate'])->whereNumber('id');
+        Route::post('{id}/comments', [ReportController::class, 'comment'])->whereNumber('id');
     });
 
     // Mobile specific: Media endpoints
@@ -106,11 +125,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('incidents/{incident}', [IncidentController::class, 'show']);
 
     // Notifications (all authenticated users)
-    Route::get('notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
-    Route::get('notifications/unread', [\App\Http\Controllers\Api\NotificationController::class, 'unread']);
-    Route::get('notifications/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
-    Route::patch('notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead']);
-    Route::patch('notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread', [NotificationController::class, 'unread']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     // ==========================================
     // ==========================================
@@ -129,8 +148,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('predictions', [PredictionController::class, 'index']);
         Route::get('predictions/{prediction}', [PredictionController::class, 'show']);
         Route::post('predictions/trigger', [PredictionController::class, 'trigger']);
-        Route::post('simulation/run', [\App\Http\Controllers\Api\TrafficSimulationController::class, 'runSimulation']);
-        Route::get('analytics/overview', [\App\Http\Controllers\Api\AnalyticsController::class, 'overview']);
+        Route::post('simulation/run', [TrafficSimulationController::class, 'runSimulation']);
+        Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
 
         // Decision Approvals (Recommendations)
         Route::get('recommendations', [RecommendationController::class, 'index']);
@@ -144,13 +163,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     Route::prefix('admin')->middleware('role:city_admin|super_admin')->group(function () {
         // User Management
-        Route::get('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
-        Route::post('users', [\App\Http\Controllers\Api\Admin\UserController::class, 'store']);
-        Route::put('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'update']);
-        Route::delete('users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'destroy']);
+        Route::get('users', [UserController::class, 'index']);
+        Route::post('users', [UserController::class, 'store']);
+        Route::put('users/{user}', [UserController::class, 'update']);
+        Route::delete('users/{user}', [UserController::class, 'destroy']);
 
         // System Stats & Logs
-        Route::get('stats', [\App\Http\Controllers\Api\Admin\SystemController::class, 'stats']);
-        Route::get('logs', [\App\Http\Controllers\Api\Admin\SystemController::class, 'logs']);
+        Route::get('stats', [SystemController::class, 'stats']);
+        Route::get('logs', [SystemController::class, 'logs']);
     });
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '../theme';
+import { theme, COLORS } from '../theme';
 import { useNotifications } from '../hooks/useNotifications';
 
 interface Props {
@@ -45,24 +45,24 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: '#EF4444',
+    top: 4,
+    right: 4,
+    minWidth: 20,
+    height: 20,
     borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    backgroundColor: COLORS.error,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: theme.colors.white,
+    paddingHorizontal: 5,
+    borderWidth: 2,
+    borderColor: COLORS.white,
     zIndex: 10,
     elevation: 2,
   },
   badgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '800',
+    color: COLORS.white,
+    fontSize: 10,
+    fontWeight: '900',
   },
 });
 

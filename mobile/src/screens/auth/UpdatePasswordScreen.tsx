@@ -17,8 +17,8 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
-import api from '../../utils/Api';
 import { useTranslation } from '../../hooks/useTranslation';
+import { authService } from '../../services/authService';
 
 const UpdatePasswordScreen = () => {
   const navigation = useNavigation();
@@ -68,42 +68,42 @@ const UpdatePasswordScreen = () => {
   const performUpdatePassword = async () => {
     setLoading(true);
     try {
-      const response = await api.post('/client/update-password', {
+      await authService.changePassword({
         current_password: currentPassword.trim(),
-        new_password: newPassword.trim(),
-        new_password_confirmation: confirmPassword.trim()
+        password: newPassword.trim(),
+        password_confirmation: confirmPassword.trim(),
       });
 
-      console.log('Update password response:', response.data);
-
-      if (response.data.status) {
-        Alert.alert(
-          t('common.success'),
-          t('changePassword.passwordChanged'),
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack()
-            }
-          ]
-        );
-      } else {
-        Alert.alert('', response.data.message || t('changePassword.passwordChangeFailed'));
-      }
+      Alert.alert(
+        t('common.success'),
+        t('changePassword.passwordChanged'),
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
 
     } catch (error: any) {
-      console.log('Update password error:', error);
-
       if (error.response?.status === 422) {
         const validationErrors = error.response.data.errors || {};
+        // BE keys: current_password, new_password, new_password_confirmation
+        // UI keys: currentPassword, newPassword, confirmPassword
+        const fieldMapping: Record<string, string> = {
+          current_password: 'currentPassword',
+          new_password: 'newPassword',
+          new_password_confirmation: 'confirmPassword',
+        };
+
         const formattedErrors: { [key: string]: string } = {};
-        Object.keys(validationErrors).forEach(key => {
-          if (Array.isArray(validationErrors[key])) {
-            formattedErrors[key] = validationErrors[key][0];
-          } else {
-            formattedErrors[key] = validationErrors[key];
-          }
+        Object.keys(validationErrors).forEach((key) => {
+          const value = validationErrors[key];
+          const message = Array.isArray(value) ? value[0] : String(value);
+          const mappedKey = fieldMapping[key] || key;
+          formattedErrors[mappedKey] = message;
         });
+
         setErrors(formattedErrors);
         const firstError = Object.values(formattedErrors)[0];
         Alert.alert(t('common.error'), String(firstError));

@@ -4,7 +4,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, TAB_BAR } from '../../theme';
+import { AegisButton, theme, SPACING, FONT_SIZE, BORDER_RADIUS, TAB_BAR } from '../../theme';
 
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
     const insets = useSafeAreaInsets();
@@ -98,21 +98,17 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 
             {/* ONLY Render Floating Center Button for CITIZEN MODE (5 Tabs) */}
             {!isEmergency && (
-                <View style={[styles.floatingButtonContainer, { bottom: Math.max(insets.bottom, 12) + 20 }]}>
-                    <TouchableOpacity
-                        style={styles.floatingButton}
-                        onPress={() => navigation.navigate('CreateReport')}
-                        activeOpacity={0.8}
-                    >
-                        <LinearGradient
-                            colors={[theme.colors.primary, theme.colors.info]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.floatingButtonGradient}
-                        >
-                            <Icon name="plus" size={32} color={theme.colors.white} />
-                        </LinearGradient>
-                    </TouchableOpacity>
+                <View style={[styles.floatingButtonContainer, { bottom: Math.max(insets.bottom, 12) + 16 }]}>
+                    <View style={styles.floatingButtonBorder}>
+                        <AegisButton
+                            onPress={() => navigation.navigate('CreateReport')}
+                            circular
+                            size="lg"
+                            icon="plus"
+                            iconSize={32}
+                            style={styles.floatingButtonShadow}
+                        />
+                    </View>
                 </View>
             )}
         </View>
@@ -198,6 +194,24 @@ const styles = StyleSheet.create({
         borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    floatingButtonShadow: {
+        ...Platform.select({
+            ios: {
+                shadowColor: theme.colors.primary,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.3,
+                shadowRadius: 12,
+            },
+            android: {
+                elevation: 10,
+            },
+        }),
+    },
+    floatingButtonBorder: {
+        backgroundColor: theme.colors.white,
+        padding: 4,
+        borderRadius: 999,
     },
 });
 

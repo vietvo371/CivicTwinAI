@@ -241,16 +241,21 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   leftContainer: {
-    width: wp('12%'),
+    flexShrink: 0,
+    minWidth: wp('11%'),
     alignItems: 'flex-start',
   },
   centerContainer: {
     flex: 1,
+    minWidth: 0,
     alignItems: 'center',
+    paddingHorizontal: SPACING.xs,
   },
   rightContainer: {
-    width: wp('12%'),
+    flexShrink: 0,
+    maxWidth: '46%',
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   backButton: {
     padding: SPACING.xs,

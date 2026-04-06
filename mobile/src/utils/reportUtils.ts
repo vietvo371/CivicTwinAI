@@ -138,3 +138,29 @@ export const getResponseTimeRemaining = (report: Report): number | null => {
     const diff = deadline.getTime() - now.getTime();
     return Math.floor(diff / (1000 * 60 * 60)); // Convert to hours
 };
+
+/**
+ * Format date string to readable format
+ * @param dateString - ISO date string
+ * @returns Formatted date string (DD/MM/YYYY)
+ */
+export const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
+
+/** Trạng thái 0–1: còn có thể chỉnh sửa nội dung trước khi xử lý */
+export const canCitizenEditReport = (trangThai: number): boolean =>
+    trangThai === 0 || trangThai === 1;
+
+/**
+ * Xóa: cho phép khi chưa vào xử lý / hoàn thành (0,1) hoặc đã từ chối (4).
+ * Trạng thái 2,3: không hiển thị xóa để tránh mâu thuẫn với quy trình xử lý.
+ */
+export const canCitizenDeleteReport = (trangThai: number): boolean =>
+    trangThai === 0 || trangThai === 1 || trangThai === 4;
+

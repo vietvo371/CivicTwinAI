@@ -218,24 +218,31 @@ const PriorityRouteScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.safeTop} edges={['top']}>
             <StatusBar barStyle="dark-content" />
             <PageHeader 
                 title="Tuyến đường ưu tiên" 
                 subtitle={viewMode === 'map' ? "Điều phối giao thông thời gian thực" : "Danh sách điểm nóng cần hỗ trợ"}
                 variant="default"
                 showBack={true}
-                showNotification={true}
+                showNotification={false}
                 rightComponent={
-                    <TouchableOpacity
-                        style={styles.headerToggleBtn}
-                        onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
-                    >
-                        <Icon name={viewMode === 'map' ? "format-list-bulleted" : "map-outline"} size={22} color={theme.colors.primary} />
-                    </TouchableOpacity>
+                    <View style={styles.headerRightRow}>
+                        <NotificationBellButton
+                            style={styles.headerBellBtn}
+                            color={theme.colors.primary}
+                        />
+                        <TouchableOpacity
+                            style={styles.headerToggleBtn}
+                            onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+                        >
+                            <Icon name={viewMode === 'map' ? "format-list-bulleted" : "map-outline"} size={22} color={theme.colors.primary} />
+                        </TouchableOpacity>
+                    </View>
                 }
             />
 
+            <View style={styles.body}>
             {viewMode === 'map' ? (
                 <View style={{ flex: 1 }}>
                     <MapboxGL.MapView
@@ -403,14 +410,28 @@ const PriorityRouteScreen = () => {
                     )}
                 </View>
             )}
+            </View>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    safeTop: {
+        flex: 1,
+        backgroundColor: theme.colors.white,
+    },
+    body: {
         flex: 1,
         backgroundColor: '#F8FAFC',
+    },
+    headerRightRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+    },
+    headerBellBtn: {
+        width: 40,
+        height: 40,
     },
     listContainer: {
         flex: 1,

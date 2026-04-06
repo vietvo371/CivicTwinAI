@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Incident;
 use App\Helpers\ApiResponse;
+use Illuminate\Support\Str;
 
 class NotificationController extends Controller
 {
@@ -69,6 +69,10 @@ class NotificationController extends Controller
 
     public function markAsRead($id, Request $request)
     {
+        if (! Str::isUuid((string) $id)) {
+            return ApiResponse::error('api.notification_invalid_id', 422);
+        }
+
         $notification = $request->user()->notifications()->where('id', $id)->first();
         
         if ($notification) {

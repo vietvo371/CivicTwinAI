@@ -216,15 +216,15 @@ class WebSocketService {
   /**
    * Subscribe using Pusher API directly (alternative method)
    */
-  subscribePusher(channelName: string, eventName: string, callback: (data: any) => void) {
+  subscribePusher(channelName: string, eventName: string, callback: (data: any) => void): () => void {
     if (!this.pusher) {
       throw new Error('Pusher not available');
     }
 
     console.log(`📡 [Pusher] Subscribing to ${channelName}...`);
-    
+
     const channel = this.pusher.subscribe(channelName);
-    
+
     channel.bind('pusher:subscription_succeeded', () => {
       console.log(`✅ [Pusher] Subscribed to ${channelName}`);
     });
@@ -232,17 +232,24 @@ class WebSocketService {
     channel.bind('pusher:subscription_error', (error: any) => {
       console.error(`❌ [Pusher] Subscription error on ${channelName}:`, error);
     });
-    
-    channel.bind(eventName, (data: any) => {
+
+    const boundHandler = (data: any) => {
       console.log(`📩 [Pusher] Event ${eventName} received:`, data);
       callback(data);
-    });
-    
+    };
+    channel.bind(eventName, boundHandler);
+
     console.log(`👂 [Pusher] Listening to ${eventName} on ${channelName}`);
-    
+
     this.channels.set(`pusher-${channelName}`, channel);
-    
-    return channel;
+
+    return () => {
+      try {
+        channel.unbind(eventName, boundHandler);
+      } catch {
+        /* ignore */
+      }
+    };
   }
 
   /**

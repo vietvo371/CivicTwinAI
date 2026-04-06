@@ -1,37 +1,32 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, StatusBar } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNotifications } from '../hooks/useNotifications';
 import { theme } from '../theme/colors';
+import { setFcmForegroundHandler } from '../realtime/fcmForegroundBridge';
+import { mapRemoteMessageToInAppNotification } from '../utils/mapFcmToInAppNotification';
+import { navigateToIncidentDetailFromInAppNotification } from '../navigation/navigateFromPushNotification';
 
 export const NotificationBanner = () => {
-  const { notifications, markAsRead } = useNotifications();
+  const { notifications, markAsRead, prependNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(1)).current;
-  
+
   const latestNotification = notifications.find(n => !n.read);
 
-  // DEBUG: Component mounted
   useEffect(() => {
-    console.log('🎨 NotificationBanner component mounted');
-    return () => console.log('🎨 NotificationBanner component unmounted');
-  }, []);
-
-  // DEBUG: Log notifications
-  useEffect(() => {
-    console.log('🎨 NotificationBanner - Total notifications:', notifications.length);
-    console.log('🎨 NotificationBanner - Latest unread:', latestNotification?.id);
-    if (notifications.length > 0) {
-      console.log('🎨 All notifications:', JSON.stringify(notifications, null, 2));
-    }
-  }, [notifications.length]);
+    setFcmForegroundHandler(msg => {
+      const n = mapRemoteMessageToInAppNotification(msg);
+      if (n) prependNotification(n);
+    });
+    return () => setFcmForegroundHandler(null);
+  }, [prependNotification]);
 
   useEffect(() => {
     if (latestNotification) {
-      console.log('🎨 Showing notification banner:', latestNotification.title);
       showToast();
     }
   }, [latestNotification?.id]);
@@ -92,6 +87,16 @@ export const NotificationBanner = () => {
     });
   };
 
+  const onToastContentPress = () => {
+    if (latestNotification) {
+      navigateToIncidentDetailFromInAppNotification(
+        latestNotification.type,
+        latestNotification.data,
+      );
+    }
+    hideToast();
+  };
+
   if (!latestNotification) return null;
 
   const getToastConfig = () => {
@@ -147,6 +152,13 @@ export const NotificationBanner = () => {
           iconColor: '#8B5CF6',
           borderColor: '#8B5CF6',
         };
+      case 'fcm_push':
+        return {
+          backgroundColor: theme.colors.infoLight,
+          icon: 'bell-ring',
+          iconColor: theme.colors.info,
+          borderColor: theme.colors.info,
+        };
       default:
         return {
           backgroundColor: theme.colors.infoLight,
@@ -170,7 +182,7 @@ export const NotificationBanner = () => {
         },
       ]}
     >
-      <TouchableOpacity
+      <View
         style={[
           styles.toast,
           {
@@ -178,8 +190,6 @@ export const NotificationBanner = () => {
             borderColor: config.borderColor,
           },
         ]}
-        activeOpacity={0.9}
-        onPress={hideToast}
       >
         {/* Progress bar */}
         <View style={styles.progressContainer}>
@@ -197,20 +207,27 @@ export const NotificationBanner = () => {
           />
         </View>
 
-        {/* Toast content */}
         <View style={styles.content}>
-          <View style={styles.iconContainer}>
-            <Icon name={config.icon} size={24} color={config.iconColor} />
-          </View>
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.title} numberOfLines={1}>
-              {latestNotification.title}
-            </Text>
-            <Text style={styles.message} numberOfLines={3}>
-              {latestNotification.message}
-            </Text>
-          </View>
+          <TouchableOpacity
+            style={styles.tapArea}
+            activeOpacity={0.92}
+            onPress={onToastContentPress}
+            accessibilityRole="button"
+            accessibilityLabel="Mở chi tiết thông báo"
+          >
+            <View style={styles.iconContainer}>
+              <Icon name={config.icon} size={24} color={config.iconColor} />
+            </View>
+
+            <View style={styles.textContainer}>
+              <Text style={styles.title} numberOfLines={1}>
+                {latestNotification.title}
+              </Text>
+              <Text style={styles.message} numberOfLines={3}>
+                {latestNotification.message}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.closeButton}
@@ -220,7 +237,7 @@ export const NotificationBanner = () => {
             <Icon name="close" size={20} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
@@ -249,8 +266,15 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
-    paddingTop: 12,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 8,
+  },
+  tapArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginRight: 4,
   },
   iconContainer: {
     marginRight: 12,
@@ -258,7 +282,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    marginRight: 8,
+    paddingRight: 4,
   },
   title: {
     fontSize: 15,

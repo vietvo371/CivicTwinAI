@@ -25,10 +25,13 @@ return [
         'high' => 'Cao',
         'critical' => 'Nghiêm trọng',
     ],
+    // Khóa = cột `incidents.status` (DB). Trait HasTranslatedEnums + __("enums.incident_status.*").
+    // API mobile (`ReportController::mapIncidentToReport`) map sang `trang_thai`: open→0, investigating→2, resolved→3, closed→4.
+    // Lưu ý: trang_thai=1 (Đã xác minh) không có giá trị status string tương ứng trên bảng incidents — chỉ dùng phía client/legacy nếu có.
     'incident_status' => [
-        'open' => 'Đang mở',
-        'investigating' => 'Đang điều tra',
-        'resolved' => 'Đã giải quyết',
+        'open' => 'Tiếp nhận',
+        'investigating' => 'Đang xử lý',
+        'resolved' => 'Hoàn thành',
         'closed' => 'Đã đóng',
     ],
     'incident_source' => [

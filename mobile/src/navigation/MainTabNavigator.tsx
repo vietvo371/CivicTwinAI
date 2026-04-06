@@ -238,11 +238,31 @@ const MainNavigator = () => {
         <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
 
         {/* Profile & Settings */}
-        <Stack.Screen name="UserProfile" component={UserProfileScreen} />
-        <Stack.Screen name="ChangePasswordLoggedIn" component={ChangePasswordLoggedInScreen} />
-        <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
-        <Stack.Screen name="HelpCenter" component={HelpCenterScreen} />
-        <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen
+          name="UserProfile"
+          component={UserProfileScreen}
+          options={{ animation: 'fade', animationDuration: 200 }}
+        />
+        <Stack.Screen
+          name="ChangePasswordLoggedIn"
+          component={ChangePasswordLoggedInScreen}
+          options={{ animation: 'fade', animationDuration: 200 }}
+        />
+        <Stack.Screen
+          name="LanguageSettings"
+          component={LanguageSettingsScreen}
+          options={{ animation: 'fade', animationDuration: 200 }}
+        />
+        <Stack.Screen
+          name="HelpCenter"
+          component={HelpCenterScreen}
+          options={{ animation: 'fade', animationDuration: 200 }}
+        />
+        <Stack.Screen
+          name="About"
+          component={AboutScreen}
+          options={{ animation: 'fade', animationDuration: 200 }}
+        />
       </Stack.Group>
     </Stack.Navigator>
   );

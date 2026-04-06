@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import Firebase
+import FirebaseMessaging
 import UserNotifications
 
 @main
@@ -43,10 +44,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     return true
   }
   
-  // Xử lý khi đăng ký thông báo từ xa thành công
+  // Bắt buộc gán APNs token cho FCM khi tự implement didRegister... (tránh token FCM “ảo” / không nhận push)
   func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-    // Firebase Messaging sẽ tự động xử lý device token
-    print("Đã đăng ký thông báo từ xa thành công")
+    Messaging.messaging().apnsToken = deviceToken
+    print("APNs device token đã gán cho Firebase Messaging")
   }
   
   // Xử lý khi đăng ký thông báo từ xa thất bại
@@ -74,10 +75,12 @@ extension AppDelegate {
   // Xử lý thông báo khi app đang chạy ở foreground
   func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
     let userInfo = notification.request.content.userInfo
-    
+
+    // Bắt buộc: gán delegate = self đã thay Firebase/RN — phải báo cho FCM thì @react-native-firebase/messaging onMessage (JS) mới nhận khi app foreground
+    Messaging.messaging().appDidReceiveMessage(userInfo)
+
     print("Thông báo nhận được ở foreground: \(userInfo)")
-    
-    // Hiển thị thông báo khi app ở foreground
+
     if #available(iOS 14.0, *) {
       completionHandler([[.banner, .sound, .badge]])
     } else {
@@ -88,9 +91,11 @@ extension AppDelegate {
   // Xử lý khi người dùng nhấp vào thông báo
   func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
     let userInfo = response.notification.request.content.userInfo
-    
+
+    Messaging.messaging().appDidReceiveMessage(userInfo)
+
     print("Người dùng nhấp vào thông báo: \(userInfo)")
-    
+
     completionHandler()
   }
 }

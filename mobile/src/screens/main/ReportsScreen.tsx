@@ -166,7 +166,7 @@ const ReportsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       <PageHeader
         title=''
         variant="default"
@@ -231,12 +231,12 @@ const ReportsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.white,
   },
   headerContainer: {
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    paddingVertical: SPACING.md,
-    backgroundColor: theme.colors.background,
+    paddingVertical: SPACING.xs,
+    backgroundColor: theme.colors.white,
   },
   searchBar: {
     flexDirection: 'row',

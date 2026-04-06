@@ -970,7 +970,7 @@ const MapScreen = () => {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                         <Icon name="access-point" size={12} color="#6366F1" />
-                        <Text style={styles.dtLabel}>DIGITAL TWIN · LIVE</Text>
+                        <Text style={styles.dtLabel}>DỮ LIỆU SỐ · TRỰC TIẾP</Text>
                       </View>
                       <Text style={styles.sheetTitle} numberOfLines={2}>
                         {selectedIncident.title || 'Sự cố chưa đặt tên'}
@@ -1081,7 +1081,7 @@ const MapScreen = () => {
                           <Text style={styles.aiPanelSub}>Mô hình dự báo giao thông thời gian thực</Text>
                         </View>
                         <View style={styles.aiBadgeLive}>
-                          <Text style={styles.aiBadgeLiveText}>LIVE</Text>
+                          <Text style={styles.aiBadgeLiveText}>TRỰC TIẾP</Text>
                         </View>
                       </View>
 
@@ -1173,6 +1173,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: SCREEN_PADDING.horizontal,
+    backgroundColor: theme.colors.white,
   },
   searchContainer: {
     marginTop: SPACING.sm,

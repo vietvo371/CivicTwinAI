@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  StatusBar,
   Alert,
   Platform,
   ActivityIndicator,
@@ -77,7 +78,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation,
 
     setLoading(true);
     try {
-      // CityResQ360 API format - theo API docs
+      // CivicTwinAI API format - theo API docs
       const response = await api.post('/auth/reset-password', {
         email: identifier,
         token: token,
@@ -142,6 +143,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation,
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       <View style={styles.backgroundContainer}>
         <View style={styles.decorativeCircle1} />
         <View style={styles.decorativeCircle2} />
@@ -270,7 +272,7 @@ const styles = StyleSheet.create({
   },
   decorativeCircle1: {
     position: 'absolute',
-    top: -50,
+    top: 0,
     right: -50,
     width: 150,
     height: 150,
