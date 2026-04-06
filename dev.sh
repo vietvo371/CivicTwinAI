@@ -8,7 +8,7 @@
 #   ./dev.sh          → chạy tất cả
 #   ./dev.sh backend  → chỉ chạy backend
 #   ./dev.sh frontend → chỉ chạy frontend
-#   ./dev.sh soketi   → chỉ chạy WebSocket
+#   ./dev.sh reverb   → chỉ chạy Laravel Reverb (WebSocket)
 #   ./dev.sh worker   → chỉ chạy queue worker
 #   ./dev.sh ai       → chỉ chạy AI service
 # ============================================
