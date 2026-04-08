@@ -35,6 +35,11 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
+    
+    // OTP Password Reset
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('accept-otp-password', [AuthController::class, 'acceptOtpPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
     // Socialite Login
     Route::get('google/redirect', [SocialAuthController::class, 'redirectToGoogle']);
