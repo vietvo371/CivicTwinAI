@@ -61,25 +61,25 @@ start_worker() {
   "
 }
 
-start_ai() {
-  echo -e "${BLUE}🧠 Starting AI Service (port 8001)...${NC}"
-  osascript -e "
-    tell application \"Terminal\"
-      do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload\"
-      set custom title of front window to \"🧠 AI :8001\"
-    end tell
-  "
-}
+# start_ai() {
+#   echo -e "${BLUE}🧠 Starting AI Service (port 8001)...${NC}"
+#   osascript -e "
+#     tell application \"Terminal\"
+#       do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload\"
+#       set custom title of front window to \"🧠 AI :8001\"
+#     end tell
+#   "
+# }
 
-start_simulator() {
-  echo -e "${YELLOW}🚗 Starting Traffic Simulator...${NC}"
-  osascript -e "
-    tell application \"Terminal\"
-      do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python simulator.py\"
-      set custom title of front window to \"🚗 Simulator\"
-    end tell
-  "
-}
+# start_simulator() {
+#   echo -e "${YELLOW}🚗 Starting Traffic Simulator...${NC}"
+#   osascript -e "
+#     tell application \"Terminal\"
+#       do script \"cd '$ROOT_DIR/ai-service' && source venv/bin/activate && python simulator.py\"
+#       set custom title of front window to \"🚗 Simulator\"
+#     end tell
+#   "
+# }
 
 start_traffic_consumer() {
   echo -e "${GREEN}📡 Starting Traffic Consumer...${NC}"

@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Attributes\Description;
-use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Incident;
 use App\Notifications\IncidentAlert;
 
-#[Signature('app:sync-incidents-to-notifications')]
-#[Description('Sync existing incidents to user notifications')]
 class SyncIncidentsToNotifications extends Command
 {
+    protected $signature = 'app:sync-incidents-to-notifications';
+
+    protected $description = 'Sync existing incidents to user notifications';
+
     /**
      * Execute the console command.
      */

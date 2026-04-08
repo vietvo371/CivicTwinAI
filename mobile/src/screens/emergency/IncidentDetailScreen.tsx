@@ -17,7 +17,8 @@ import { ApiResponse } from '../../types/api/common';
 import env from '../../config/env';
 import { useAuth } from '../../contexts/AuthContext';
 
-MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
+// MapboxGL.setAccessToken should be called inside component/lifecycle in version 10+
+
 
 type IncidentDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
 
@@ -110,11 +111,25 @@ const TYPE_MAP: Record<string, { label: string; icon: string }> = {
   other:        { label: 'Khác',       icon: 'alert-circle-outline' },
 };
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleString('vi-VN', {
-    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
+const fmtDate = (iso: string | null | undefined) => {
+  if (!iso) return 'Chưa xác định';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return 'Ngày không hợp lệ';
+    
+    // Manually format to avoid toLocaleString/Intl issues in Hermes Release builds
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const day = pad(d.getDate());
+    const month = pad(d.getMonth() + 1);
+    const year = d.getFullYear();
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  } catch (err) {
+    return 'Lỗi định dạng';
+  }
+};
 
 const parseAIContent = (content: any): string => {
   if (!content) return '';
@@ -177,6 +192,17 @@ const IncidentDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const { isOperator, isEmergency } = useAuth();
   const canActOnIncident = isOperator || isEmergency;
+
+  // Initialize Mapbox & other effects defensively
+  React.useLayoutEffect(() => {
+    if (MapboxGL && typeof MapboxGL.setAccessToken === 'function') {
+      try {
+        MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
+      } catch (err) {
+        console.warn('Mapbox setAccessToken failed:', err);
+      }
+    }
+  }, []);
 
   const [incident, setIncident]   = useState<Incident | null>(null);
   const [loading, setLoading]     = useState(true);
@@ -376,7 +402,7 @@ const IncidentDetailScreen = () => {
 
           {/* Title */}
           <Text style={styles.heroTitle} numberOfLines={2}>
-            {incident.title}
+            {String(incident.title || 'Không có tiêu đề')}
           </Text>
 
           {/* Meta */}
@@ -392,18 +418,22 @@ const IncidentDetailScreen = () => {
               <Text style={styles.metaText}>{incident.location_name}</Text>
             </View>
           )}
-          {incident.location && (
+          {incident.location && 
+           !isNaN(Number(incident.location.lat)) && 
+           !isNaN(Number(incident.location.lng)) && (
             <View style={[styles.metaItem, { marginTop: 2 }]}>
               <Icon name="crosshairs-gps" size={13} color={theme.colors.textSecondary} />
               <Text style={styles.metaText}>
-                {incident.location.lat.toFixed(5)}, {incident.location.lng.toFixed(5)}
+                {Number(incident.location.lat).toFixed(5)}, {Number(incident.location.lng).toFixed(5)}
               </Text>
             </View>
           )}
         </View>
 
-        {/* ── Map Preview (nếu BE có tọa độ) ── */}
-        {incident.location && typeof incident.location.lat === 'number' && typeof incident.location.lng === 'number' && (
+        {/* ── Map Preview ── */}
+        {incident.location && 
+         !isNaN(Number(incident.location.lat)) && 
+         !isNaN(Number(incident.location.lng)) && (
           <View style={styles.card}>
             <Text style={styles.cardLabel}>BẢN ĐỒ</Text>
             <View style={styles.mapPreviewWrap}>
@@ -419,12 +449,12 @@ const IncidentDetailScreen = () => {
               >
                 <MapboxGL.Camera
                   zoomLevel={15}
-                  centerCoordinate={[incident.location.lng, incident.location.lat]}
+                  centerCoordinate={[Number(incident.location.lng), Number(incident.location.lat)]}
                 />
 
                 <MapboxGL.PointAnnotation
                   id={`incident-location-${incident.id}`}
-                  coordinate={[incident.location.lng, incident.location.lat]}
+                  coordinate={[Number(incident.location.lng), Number(incident.location.lat)]}
                 >
                   <View style={[styles.markerContainer, { borderColor: severity.color }]} pointerEvents="none">
                     <Icon name={typeInfo.icon} size={16} color={severity.color} />
@@ -435,8 +465,8 @@ const IncidentDetailScreen = () => {
 
             <Text style={styles.mapCaption}>
               {incident.location_name
-                ? incident.location_name
-                : `${incident.location.lat.toFixed(5)}, ${incident.location.lng.toFixed(5)}`}
+                ? String(incident.location_name)
+                : `${Number(incident.location.lat).toFixed(5)}, ${Number(incident.location.lng).toFixed(5)}`}
             </Text>
           </View>
         )}
@@ -461,7 +491,7 @@ const IncidentDetailScreen = () => {
               {metadataImages.map((url, idx) => (
                 <Image
                   key={`${url}-${idx}`}
-                  source={{ uri: url }}
+                  source={{ uri: String(url) }}
                   style={styles.mediaImage}
                   resizeMode="cover"
                 />
