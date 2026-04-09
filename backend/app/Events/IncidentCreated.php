@@ -5,11 +5,11 @@ namespace App\Events;
 use App\Models\Incident;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class IncidentCreated implements ShouldBroadcast
+class IncidentCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -22,6 +22,11 @@ class IncidentCreated implements ShouldBroadcast
         return [
             new Channel('traffic'),
         ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'IncidentCreated';
     }
 
     public function broadcastWith(): array
