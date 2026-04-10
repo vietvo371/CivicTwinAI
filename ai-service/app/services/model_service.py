@@ -28,10 +28,20 @@ class ModelService:
     
     def load_model(self):
         """Load trained LSTM model from disk"""
-        model_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            'models', 'traffic_lstm.pt'
-        )
+        # Try environment variable first, then fallback to relative path
+        model_path = os.getenv("MODEL_PATH")
+        if not model_path:
+            # Default: project_root/models/traffic_lstm.pt
+            model_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                'models', 'traffic_lstm.pt'
+            )
+        
+        # Final fallback check in case of different execution context
+        if not os.path.exists(model_path):
+            alt_path = os.path.join(os.getcwd(), 'models', 'traffic_lstm.pt')
+            if os.path.exists(alt_path):
+                model_path = alt_path
         
         if not os.path.exists(model_path):
             logger.warning(f"Model file not found at {model_path}. Using fallback BFS.")

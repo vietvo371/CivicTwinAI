@@ -1,24 +1,29 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "CivicTwin AI Service"
     VERSION: str = "1.0.0"
     
     # DB Configuration (Defaults to match Laravel's .env)
-    DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
-    DB_PORT: str = os.getenv("DB_PORT", "5432")
-    DB_NAME: str = os.getenv("DB_DATABASE", "civictwin")
-    DB_USER: str = os.getenv("DB_USERNAME", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "secret")
+    DB_HOST: str = "127.0.0.1"
+    DB_PORT: str = "5432"
+    DB_DATABASE: str = "civictwin"
+    DB_USERNAME: str = "postgres"
+    DB_PASSWORD: str = "secret"
     
     @property
     def DATABASE_URL(self) -> str:
+        # Check if environment variable DATABASE_URL is set directly
         env_url = os.getenv("DATABASE_URL")
         if env_url:
             if env_url.startswith("postgresql://"):
                 return env_url.replace("postgresql://", "postgresql+asyncpg://")
             return env_url
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        
+        # Otherwise build from component variables
+        return f"postgresql+asyncpg://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_DATABASE}"
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
