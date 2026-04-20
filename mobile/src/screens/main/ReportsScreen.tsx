@@ -19,10 +19,12 @@ import ReportCard from '../../components/reports/ReportCard';
 import { ReportFilterModal, FilterOptions } from '../../components/reports/ReportFilters';
 import { reportService } from '../../services/reportService';
 import { Report } from '../../types/api/report';
+import { useTranslation } from '../../hooks/useTranslation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const ReportsScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,20 +131,20 @@ const ReportsScreen = () => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Đang tải...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       );
     }
     return (
       <View style={styles.emptyContainer}>
         <Icon name="file-document-outline" size={64} color={theme.colors.textSecondary} />
-        <Text style={styles.emptyText}>Không có phản ánh nào</Text>
+        <Text style={styles.emptyText}>{t('reports.noReports')}</Text>
         <TouchableOpacity
           style={styles.createButton}
           onPress={() => navigation.navigate('CreateReport')}
         >
           <Icon name="plus-circle" size={20} color={theme.colors.white} />
-          <Text style={styles.createButtonText}>Tạo phản ánh mới</Text>
+          <Text style={styles.createButtonText}>{t('reports.createReport')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -157,18 +159,18 @@ const ReportsScreen = () => {
     );
   };
 
-  const getSubtitle = () => {
-    if (loading) return 'Đang tải...';
+  const getTitle = () => {
+    if (loading) return t('common.loading');
     const total = reports.length;
-    if (total === 0) return 'Chưa có phản ánh';
-    return `${total} phản ánh`;
+    if (total === 0) return t('reports.noReports');
+    return `${total} ${t('reports.title')}`;
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       <PageHeader
-        title=''
+        title={getTitle()}
         variant="default"
         rightIcon="plus-circle"
         onRightPress={() => navigation.navigate('CreateReport')}
@@ -180,7 +182,7 @@ const ReportsScreen = () => {
           <Icon name="magnify" size={ICON_SIZE.md} color={theme.colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm kiếm phản ánh..."
+            placeholder={t('reports.searchReports')}
             placeholderTextColor={theme.colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}

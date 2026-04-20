@@ -20,7 +20,7 @@ type ReportDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
 const VOTE_STORAGE_KEY = 'user_votes';
 
 const ReportDetailScreen = () => {
-  const { t } = useTranslation();
+  const { t, getCurrentLanguage } = useTranslation();
   const route = useRoute<ReportDetailRouteProp>();
   const navigation = useNavigation();
   const { id } = route.params;
@@ -233,7 +233,7 @@ const ReportDetailScreen = () => {
               <View style={styles.metaItem}>
                 <Icon name="clock-outline" size={14} color={theme.colors.textSecondary} />
                 <Text style={styles.metaText}>
-                  {new Date(report.created_at).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(report.created_at).toLocaleDateString(getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
               <View style={styles.metaItem}>
@@ -310,9 +310,9 @@ const ReportDetailScreen = () => {
                         <Text style={styles.commentUser}>
                           {(comment as any).user?.ho_ten || (comment as any).nguoi_dung?.ho_ten || t('profile.user')}
                         </Text>
-                        <Text style={styles.commentTime}>
-                          {new Date(comment.created_at || comment.ngay_tao || '').toLocaleDateString('vi-VN')}
-                        </Text>
+                <Text style={styles.commentTime}>
+                  {new Date(comment.created_at || comment.ngay_tao || '').toLocaleDateString(getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US')}
+                </Text>
                       </View>
                     </View>
                   </View>

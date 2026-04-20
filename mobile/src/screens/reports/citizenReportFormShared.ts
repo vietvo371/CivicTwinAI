@@ -8,18 +8,18 @@ export type IncidentFormMedia = Media & {
 };
 
 export const CATEGORIES = [
-  { value: 'accident', label: 'Tai nạn', icon: 'car-emergency', color: '#F43F5E' },
-  { value: 'congestion', label: 'Ùn tắc', icon: 'traffic-light', color: '#F59E0B' },
-  { value: 'construction', label: 'Công trình', icon: 'hard-hat', color: '#10B981' },
-  { value: 'weather', label: 'Thời tiết', icon: 'weather-pouring', color: '#3B82F6' },
-  { value: 'other', label: 'Khác', icon: 'dots-horizontal', color: '#6B7280' },
+  { value: 'accident', labelKey: 'reports.categories.accident', icon: 'car-emergency', color: '#F43F5E' },
+  { value: 'congestion', labelKey: 'reports.categories.congestion', icon: 'traffic-light', color: '#F59E0B' },
+  { value: 'construction', labelKey: 'reports.categories.construction', icon: 'hard-hat', color: '#10B981' },
+  { value: 'weather', labelKey: 'reports.categories.weather', icon: 'weather-pouring', color: '#3B82F6' },
+  { value: 'other', labelKey: 'reports.categories.other', icon: 'dots-horizontal', color: '#6B7280' },
 ] as const;
 
 export const PRIORITIES = [
-  { value: 'low', label: 'Thấp', color: '#10B981' },
-  { value: 'medium', label: 'Trung bình', color: '#3B82F6' },
-  { value: 'high', label: 'Cao', color: '#F59E0B' },
-  { value: 'critical', label: 'Khẩn cấp', color: '#F43F5E' },
+  { value: 'low', labelKey: 'reports.priorities.low', color: '#10B981' },
+  { value: 'medium', labelKey: 'reports.priorities.medium', color: '#3B82F6' },
+  { value: 'high', labelKey: 'reports.priorities.high', color: '#F59E0B' },
+  { value: 'critical', labelKey: 'reports.priorities.critical', color: '#F43F5E' },
 ] as const;
 
 /** BE phải trả object; `[]` truthy từng làm app coi là có data. */
@@ -33,8 +33,10 @@ export function buildMobileIncidentTitle(
   dia_chi: string,
   vi_do: number,
   kinh_do: number,
+  t: (key: string) => string,
 ): string {
-  const categoryLabel = CATEGORIES.find((c) => c.value === danh_muc)?.label || 'Khác';
+  const category = CATEGORIES.find((c) => c.value === danh_muc);
+  const categoryLabel = category ? t(category.labelKey) : t('reports.categories.other');
   const loc =
     dia_chi && String(dia_chi).trim() !== ''
       ? String(dia_chi).trim()
@@ -79,7 +81,10 @@ export type CitizenReportFormState = {
 };
 
 /** Payload `PUT /reports/:id` (field số) khớp ReportController::update. */
-export function toReportUpdateBody(form: CitizenReportFormState): Partial<CreateReportRequest> {
+export function toReportUpdateBody(
+  form: CitizenReportFormState,
+  t: (key: string) => string,
+): Partial<CreateReportRequest> {
   const typeToNum: Record<string, number> = {
     accident: 1,
     congestion: 2,
@@ -94,7 +99,7 @@ export function toReportUpdateBody(form: CitizenReportFormState): Partial<Create
     critical: 4,
   };
   return {
-    tieu_de: buildMobileIncidentTitle(form.danh_muc, form.dia_chi, form.vi_do, form.kinh_do),
+    tieu_de: buildMobileIncidentTitle(form.danh_muc, form.dia_chi, form.vi_do, form.kinh_do, t),
     mo_ta: form.mo_ta,
     danh_muc: typeToNum[form.danh_muc] ?? 6,
     uu_tien: severityToNum[form.uu_tien] ?? 2,

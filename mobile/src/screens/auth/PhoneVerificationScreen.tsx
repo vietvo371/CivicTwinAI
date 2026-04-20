@@ -228,7 +228,7 @@ const PhoneVerificationScreen = () => {
 
       Alert.alert(t('common.success'), t('phoneVerification.phoneVerifiedSuccess'), [
         {
-          text: 'OK',
+          text: t('common.confirm'),
           onPress: () => {
             (navigation as any).goBack();
           }

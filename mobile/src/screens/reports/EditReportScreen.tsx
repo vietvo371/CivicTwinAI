@@ -26,6 +26,7 @@ import {
 } from './citizenReportFormShared';
 import { RootStackParamList } from '../../navigation/types';
 import { canCitizenEditReport, getStatusText } from '../../utils/reportUtils';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // Initialize Mapbox
 MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
@@ -33,6 +34,7 @@ MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
 type EditReportRouteProp = RouteProp<RootStackParamList, 'EditReport'>;
 
 const EditReportScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute<EditReportRouteProp>();
   const { id: reportId } = route.params;
@@ -96,7 +98,7 @@ const EditReportScreen = () => {
         const response = await reportService.getReportDetail(reportId);
         if (cancelled) return;
         if (!response.success || !response.data) {
-          setErrorMessage('Không thể tải thông tin phản ánh');
+          setErrorMessage(t('reports.cannotLoadReport'));
           setShowErrorModal(true);
           return;
         }
@@ -104,7 +106,7 @@ const EditReportScreen = () => {
         if (!canCitizenEditReport(report.trang_thai)) {
           setEditBlocked(true);
           setErrorMessage(
-            `Phản ánh ở trạng thái "${getStatusText(report.trang_thai)}" không thể chỉnh sửa. Chỉ được sửa khi Tiếp nhận hoặc Đã xác minh.`,
+            t('reports.editBlockedStatus', { status: getStatusText(report.trang_thai) }),
           );
           setShowErrorModal(true);
           return;
@@ -138,7 +140,7 @@ const EditReportScreen = () => {
         }
       } catch {
         if (!cancelled) {
-          setErrorMessage('Không thể tải thông tin phản ánh');
+          setErrorMessage(t('reports.cannotLoadReport'));
           setShowErrorModal(true);
         }
       } finally {
@@ -159,7 +161,7 @@ const EditReportScreen = () => {
 
   const handleAIParse = async () => {
     if (!formData.mo_ta.trim()) {
-      setErrorMessage('Vui lòng nhập mô tả để AI phân tích.');
+      setErrorMessage(t('reports.aiNoDescription'));
       setShowErrorModal(true);
       return;
     }
@@ -180,7 +182,7 @@ const EditReportScreen = () => {
       }
 
       if (data?.error === 'NOT_ENOUGH_INFO') {
-        setErrorMessage(data.message || 'AI không có đủ thông tin để phân tích.');
+        setErrorMessage(data.message || t('reports.aiNotEnoughInfo'));
         setShowErrorModal(true);
         setAiParseLoading(false);
         return;
@@ -195,10 +197,10 @@ const EditReportScreen = () => {
       }));
 
       setAiFilledFields(['danh_muc', 'uu_tien', 'dia_chi']);
-      setSuccessMessage('AI đã phân tích và điền thông tin thành công!');
+      setSuccessMessage(t('reports.aiFilledSuccess'));
       setShowSuccessModal(true);
     } catch (error) {
-      setErrorMessage('Lỗi khi AI phân tích mô tả.');
+      setErrorMessage(t('reports.aiParseError'));
       setShowErrorModal(true);
     }
     setAiParseLoading(false);
@@ -309,7 +311,7 @@ const EditReportScreen = () => {
       setUploadingMedia(false);
       setAiAnalyzing(true);
       setUploadProgress(8);
-      setUploadStatus('Đang gửi ảnh cho AI phân tích...');
+      setUploadStatus(t('reports.sendingImageToAi'));
 
       let visionPayload: Record<string, unknown> | null = null;
       let visionBeMessage = '';
@@ -336,7 +338,7 @@ const EditReportScreen = () => {
         if (visionRes.success && isVisionDataObject(visionRes.data)) {
           visionPayload = visionRes.data as Record<string, unknown>;
           setUploadProgress(32);
-          setUploadStatus('Đang nhận kết quả từ AI...');
+          setUploadStatus(t('reports.receivingAiResult'));
         } else {
           if (__DEV__) {
             console.warn('[CreateReport] analyze-image: bỏ qua data (không phải object JSON — có thể là [] hoặc null).');
@@ -345,7 +347,7 @@ const EditReportScreen = () => {
         }
       } catch (e) {
         console.warn('analyze-image:', e);
-        setUploadStatus('Không phân tích được ảnh — vẫn tải ảnh lên bình thường');
+        setUploadStatus(t('reports.imageAnalyzeFailed'));
         await new Promise<void>((r) => setTimeout(r, 500));
       }
 
@@ -353,7 +355,7 @@ const EditReportScreen = () => {
       setAiAnalyzing(false);
       setMediaWfAiDone(true);
       setUploadingMedia(true);
-      setUploadStatus('Đang áp dụng kết quả vào form...');
+      setUploadStatus(t('reports.applyingAiResult'));
       setUploadProgress(40);
 
       if (visionPayload) {
@@ -397,8 +399,8 @@ const EditReportScreen = () => {
           return [...rest, ...filledFields];
         });
 
-        const categoryLabel = CATEGORIES.find((c: any) => c.value === vType)?.label || 'Khác';
-        const priorityLabel = PRIORITIES.find((p: any) => p.value === vSev)?.label || 'Trung bình';
+        const categoryLabel = CATEGORIES.find((c: any) => c.value === vType) ? t(CATEGORIES.find((c: any) => c.value === vType)!.labelKey) : t('reports.categories.other');
+        const priorityLabel = PRIORITIES.find((p: any) => p.value === vSev) ? t(PRIORITIES.find((p: any) => p.value === vSev)!.labelKey) : t('reports.priorities.medium');
         const confPct =
           visionPayload.confidence != null && !Number.isNaN(Number(visionPayload.confidence))
             ? `${Math.round(Number(visionPayload.confidence) * 100)}%`
@@ -409,17 +411,17 @@ const EditReportScreen = () => {
 
         if (unclear) {
           setAiAnalysisMessage(
-            `⚠️ ${visionBeMessage || 'Ảnh chưa đủ rõ để tự điền form.'}\n\n` +
+            `⚠️ ${visionBeMessage || t('reports.imageNotClear')}\n\n` +
               (userHint ? `${userHint}\n\n` : '') +
-              (vDesc ? `📝 Gợi ý trong mô tả: ${vDesc}\n\n` : '') +
-              `👉 Bạn nên xóa ảnh này, chụp lại (gần, sáng, rõ sự cố) rồi thêm lại.`,
+              (vDesc ? `${t('reports.descriptionSuggestion')}: ${vDesc}\n\n` : '') +
+              `👉 ${t('reports.retakeAdvice')}`,
           );
         } else {
           setAiAnalysisMessage(
-            `AI đã phân tích ảnh${confPct ? ` (${confPct} tin cậy)` : ''} và điền form.\n\n` +
-              `📁 Danh mục: ${categoryLabel}\n` +
-              `⚠️ Mức độ: ${priorityLabel}\n\n` +
-              `Tiêu đề khi cập nhật gồm loại sự cố và địa điểm bạn chọn. Hãy xem lại mô tả và vị trí trước khi lưu.`,
+            t('reports.aiAnalyzedImage', { confPct: confPct ? ` (${confPct})` : '' }) + '\n\n' +
+              `📁 ${t('reports.categoryField')}: ${categoryLabel}\n` +
+              `⚠️ ${t('reports.severityField')}: ${priorityLabel}\n\n` +
+              t('reports.reviewBeforeSending'),
           );
         }
         if (__DEV__) {
@@ -437,11 +439,11 @@ const EditReportScreen = () => {
 
       // —— Bước 2: Tải toàn bộ ảnh lên media (preview + gửi incident sau) ——
       setUploadProgress(44);
-      setUploadStatus(`Đang tải 0/${totalAssets} ảnh...`);
+      setUploadStatus(t('reports.uploadingImagesProgress', { current: 0, total: totalAssets }));
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = assets[i];
-        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} ảnh...`);
+        setUploadStatus(t('reports.uploadingImagesProgress', { current: i + 1, total: totalAssets }));
         setUploadProgress(44 + Math.round(((i + 1) / totalAssets) * 48));
 
         try {
@@ -449,7 +451,7 @@ const EditReportScreen = () => {
             asset,
             asset.type?.includes('video') ? 'video' : 'image',
             'phan_anh',
-            'Hình ảnh phản ánh',
+            t('reports.imageRequired'),
           );
           if (response.success && response.data) {
             newMedia.push({
@@ -476,10 +478,10 @@ const EditReportScreen = () => {
       setMediaWfUploadDone(true);
       setUploadingMedia(false);
       setUploadProgress(100);
-      setUploadStatus('Đã tải xong ảnh');
+      setUploadStatus(t('reports.imagesUploaded'));
 
       if (visionPayload) {
-        setUploadStatus('Đang chuẩn bị hiển thị kết quả AI...');
+        setUploadStatus(t('reports.preparingAiResult'));
         setMediaWfFinishing(true);
         await new Promise<void>((r) => setTimeout(r, 700));
         setMediaWfFinishing(false);
@@ -493,7 +495,7 @@ const EditReportScreen = () => {
       setMediaWfUploadDone(false);
       setMediaWfFinishing(false);
       setMediaWorkflowPhase('idle');
-      setErrorMessage('Đã xảy ra lỗi khi xử lý ảnh. Vui lòng thử lại.');
+      setErrorMessage(t('reports.imageProcessingError'));
       setShowErrorModal(true);
     } finally {
       setUploadingMedia(false);
@@ -516,7 +518,7 @@ const EditReportScreen = () => {
       }
     } catch (error) {
       console.error('Camera error:', error);
-      setErrorMessage('Không thể mở camera. Vui lòng kiểm tra quyền truy cập.');
+      setErrorMessage(t('reports.cameraPermissionError'));
       setShowErrorModal(true);
     }
   };
@@ -536,32 +538,32 @@ const EditReportScreen = () => {
       }
     } catch (error) {
       console.error('Image picker error:', error);
-      setErrorMessage('Không thể chọn ảnh. Vui lòng thử lại.');
+      setErrorMessage(t('reports.cannotSelectImage'));
       setShowErrorModal(true);
     }
   };
 
   const handleSelectMedia = () => {
     if (uploadedMedia.length >= 5) {
-      setErrorMessage('Bạn chỉ được tải lên tối đa 5 ảnh/video');
+      setErrorMessage(t('reports.maxImagesLimit'));
       setShowErrorModal(true);
       return;
     }
 
     Alert.alert(
-      'Chọn hình ảnh',
-      'Chọn nguồn hình ảnh',
+      t('reports.selectImage'),
+      t('reports.selectImageSource'),
       [
         {
-          text: 'Chụp ảnh',
+          text: t('reports.takePhoto'),
           onPress: handleTakePhoto,
         },
         {
-          text: 'Chọn từ thư viện',
+          text: t('reports.selectFromGallery'),
           onPress: handleSelectFromGallery,
         },
         {
-          text: 'Hủy',
+          text: t('common.cancel'),
           style: 'cancel',
         },
       ],
@@ -603,13 +605,13 @@ const EditReportScreen = () => {
     const newErrors: typeof errors = {};
 
     if (!formData.mo_ta.trim()) {
-      newErrors.mo_ta = 'Vui lòng nhập mô tả';
+      newErrors.mo_ta = t('reports.descriptionRequired');
     } else if (formData.mo_ta.length < 20) {
-      newErrors.mo_ta = 'Mô tả phải có ít nhất 20 ký tự';
+      newErrors.mo_ta = t('reports.descriptionMinLength');
     }
 
     if (!formData.dia_chi.trim()) {
-      newErrors.dia_chi = 'Vui lòng nhập địa chỉ';
+      newErrors.dia_chi = t('reports.addressRequired');
     }
 
     setErrors(newErrors);
@@ -623,19 +625,19 @@ const EditReportScreen = () => {
 
     setLoading(true);
     try {
-      const payload = toReportUpdateBody(formData);
+      const payload = toReportUpdateBody(formData, t);
       const response = await reportService.updateReport(reportId, payload);
 
       if (response.success) {
-        setSuccessMessage('Phản ánh đã được cập nhật.');
+        setSuccessMessage(t('reports.updateSuccess'));
         setShowSuccessModal(true);
       } else {
-        setErrorMessage(response.message || 'Không thể cập nhật phản ánh.');
+        setErrorMessage(response.message || t('reports.updateError'));
         setShowErrorModal(true);
       }
     } catch (error: any) {
       console.error('[EditReport] update:', error);
-      let message = 'Không thể cập nhật phản ánh. Vui lòng thử lại.';
+      let message = t('reports.updateError');
       const errData = error.response?.data;
       if (errData?.errors && typeof errData.errors === 'object') {
         const first = Object.values(errData.errors).flat()[0];
@@ -687,7 +689,7 @@ const EditReportScreen = () => {
       dia_chi:
         (tempAddress && tempAddress.trim()) ||
         prev.dia_chi ||
-        `Vị trí: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`,
+        `${t('reports.location')}: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`,
     }));
     setShowMapModal(false);
   };
@@ -700,13 +702,13 @@ const EditReportScreen = () => {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Quyền vị trí', 'Cần quyền vị trí để đưa ghim về chỗ bạn đang đứng.');
+          Alert.alert(t('reports.locationPermission'), t('reports.locationPermissionDesc'));
           return;
         }
       } else {
         const auth = await Geolocation.requestAuthorization('whenInUse');
         if (auth !== 'granted') {
-          Alert.alert('Quyền vị trí', 'Bật quyền vị trí trong Cài đặt để dùng tính năng này.');
+          Alert.alert(t('reports.locationPermission'), t('reports.enableLocationInSettings'));
           return;
         }
       }
@@ -731,7 +733,7 @@ const EditReportScreen = () => {
           }
         },
         (error) => {
-          Alert.alert('Không lấy được vị trí', error.message || 'Thử lại sau.');
+          Alert.alert(t('reports.cannotGetLocation'), error.message || t('reports.tryAgainLater'));
           setMapGpsLoading(false);
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
@@ -755,7 +757,7 @@ const EditReportScreen = () => {
         <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
           <View style={styles.headerShell}>
             <PageHeader
-              title="Chỉnh sửa phản ánh"
+              title={t('reports.editReport')}
               variant="default"
               showBack={true}
               showNotification={false}
@@ -765,7 +767,7 @@ const EditReportScreen = () => {
         </View>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={{ marginTop: SPACING.md, color: COLORS.textSecondary }}>Đang tải...</Text>
+          <Text style={{ marginTop: SPACING.md, color: COLORS.textSecondary }}>{t('common.loading')}</Text>
         </View>
       </View>
     );
@@ -778,7 +780,7 @@ const EditReportScreen = () => {
         <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
           <View style={styles.headerShell}>
             <PageHeader
-              title="Chỉnh sửa phản ánh"
+              title={t('reports.editReport')}
               variant="default"
               showBack={true}
               showNotification={false}
@@ -789,16 +791,16 @@ const EditReportScreen = () => {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.xl }}>
           <Icon name="lock-alert" size={48} color={COLORS.textSecondary} />
           <Text style={{ marginTop: SPACING.md, color: COLORS.textSecondary, textAlign: 'center' }}>
-            Không thể chỉnh sửa phản ánh này.
+            {t('reports.editBlocked')}
           </Text>
         </View>
         <ModalCustom
           isModalVisible={showErrorModal}
           setIsModalVisible={setShowErrorModal}
-          title="Không thể chỉnh sửa"
+          title={t('reports.cannotEdit')}
           type="warning"
           isClose={false}
-          actionText="Quay lại"
+          actionText={t('common.confirm')}
           dismissOnBackdropPress={false}
           onPressAction={handleErrorModalAction}
         >
@@ -814,7 +816,7 @@ const EditReportScreen = () => {
       <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
         <View style={styles.headerShell}>
           <PageHeader
-            title="Chỉnh sửa phản ánh"
+            title={t('reports.editReport')}
             variant="default"
             showBack={true}
             showNotification={false}
@@ -829,7 +831,7 @@ const EditReportScreen = () => {
                   pressed && !submitDisabled && styles.headerSendPillPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Cập nhật phản ánh"
+                accessibilityLabel={t('reports.updateReport')}
                 accessibilityState={{ disabled: submitDisabled, busy: loading }}
               >
                 {loading ? (
@@ -837,7 +839,7 @@ const EditReportScreen = () => {
                 ) : (
                   <>
                     <Icon name="content-save" size={18} color={COLORS.white} />
-                    <Text style={styles.headerSendPillText}>Cập nhật</Text>
+                    <Text style={styles.headerSendPillText}>{t('reports.updateReport')}</Text>
                   </>
                 )}
               </Pressable>
@@ -858,14 +860,14 @@ const EditReportScreen = () => {
         <AegisEntrance delay={120} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>HÌNH ẢNH</Text>
+            <Text style={styles.sectionHeading}>{t('reports.media')}</Text>
             <View style={styles.livePill}>
               <View style={styles.liveDot} />
-              <Text style={styles.livePillText}>AI</Text>
+              <Text style={styles.livePillText}>{t('reports.ai')}</Text>
             </View>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Thêm ảnh: AI đọc ảnh đầu tiên để gợi ý nội dung; mọi ảnh bạn chọn sẽ được tải lên (giống màn tạo phản ánh).
+            {t('reports.firstImageAi')}
           </Text>
 
           {/* Kết quả phân tích ảnh (AI) */}
@@ -883,7 +885,7 @@ const EditReportScreen = () => {
                     <View style={styles.aiVisionIconBox}>
                       <Icon name="eye-outline" size={16} color="#10B981" />
                     </View>
-                    <Text style={styles.aiVisionTitle}>AI PHÂN TÍCH HÌNH ẢNH</Text>
+                    <Text style={styles.aiVisionTitle}>{t('reports.aiAnalysisImage')}</Text>
                   </View>
                   <TouchableOpacity onPress={() => setAiVisionResult(null)}>
                     <Icon name="close" size={18} color="#64748B" />
@@ -910,7 +912,7 @@ const EditReportScreen = () => {
                 {aiVisionResult.confidence != null && (
                   <View style={styles.confidenceContainer}>
                     <View style={styles.confidenceHeader}>
-                      <Text style={styles.confidenceLabel}>Độ tin cậy</Text>
+                      <Text style={styles.confidenceLabel}>{t('reports.confidenceLabel')}</Text>
                       <Text style={styles.confidenceValue}>{Math.round(aiVisionResult.confidence * 100)}%</Text>
                     </View>
                     <View style={styles.confidenceBarBg}>
@@ -926,7 +928,7 @@ const EditReportScreen = () => {
 
                 <View style={styles.aiVisionFooter}>
                   <Icon name="auto-fix" size={14} color="#64748B" />
-                  <Text style={styles.aiVisionFooterText}>AI đã tự động điền các trường thông tin</Text>
+                  <Text style={styles.aiVisionFooterText}>{t('reports.aiAutoFilled')}</Text>
                 </View>
               </View>
             </Animated.View>
@@ -974,7 +976,7 @@ const EditReportScreen = () => {
                     <View style={styles.uploadIconBox}>
                       <Icon name="camera-plus-outline" size={32} color={theme.colors.primary} />
                     </View>
-                    <Text style={styles.uploadCardText}>Thêm ảnh</Text>
+                    <Text style={styles.uploadCardText}>{t('reports.addImages')}</Text>
                     <Text style={styles.uploadCardHint}>{uploadedMedia.length}/5</Text>
                   </>
                 )}
@@ -984,7 +986,7 @@ const EditReportScreen = () => {
           <View style={styles.uploadInfoRow}>
             <Icon name="information-outline" size={16} color={theme.colors.textSecondary} />
             <Text style={styles.uploadInfo}>
-              Tối đa 5 ảnh (JPG, PNG). Ảnh đầu tiên được AI đọc để gợi ý; các ảnh còn lại đi kèm luồng upload.
+              {t('reports.imagesOrVideos')}
             </Text>
           </View>
           </AegisCard>
@@ -994,14 +996,14 @@ const EditReportScreen = () => {
         <AegisEntrance delay={220} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>DANH MỤC</Text>
+            <Text style={styles.sectionHeading}>{t('reports.category')}</Text>
             {aiFilledFields.includes('danh_muc') ? (
               <View style={styles.categoryBadgeAi}>
-                <Text style={styles.categoryBadgeAiText}>AI</Text>
+                <Text style={styles.categoryBadgeAiText}>{t('reports.ai')}</Text>
               </View>
             ) : null}
           </View>
-          <Text style={styles.sectionSubtitle}>Chọn danh mục phù hợp với vấn đề</Text>
+          <Text style={styles.sectionSubtitle}>{t('reports.selectCategoryHint')}</Text>
 
           <TouchableOpacity
             style={styles.categorySelectButton}
@@ -1024,10 +1026,10 @@ const EditReportScreen = () => {
                   </View>
                   <View style={styles.categorySelectContent}>
                     <Text style={styles.categorySelectLabel}>
-                      {selectedCategory?.label || 'Chọn danh mục'}
+                      {selectedCategory ? t(selectedCategory.labelKey) : t('reports.selectCategory')}
                     </Text>
                     {selectedCategory && (
-                      <Text style={styles.categorySelectHint}>Nhấn để thay đổi</Text>
+                      <Text style={styles.categorySelectHint}>{t('reports.tapToChange')}</Text>
                     )}
                   </View>
                   <Icon name="chevron-down" size={24} color={theme.colors.textSecondary} />
@@ -1042,7 +1044,7 @@ const EditReportScreen = () => {
         <AegisEntrance delay={320} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>NỘI DUNG</Text>
+            <Text style={styles.sectionHeading}>{t('reports.content')}</Text>
             <TouchableOpacity
               style={[styles.aiParsePill, aiParseLoading && styles.aiParsePillDisabled]}
               onPress={handleAIParse}
@@ -1053,20 +1055,20 @@ const EditReportScreen = () => {
               ) : (
                 <>
                   <Icon name="auto-fix" size={14} color={COLORS.accent} />
-                  <Text style={styles.aiParsePillText}>AI PARSE</Text>
+                  <Text style={styles.aiParsePillText}>{t('reports.aiParse')}</Text>
                 </>
               )}
             </TouchableOpacity>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Khi cập nhật, tiêu đề được tạo từ danh mục và địa chỉ (giống màn tạo mới). Viết mô tả rõ ràng; chạm AI Parse nếu muốn gợi ý từ đoạn chữ.
+            {t('reports.contentHint')}
           </Text>
 
           <View style={styles.inputGroup}>
             <View style={styles.inputWithBadge}>
               <InputCustom
-                label="Mô tả"
-                placeholder="Mô tả chi tiết vấn đề"
+                label={t('reports.description')}
+                placeholder={t('reports.descriptionPlaceholder')}
                 value={formData.mo_ta}
                 onChangeText={(text) => {
                   setFormData({ ...formData, mo_ta: text });
@@ -1096,10 +1098,10 @@ const EditReportScreen = () => {
           <View style={styles.generatedTitlePreviewBox}>
             <View style={styles.generatedTitlePreviewHeader}>
               <Icon name="format-title" size={18} color={theme.colors.primary} />
-              <Text style={styles.generatedTitlePreviewHeading}>Tiêu đề khi gửi</Text>
+              <Text style={styles.generatedTitlePreviewHeading}>{t('reports.sendingTitlePreview')}</Text>
             </View>
             <Text style={styles.generatedTitlePreviewHint}>
-              Giống màn tạo phản ánh: cập nhật theo danh mục (trên) và địa chỉ (mục Vị trí).
+              {t('reports.titleUpdatesFromCategory')}
             </Text>
             <Text style={styles.generatedTitlePreviewBody} numberOfLines={4}>
               {buildMobileIncidentTitle(
@@ -1117,16 +1119,16 @@ const EditReportScreen = () => {
         <AegisEntrance delay={420} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>VỊ TRÍ</Text>
+            <Text style={styles.sectionHeading}>{t('reports.location')}</Text>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Đã tự lấy GPS khi mở màn hình (nếu được phép). Chạm &quot;Chọn vị trí trên bản đồ&quot; để chỉnh điểm, rồi Xác nhận — địa chỉ và tọa độ sẽ cập nhật theo ghim.
+            {t('reports.gpsAutoHint')}
           </Text>
 
           <View style={styles.inputGroup}>
             <InputCustom
-              label="Địa chỉ"
-              placeholder="Nhập địa chỉ cụ thể"
+              label={t('reports.address')}
+              placeholder={t('reports.addressPlaceholder')}
               value={formData.dia_chi}
               onChangeText={(text) => setFormData({ ...formData, dia_chi: text })}
               error={errors.dia_chi}
@@ -1142,14 +1144,14 @@ const EditReportScreen = () => {
                 <Icon name="map-search" size={24} color={theme.colors.primary} />
               </View>
               <View style={styles.mapButtonContent}>
-                <Text style={styles.mapButtonText}>Chọn vị trí trên bản đồ</Text>
-                <Text style={styles.mapButtonHint}>Chạm để mở bản đồ</Text>
+                <Text style={styles.mapButtonText}>{t('reports.openMap')}</Text>
+                <Text style={styles.mapButtonHint}>{t('reports.tapToOpenMap')}</Text>
               </View>
               <Icon name="chevron-right" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
             {formData.vi_do && formData.kinh_do && (
               <Text style={styles.coordsText}>
-                Tọa độ: {formData.vi_do.toFixed(6)}, {formData.kinh_do.toFixed(6)}
+                {t('reports.coordinates')}: {formData.vi_do.toFixed(6)}, {formData.kinh_do.toFixed(6)}
               </Text>
             )}
           </View>
@@ -1160,14 +1162,14 @@ const EditReportScreen = () => {
         <AegisEntrance delay={520} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>MỨC ĐỘ</Text>
+            <Text style={styles.sectionHeading}>{t('reports.priority')}</Text>
             {aiFilledFields.includes('uu_tien') ? (
               <View style={styles.categoryBadgeAi}>
-                <Text style={styles.categoryBadgeAiText}>AI</Text>
+                <Text style={styles.categoryBadgeAiText}>{t('reports.ai')}</Text>
               </View>
             ) : null}
           </View>
-          <Text style={styles.sectionSubtitle}>Đánh giá mức độ nghiêm trọng của vấn đề</Text>
+          <Text style={styles.sectionSubtitle}>{t('reports.severityRatingHint')}</Text>
 
           <View style={styles.priorityContainer}>
             {PRIORITIES.map((priority: any) => {
@@ -1199,7 +1201,7 @@ const EditReportScreen = () => {
                       styles.priorityText,
                       isActive && { color: theme.colors.white, fontWeight: '700' }
                     ]}>
-                      {priority.label}
+                      {t(priority.labelKey)}
                     </Text>
                     {isAiFilled && (
                       <Icon name="robot" size={14} color={theme.colors.white} />
@@ -1217,7 +1219,7 @@ const EditReportScreen = () => {
             <View style={styles.footerLine} />
             <View style={styles.footerBrandRow}>
               <Icon name="shield-check" size={14} color={COLORS.primary} />
-              <Text style={styles.footerBrandText}>CIVICTWIN AI • BÁO CÁO CÔNG DÂN</Text>
+              <Text style={styles.footerBrandText}>{t('reports.civicTwinReport')}</Text>
             </View>
           </View>
         </AegisEntrance>
@@ -1236,9 +1238,9 @@ const EditReportScreen = () => {
               <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeButton}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
-              <Text style={styles.mapTitle}>Chọn vị trí</Text>
+              <Text style={styles.mapTitle}>{t('reports.mapTitle')}</Text>
               <TouchableOpacity onPress={confirmLocation} style={styles.confirmButton}>
-                <Text style={styles.confirmButtonText}>Xác nhận</Text>
+                <Text style={styles.confirmButtonText}>{t('reports.confirmLocation')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1275,7 +1277,7 @@ const EditReportScreen = () => {
                 onPress={handleMyLocationOnMap}
                 disabled={mapGpsLoading}
                 activeOpacity={0.85}
-                accessibilityLabel="Vị trí của tôi"
+                accessibilityLabel={t('reports.myLocation')}
               >
                 {mapGpsLoading ? (
                   <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -1289,7 +1291,7 @@ const EditReportScreen = () => {
                   <ActivityIndicator size="small" color={theme.colors.primary} />
                 ) : (
                   <Text style={styles.addressText} numberOfLines={2}>
-                    {tempAddress || 'Chạm vào bản đồ để chọn vị trí'}
+                    {tempAddress || t('reports.tapMapHint')}
                   </Text>
                 )}
               </View>
@@ -1302,10 +1304,10 @@ const EditReportScreen = () => {
       <ModalCustom
         isModalVisible={showSuccessModal}
         setIsModalVisible={setShowSuccessModal}
-        title="Thành công"
+        title={t('common.success')}
         type="success"
         isClose={false}
-        actionText="OK"
+        actionText={t('common.confirm')}
         onPressAction={handleSuccessClose}
       >
         <Text style={styles.modalText}>{successMessage}</Text>
@@ -1315,10 +1317,10 @@ const EditReportScreen = () => {
       <ModalCustom
         isModalVisible={showErrorModal}
         setIsModalVisible={setShowErrorModal}
-        title="Lỗi"
+        title={t('common.error')}
         type="error"
         isClose={false}
-        actionText="OK"
+        actionText={t('common.confirm')}
         onPressAction={handleErrorModalAction}
       >
         <Text style={styles.modalText}>{errorMessage}</Text>
@@ -1357,7 +1359,7 @@ const EditReportScreen = () => {
 
             {/* Modal Header */}
             <View style={styles.categoryModalHeader}>
-              <Text style={styles.categoryModalTitle}>Chọn danh mục</Text>
+              <Text style={styles.categoryModalTitle}>{t('reports.selectCategoryModal')}</Text>
               <TouchableOpacity onPress={handleCloseCategoryModal}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
@@ -1400,7 +1402,7 @@ const EditReportScreen = () => {
                           styles.categoryOptionLabel,
                           isSelected && { color: category.color }
                         ]}>
-                          {category.label}
+                          {t(category.labelKey)}
                         </Text>
                       </View>
                       {isSelected && (
@@ -1453,12 +1455,12 @@ const EditReportScreen = () => {
 
               <Text style={styles.loadingTitle}>
                 {!mediaWfAiDone
-                  ? '🤖 Đang phân tích ảnh'
+                  ? `🤖 ${t('reports.analyzingImages')}`
                   : !mediaWfUploadDone
-                    ? '📤 Đang tải ảnh lên'
-                    : mediaWfFinishing
-                      ? '✨ Đang hoàn tất'
-                      : 'Đang xử lý'}
+                      ? `📤 ${t('reports.uploadingImages')}`
+                      : mediaWfFinishing
+                        ? `✨ ${t('reports.finalizing')}`
+                        : t('reports.processing')}
               </Text>
               <Text style={styles.loadingStatus}>{uploadStatus}</Text>
 
@@ -1498,7 +1500,7 @@ const EditReportScreen = () => {
                       mediaWfAiDone && styles.stepTextDone,
                     ]}
                   >
-                    Phân tích AI
+                    {t('reports.aiParseDescription')}
                   </Text>
                 </View>
 
@@ -1525,7 +1527,7 @@ const EditReportScreen = () => {
                       mediaWfUploadDone && styles.stepTextDone,
                     ]}
                   >
-                    Tải ảnh
+                    {t('reports.uploadingImages')}
                   </Text>
                 </View>
 
@@ -1549,19 +1551,19 @@ const EditReportScreen = () => {
                       mediaWfUploadDone && mediaWfFinishing && styles.stepTextActive,
                     ]}
                   >
-                    Hiển thị kết quả
+                    {t('reports.preparingResults')}
                   </Text>
                 </View>
               </View>
 
               <Text style={styles.loadingHint}>
                 {!mediaWfAiDone
-                  ? 'AI đang đọc ảnh — thường mất vài giây, vui lòng đợi.'
-                  : !mediaWfUploadDone
-                    ? 'Đang tải ảnh — vui lòng đợi và giữ mạng ổn định.'
-                    : mediaWfFinishing
-                      ? 'Chuẩn bị bảng tóm tắt cho bạn...'
-                      : ''}
+                    ? t('reports.aiReadingImages')
+                    : !mediaWfUploadDone
+                      ? t('reports.uploadingImagesWait')
+                      : mediaWfFinishing
+                        ? t('reports.preparingSummary')
+                        : ''}
               </Text>
             </View>
           ) : (
@@ -1576,9 +1578,9 @@ const EditReportScreen = () => {
                   <Icon name="check-decagram" size={40} color={theme.colors.success} />
                 </View>
               </LinearGradient>
-              <Text style={styles.loadingTitle}>Đã phân tích xong</Text>
+              <Text style={styles.loadingTitle}>{t('reports.aiAnalysisComplete')}</Text>
               <Text style={styles.mediaSummarySubtitle}>
-                Gợi ý đã được áp dụng vào form — bạn có thể chỉnh lại trước khi cập nhật.
+                {t('reports.suggestionsApplied')}
               </Text>
               <ScrollView
                 style={styles.mediaSummaryScroll}
@@ -1594,7 +1596,7 @@ const EditReportScreen = () => {
                 activeOpacity={0.85}
                 onPress={() => setMediaWorkflowPhase('idle')}
               >
-                <Text style={styles.mediaSummaryButtonText}>Đã hiểu, tiếp tục</Text>
+                <Text style={styles.mediaSummaryButtonText}>{t('reports.understoodContinue')}</Text>
               </TouchableOpacity>
             </View>
           )}

@@ -91,21 +91,21 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation,
       // Response format: { success: true, message: "..." }
       if (response.data.success) {
         Alert.alert(
-          'Thành công',
-          response.data.message || 'Mật khẩu đã được đặt lại thành công',
+          t('common.success'),
+          response.data.message || t('changePassword.passwordChangedSuccess'),
           [
             {
-              text: 'Xác nhận',
+              text: t('common.confirm'),
               onPress: () => navigation.navigate('Login'),
             },
           ]
         );
       } else {
-        Alert.alert('Lỗi', response.data.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+        Alert.alert(t('common.error'), response.data.message || t('changePassword.passwordChangedFailed'));
       }
     } catch (error: any) {
       console.log('Reset password error:', error);
-      let errorMessage = 'Không thể đặt lại mật khẩu. Vui lòng thử lại.';
+      let errorMessage = t('changePassword.passwordChangedFailed');
       
       if (error.response?.data?.errors) {
         // Handle validation errors
@@ -118,7 +118,7 @@ const ChangePasswordScreen: React.FC<ChangePasswordScreenProps> = ({ navigation,
         errorMessage = error.message;
       }
       
-      Alert.alert('Lỗi', errorMessage);
+      Alert.alert(t('common.error'), errorMessage);
     } finally {
       setLoading(false);
     }

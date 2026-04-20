@@ -170,7 +170,7 @@ const EmailVerificationScreen = () => {
 
       Alert.alert(t('common.success'), t('emailVerification.emailVerifiedSuccess'), [
         {
-          text: 'OK',
+          text: t('common.confirm'),
           onPress: () => {
             (navigation as any).goBack();
           }

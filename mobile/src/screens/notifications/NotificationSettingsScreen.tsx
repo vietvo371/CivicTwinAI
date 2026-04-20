@@ -3,13 +3,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
 import PageHeader from '../../component/PageHeader';
 import { theme, SPACING, FONT_SIZE } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const NotificationSettingsScreen = () => {
+  const { t } = useTranslation();
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <PageHeader title="Cài đặt thông báo" variant="simple" />
+      <PageHeader title={t('notifications.title')} variant="simple" />
       <View style={styles.content}>
-        <Text style={styles.placeholderText}>Cài đặt thông báo đang được phát triển</Text>
+        <Text style={styles.placeholderText}>{t('notifications.comingSoon')}</Text>
       </View>
     </SafeAreaView>
   );

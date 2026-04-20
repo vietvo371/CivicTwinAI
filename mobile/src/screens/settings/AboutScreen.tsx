@@ -5,29 +5,31 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PageHeader from '../../component/PageHeader';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, SCREEN_PADDING } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const AboutScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
 
     const appInfo = {
         name: 'CivicTwinAI',
         version: '1.0.0',
         buildNumber: '100',
-        description: 'Ứng dụng báo cáo và quản lý sự cố đô thị thông minh',
+        description: t('about.description'),
     };
 
     const features = [
-        { icon: 'map-marker-alert', title: 'Báo cáo sự cố', description: 'Báo cáo các vấn đề đô thị nhanh chóng' },
-        { icon: 'chart-line', title: 'Theo dõi tiến độ', description: 'Cập nhật tình trạng xử lý real-time' },
-        { icon: 'account-group', title: 'Cộng đồng', description: 'Kết nối với cư dân thành phố' },
-        { icon: 'shield-check', title: 'Xác thực', description: 'Hệ thống xác thực danh tính an toàn' },
+        { icon: 'map-marker-alert', title: t('about.feat1Title'), description: t('about.feat1Desc') },
+        { icon: 'chart-line', title: t('about.feat2Title'), description: t('about.feat2Desc') },
+        { icon: 'account-group', title: t('about.feat3Title'), description: t('about.feat3Desc') },
+        { icon: 'shield-check', title: t('about.feat4Title'), description: t('about.feat4Desc') },
     ];
 
     const teamMembers = [
-        { name: 'Phát triển', email: 'dev@civictwinai.com' },
-        { name: 'Hỗ trợ', email: 'support@civictwinai.com' },
-        { name: 'Kinh doanh', email: 'business@civictwinai.com' },
+        { name: t('about.contactDev'), email: 'dev@civictwinai.com' },
+        { name: t('about.contactSupport'), email: 'support@civictwinai.com' },
+        { name: t('about.contactBusiness'), email: 'business@civictwinai.com' },
     ];
 
     const socialLinks = [
@@ -41,7 +43,7 @@ const AboutScreen = () => {
         <SafeAreaView style={styles.container} edges={[]}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
             <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
-                <PageHeader title="Về ứng dụng" variant="default" />
+                <PageHeader title={t('about.title')} variant="default" />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -51,13 +53,15 @@ const AboutScreen = () => {
                         <Icon name="city-variant" size={64} color={theme.colors.primary} />
                     </View>
                     <Text style={styles.appName}>{appInfo.name}</Text>
-                    <Text style={styles.appVersion}>Phiên bản {appInfo.version} ({appInfo.buildNumber})</Text>
+                    <Text style={styles.appVersion}>
+                        {t('about.version', { version: appInfo.version, build: appInfo.buildNumber })}
+                    </Text>
                     <Text style={styles.appDescription}>{appInfo.description}</Text>
                 </View>
 
                 {/* Features */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Tính năng nổi bật</Text>
+                    <Text style={styles.sectionTitle}>{t('about.featuresTitle')}</Text>
                     <View style={styles.featureGrid}>
                         {features.map((feature, index) => (
                             <View key={index} style={styles.featureCard}>
@@ -74,16 +78,15 @@ const AboutScreen = () => {
                 {/* Mission */}
                 <View style={styles.missionSection}>
                     <Icon name="target" size={ICON_SIZE.xl} color={theme.colors.primary} />
-                    <Text style={styles.missionTitle}>Sứ mệnh của chúng tôi</Text>
+                    <Text style={styles.missionTitle}>{t('about.missionTitle')}</Text>
                     <Text style={styles.missionText}>
-                        Xây dựng một thành phố thông minh, kết nối cư dân với chính quyền để cùng nhau
-                        giải quyết các vấn đề đô thị một cách nhanh chóng và hiệu quả.
+                        {t('about.missionText')}
                     </Text>
                 </View>
 
                 {/* Contact Team */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Liên hệ</Text>
+                    <Text style={styles.sectionTitle}>{t('about.contact')}</Text>
                     <View style={styles.contactList}>
                         {teamMembers.map((member, index) => (
                             <TouchableOpacity
@@ -104,7 +107,7 @@ const AboutScreen = () => {
 
                 {/* Social Media */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Theo dõi chúng tôi</Text>
+                    <Text style={styles.sectionTitle}>{t('about.followUs')}</Text>
                     <View style={styles.socialGrid}>
                         {socialLinks.map((social, index) => (
                             <TouchableOpacity
@@ -125,14 +128,14 @@ const AboutScreen = () => {
                         style={styles.legalLink}
                         onPress={() => Linking.openURL('https://civictwinai.com/privacy')}
                     >
-                        <Text style={styles.legalText}>Chính sách bảo mật</Text>
+                        <Text style={styles.legalText}>{t('about.privacyPolicy')}</Text>
                     </TouchableOpacity>
                     <Text style={styles.legalDivider}>•</Text>
                     <TouchableOpacity
                         style={styles.legalLink}
                         onPress={() => Linking.openURL('https://civictwinai.com/terms')}
                     >
-                        <Text style={styles.legalText}>Điều khoản sử dụng</Text>
+                        <Text style={styles.legalText}>{t('about.termsOfUse')}</Text>
                     </TouchableOpacity>
                 </View>
 

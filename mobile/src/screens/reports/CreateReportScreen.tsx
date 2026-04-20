@@ -359,8 +359,8 @@ const CreateReportScreen = () => {
           return [...rest, ...filledFields];
         });
 
-        const categoryLabel = CATEGORIES.find((c: any) => c.value === vType)?.label || 'Khác';
-        const priorityLabel = PRIORITIES.find((p: any) => p.value === vSev)?.label || 'Trung bình';
+        const categoryLabel = CATEGORIES.find((c: any) => c.value === vType) ? t(CATEGORIES.find((c: any) => c.value === vType)!.labelKey) : t('reports.categories.other');
+        const priorityLabel = PRIORITIES.find((p: any) => p.value === vSev) ? t(PRIORITIES.find((p: any) => p.value === vSev)!.labelKey) : t('reports.priorities.medium');
         const confPct =
           visionPayload.confidence != null && !Number.isNaN(Number(visionPayload.confidence))
             ? `${Math.round(Number(visionPayload.confidence) * 100)}%`
@@ -646,6 +646,7 @@ const CreateReportScreen = () => {
           formData.dia_chi,
           formData.vi_do,
           formData.kinh_do,
+          t,
         ),
       );
       fd.append('type', formData.danh_muc);
@@ -868,7 +869,7 @@ const CreateReportScreen = () => {
         <AegisEntrance delay={120} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>HÌNH ẢNH</Text>
+            <Text style={styles.sectionHeading}>{t('reports.images').toUpperCase()}</Text>
             <View style={styles.livePill}>
               <View style={styles.liveDot} />
               <Text style={styles.livePillText}>AI</Text>
@@ -1004,7 +1005,7 @@ const CreateReportScreen = () => {
         <AegisEntrance delay={220} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>DANH MỤC</Text>
+            <Text style={styles.sectionHeading}>{t('reports.category').toUpperCase()}</Text>
             {aiFilledFields.includes('danh_muc') ? (
               <View style={styles.categoryBadgeAi}>
                 <Text style={styles.categoryBadgeAiText}>AI</Text>
@@ -1034,7 +1035,7 @@ const CreateReportScreen = () => {
                   </View>
                   <View style={styles.categorySelectContent}>
                     <Text style={styles.categorySelectLabel}>
-                      {selectedCategory?.label || t('reports.selectCategory')}
+                      {selectedCategory ? t(selectedCategory.labelKey) : t('reports.selectCategory')}
                     </Text>
                     {selectedCategory && (
                       <Text style={styles.categorySelectHint}>{t('reports.pressToChange')}</Text>
@@ -1117,6 +1118,7 @@ const CreateReportScreen = () => {
                 formData.dia_chi,
                 formData.vi_do,
                 formData.kinh_do,
+                t,
               )}
             </Text>
           </View>
@@ -1127,7 +1129,7 @@ const CreateReportScreen = () => {
         <AegisEntrance delay={420} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>VỊ TRÍ</Text>
+            <Text style={styles.sectionHeading}>{t('reports.location').toUpperCase()}</Text>
           </View>
           <Text style={styles.sectionSubtitle}>
             {t('reports.gpsAutoHint')}
@@ -1170,7 +1172,7 @@ const CreateReportScreen = () => {
         <AegisEntrance delay={520} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>MỨC ĐỘ</Text>
+            <Text style={styles.sectionHeading}>{t('reports.priority').toUpperCase()}</Text>
             {aiFilledFields.includes('uu_tien') ? (
               <View style={styles.categoryBadgeAi}>
                 <Text style={styles.categoryBadgeAiText}>AI</Text>
@@ -1209,7 +1211,7 @@ const CreateReportScreen = () => {
                       styles.priorityText,
                       isActive && { color: theme.colors.white, fontWeight: '700' }
                     ]}>
-                      {priority.label}
+                      {t(priority.labelKey)}
                     </Text>
                     {isAiFilled && (
                       <Icon name="robot" size={14} color={theme.colors.white} />
@@ -1227,7 +1229,7 @@ const CreateReportScreen = () => {
             <View style={styles.footerLine} />
             <View style={styles.footerBrandRow}>
               <Icon name="shield-check" size={14} color={COLORS.primary} />
-              <Text style={styles.footerBrandText}>CIVICTWIN AI • BÁO CÁO CÔNG DÂN</Text>
+              <Text style={styles.footerBrandText}>CIVICTWIN AI • {t('reports.citizenReport').toUpperCase()}</Text>
             </View>
           </View>
         </AegisEntrance>
@@ -1315,7 +1317,7 @@ const CreateReportScreen = () => {
         title={t('common.success')}
         type="success"
         isClose={false}
-        actionText="OK"
+        actionText={t('common.confirm')}
         onPressAction={handleSuccessClose}
       >
         <Text style={styles.modalText}>{successMessage}</Text>
@@ -1328,7 +1330,7 @@ const CreateReportScreen = () => {
         title={t('common.error')}
         type="error"
         isClose={false}
-        actionText="OK"
+        actionText={t('common.confirm')}
       >
         <Text style={styles.modalText}>{errorMessage}</Text>
       </ModalCustom>
@@ -1409,7 +1411,7 @@ const CreateReportScreen = () => {
                           styles.categoryOptionLabel,
                           isSelected && { color: category.color }
                         ]}>
-                          {category.label}
+                          {t(category.labelKey)}
                         </Text>
                       </View>
                       {isSelected && (

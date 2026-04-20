@@ -18,6 +18,7 @@ import {
 import NotificationBellButton from '../../component/NotificationBellButton';
 import env from '../../config/env';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
 // Initialize Mapbox
@@ -32,6 +33,7 @@ import { incidentService, Incident } from '../../services/incidentService';
 // ...
 
 const MapScreen = () => {
+  const { t, getCurrentLanguage } = useTranslation();
   const [userLocation, setUserLocation] = useState<number[] | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number>(-1);
   const [mapReports, setMapReports] = useState<MapReport[]>([]);
@@ -92,30 +94,30 @@ const MapScreen = () => {
   const backdropAnim = useRef(new Animated.Value(0)).current; // Start transparent
 
   const categories = [
-    { id: -1, label: 'Tất cả', icon: 'view-grid-outline' },
-    { id: 1, label: 'Giao thông', icon: 'road-variant' },
-    { id: 2, label: 'Môi trường', icon: 'tree-outline' },
-    { id: 3, label: 'Hỏa hoạn', icon: 'fire' },
-    { id: 4, label: 'Rác thải', icon: 'trash-can-outline' },
-    { id: 5, label: 'Ngập lụt', icon: 'weather-pouring' },
-    { id: 6, label: 'Khác', icon: 'alert-circle-outline' },
+    { id: -1, label: t('common.all'), icon: 'view-grid-outline' },
+    { id: 1, label: t('reports.categories.traffic'), icon: 'road-variant' },
+    { id: 2, label: t('reports.categories.environment'), icon: 'tree-outline' },
+    { id: 3, label: t('reports.categories.fire'), icon: 'fire' },
+    { id: 4, label: t('reports.categories.waste'), icon: 'trash-can-outline' },
+    { id: 5, label: t('reports.categories.flood'), icon: 'weather-pouring' },
+    { id: 6, label: t('reports.categories.other'), icon: 'alert-circle-outline' },
   ];
 
   const emergencyCategories = [
-    { id: 1, label: 'Ùn tắc nghiêm trọng', icon: 'car-brake-alert' },
-    { id: 2, label: 'Tai nạn/Sự cố', icon: 'alert-octagon' },
-    { id: 3, label: 'Camera giám sát', icon: 'cctv' },
-    { id: 4, label: 'Lực lượng cơ động', icon: 'police-badge-outline' },
+    { id: 1, label: t('map.emergencyCategories.severeCongestion'), icon: 'car-brake-alert' },
+    { id: 2, label: t('map.emergencyCategories.accidentIncident'), icon: 'alert-octagon' },
+    { id: 3, label: t('map.emergencyCategories.monitoringCamera'), icon: 'cctv' },
+    { id: 4, label: t('map.emergencyCategories.mobileForce'), icon: 'police-badge-outline' },
   ];
 
   const MOCK_CAMERAS: any[] = [
-    { id: 9001, type: 'camera', title: 'Camera Đầu Cầu Rồng', location: { lat: 16.0610, lng: 108.2272 }, status: 'online', severity: 'low', description: 'Trực thuộc hệ thống phân tích lưu lượng thông minh.' },
-    { id: 9002, type: 'camera', title: 'Camera Ngã Tư Hùng Vương', location: { lat: 16.0718, lng: 108.2198 }, status: 'online', severity: 'low', description: 'Góc quét rộng bao quát toàn bộ ngã tư.' }
+    { id: 9001, type: 'camera', title: t('map.mock.cameraDragonBridge'), location: { lat: 16.0610, lng: 108.2272 }, status: 'online', severity: 'low', description: t('map.mock.cameraDesc') },
+    { id: 9002, type: 'camera', title: t('map.mock.cameraHungVuong'), location: { lat: 16.0718, lng: 108.2198 }, status: 'online', severity: 'low', description: t('map.mock.cameraWideDesc') }
   ];
 
   const MOCK_PATROLS: any[] = [
-    { id: 8001, type: 'patrol', title: 'Tổ Tuần tra CSGT 01', location: { lat: 16.0650, lng: 108.2200 }, status: 'patrolling', severity: 'medium', description: 'Đang di chuyển khu vực Hải Châu.' },
-    { id: 8002, type: 'patrol', title: 'Xe Cứu Y tế 115 ĐN', location: { lat: 16.0595, lng: 108.2150 }, status: 'standby', severity: 'low', description: 'Đang túc trực tại cơ sở y tế gần nhất.' }
+    { id: 8001, type: 'patrol', title: t('map.mock.patrol01'), location: { lat: 16.0650, lng: 108.2200 }, status: 'patrolling', severity: 'medium', description: t('map.mock.patrolDesc') },
+    { id: 8002, type: 'patrol', title: t('map.mock.ambulance'), location: { lat: 16.0595, lng: 108.2150 }, status: 'standby', severity: 'low', description: t('map.mock.ambulanceDesc') }
   ];
 
   const onUserLocationUpdate = (location: MapboxGL.Location) => {
@@ -136,14 +138,14 @@ const MapScreen = () => {
 
   const getCategoryName = (category: number): string => {
     const categories: { [key: number]: string } = {
-      1: 'Giao thông',
-      2: 'Môi trường',
-      3: 'Hỏa hoạn',
-      4: 'Rác thải',
-      5: 'Ngập lụt',
-      6: 'Khác',
+      1: t('reports.categories.traffic'),
+      2: t('reports.categories.environment'),
+      3: t('reports.categories.fire'),
+      4: t('reports.categories.waste'),
+      5: t('reports.categories.flood'),
+      6: t('reports.categories.other'),
     };
-    return categories[category] || 'Khác';
+    return categories[category] || t('reports.categories.other');
   };
 
   const getStatusColor = (status: number): string => {
@@ -159,12 +161,12 @@ const MapScreen = () => {
 
   const getStatusLabel = (status: number): string => {
     switch (status) {
-      case 0: return 'Tiếp nhận';
-      case 1: return 'Đã xác minh';
-      case 2: return 'Đang xử lý';
-      case 3: return 'Hoàn thành';
-      case 4: return 'Từ chối';
-      default: return 'Khác';
+      case 0: return t('reports.status.received');
+      case 1: return t('reports.status.verified');
+      case 2: return t('reports.status.processing');
+      case 3: return t('reports.status.completed');
+      case 4: return t('reports.status.rejected');
+      default: return t('reports.status.unknown');
     }
   };
 
@@ -466,23 +468,23 @@ const MapScreen = () => {
 
   const mapEmergencyStatusLabel = (status: string) => {
     const map: any = {
-      open: 'Mở',
-      investigating: 'Đang xử lý',
-      resolved: 'Đã giải quyết',
-      closed: 'Đã đóng'
+      open: t('emergency.status.open'),
+      investigating: t('emergency.status.investigating'),
+      resolved: t('emergency.status.resolved'),
+      closed: t('emergency.status.closed')
     };
-    return map[status] || 'Không rõ';
+    return map[status] || t('reports.status.unknown');
   };
 
   const mapEmergencyTypeLabel = (type: string) => {
     const map: any = {
-      accident: 'Tai nạn',
-      congestion: 'Ùn tắc',
-      construction: 'Thi công',
-      weather: 'Thời tiết',
-      other: 'Khác'
+      accident: t('emergency.type.accident'),
+      congestion: t('emergency.type.congestion'),
+      construction: t('emergency.type.construction'),
+      weather: t('emergency.type.weather'),
+      other: t('emergency.type.other')
     };
-    return map[type] || 'Khác';
+    return map[type] || t('emergency.type.other');
   };
 
   return (
@@ -680,7 +682,7 @@ const MapScreen = () => {
         loading && (
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingBox}>
-              <Text style={styles.loadingText}>Đang tải...</Text>
+              <Text style={styles.loadingText}>{t('map.loading')}</Text>
             </View>
           </View>
         )
@@ -695,7 +697,7 @@ const MapScreen = () => {
               <Icon name="magnify" size={ICON_SIZE.md} color={theme.colors.textSecondary} />
               <TextInput
                 style={styles.searchInput}
-                placeholder={isEmergency ? "Tra cứu điểm nóng, phương tiện..." : "Tìm kiếm địa điểm, sự cố..."}
+                placeholder={isEmergency ? t('map.emergencySearchPlaceholder') : t('map.searchPlaceholder')}
                 placeholderTextColor={theme.colors.textSecondary}
               />
               <TouchableOpacity onPress={fetchMapReports} style={styles.iconButton}>
@@ -755,11 +757,11 @@ const MapScreen = () => {
               </TouchableOpacity>
             )) : (
               // Emergency mode — type filter with counts
-              [{ id: -1, label: 'Tất cả', icon: 'view-grid-outline', type: null, color: '#6366F1' },
-               { id: 1, label: 'Ùn tắc', icon: 'car-brake-alert', type: 'congestion', color: '#F97316' },
-               { id: 2, label: 'Tai nạn', icon: 'alert-octagon', type: 'accident', color: '#EF4444' },
-               { id: 3, label: 'Camera', icon: 'cctv', type: 'camera', color: '#06B6D4' },
-               { id: 4, label: 'Tuần tra', icon: 'police-badge-outline', type: 'patrol', color: '#10B981' },
+              [{ id: -1, label: t('common.all'), icon: 'view-grid-outline', type: null, color: '#6366F1' },
+               { id: 1, label: t('map.emergencyCategories.severeCongestion'), icon: 'car-brake-alert', type: 'congestion', color: '#F97316' },
+               { id: 2, label: t('map.emergencyCategories.accidentIncident'), icon: 'alert-octagon', type: 'accident', color: '#EF4444' },
+               { id: 3, label: t('map.emergencyCategories.monitoringCamera'), icon: 'cctv', type: 'camera', color: '#06B6D4' },
+               { id: 4, label: t('map.emergencyCategories.mobileForce'), icon: 'police-badge-outline', type: 'patrol', color: '#10B981' },
               ].map((cat) => {
                 const count = cat.type === 'congestion' ? mapIncidents.filter(i => i.type === 'congestion').length
                   : cat.type === 'accident' ? mapIncidents.filter(i => !['congestion'].includes(i.type)).length
@@ -886,14 +888,14 @@ const MapScreen = () => {
 
                     {loadingDetail ? (
                       <View style={styles.detailLoading}>
-                        <Text style={styles.detailLoadingText}>Đang tải thông tin...</Text>
+                        <Text style={styles.detailLoadingText}>{t('reports.loadingDetail')}</Text>
                       </View>
                     ) : reportDetail ? (
                       <>
                         {/* Description */}
                         {reportDetail.mo_ta && (
                           <View style={styles.detailSection}>
-                            <Text style={styles.detailLabel}>Mô tả</Text>
+                            <Text style={styles.detailLabel}>{t('common.description')}</Text>
                             <Text style={styles.detailText} numberOfLines={3}>
                               {reportDetail.mo_ta}
                             </Text>
@@ -903,7 +905,7 @@ const MapScreen = () => {
                         {/* Media Gallery */}
                         {reportDetail.hinh_anhs && reportDetail.hinh_anhs.length > 0 && (
                           <View style={styles.detailSection}>
-                            <Text style={styles.detailLabel}>Hình ảnh</Text>
+                            <Text style={styles.detailLabel}>{t('common.images')}</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaScroll}>
                               {reportDetail.hinh_anhs.map((item) => (
                                 <TouchableOpacity key={item.id} activeOpacity={0.9}>
@@ -929,7 +931,7 @@ const MapScreen = () => {
                           <View style={styles.detailRow}>
                             <Icon name="clock-outline" size={16} color={theme.colors.textSecondary} />
                             <Text style={styles.detailTextSmall}>
-                              {new Date(reportDetail.created_at).toLocaleDateString('vi-VN', {
+                              {new Date(reportDetail.created_at).toLocaleDateString(getCurrentLanguage(), {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric',
@@ -951,12 +953,12 @@ const MapScreen = () => {
                             }}
                           >
                             <Icon name="information-outline" size={ICON_SIZE.md} color={theme.colors.primary} />
-                            <Text style={styles.sheetButtonText}>Xem chi tiết</Text>
+                            <Text style={styles.sheetButtonText}>{t('common.viewDetail')}</Text>
                           </TouchableOpacity>
 
                           <TouchableOpacity style={styles.sheetButton}>
                             <Icon name="share-variant-outline" size={ICON_SIZE.md} color={theme.colors.primary} />
-                            <Text style={styles.sheetButtonText}>Chia sẻ</Text>
+                            <Text style={styles.sheetButtonText}>{t('common.share')}</Text>
                           </TouchableOpacity>
                         </View>
                       </>
@@ -970,10 +972,10 @@ const MapScreen = () => {
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                         <Icon name="access-point" size={12} color="#6366F1" />
-                        <Text style={styles.dtLabel}>DỮ LIỆU SỐ · TRỰC TIẾP</Text>
+                        <Text style={styles.dtLabel}>{t('emergency.aiDataStream')}</Text>
                       </View>
                       <Text style={styles.sheetTitle} numberOfLines={2}>
-                        {selectedIncident.title || 'Sự cố chưa đặt tên'}
+                        {selectedIncident.title || t('emergency.unnamedIncident', { id: selectedIncident.id })}
                       </Text>
                       <Text style={styles.sheetId}>NODE #{selectedIncident.id} · {mapEmergencyTypeLabel(selectedIncident.type)}</Text>
                     </View>
@@ -1031,9 +1033,9 @@ const MapScreen = () => {
                     {/* ── Mini Status Timeline ── */}
                     <View style={styles.timeline}>
                       {[
-                        { key: 'open',          label: 'Tiếp nhận',  icon: 'alert-circle' },
-                        { key: 'investigating', label: 'Xử lý',      icon: 'magnify' },
-                        { key: 'resolved',      label: 'Hoàn thành', icon: 'check-circle' },
+                        { key: 'open',          label: t('emergency.timeline.received'),  icon: 'alert-circle' },
+                        { key: 'investigating', label: t('emergency.timeline.processing'),      icon: 'magnify' },
+                        { key: 'resolved',      label: t('emergency.timeline.completed'), icon: 'check-circle' },
                       ].map((step, idx, arr) => {
                         const statusOrder = ['open', 'investigating', 'resolved', 'closed'];
                         const currentIdx = statusOrder.indexOf(selectedIncident?.status || 'open');
@@ -1077,11 +1079,11 @@ const MapScreen = () => {
                           <Icon name="brain" size={16} color="#A78BFA" />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.aiPanelTitle}>CivicTwin AI · Phân tích Tình huống</Text>
-                          <Text style={styles.aiPanelSub}>Mô hình dự báo giao thông thời gian thực</Text>
+                          <Text style={styles.aiPanelTitle}>{t('emergency.aiAnalysisTitle')}</Text>
+                          <Text style={styles.aiPanelSub}>{t('emergency.aiAnalysisSubtitle')}</Text>
                         </View>
                         <View style={styles.aiBadgeLive}>
-                          <Text style={styles.aiBadgeLiveText}>TRỰC TIẾP</Text>
+                          <Text style={styles.aiBadgeLiveText}>{t('emergency.liveStatus')}</Text>
                         </View>
                       </View>
 
@@ -1089,12 +1091,10 @@ const MapScreen = () => {
                       <View style={styles.aiPredRow}>
                         <Icon name="trending-up" size={14} color="#F59E0B" />
                         <Text style={styles.aiPredText}>
-                          <Text style={{ color: '#F59E0B', fontWeight: '700' }}>Dự báo: </Text>
-                          Nguy cơ ùn tắc lan rộng tăng{' '}
-                          <Text style={{ color: '#EF4444', fontWeight: '700' }}>
-                            {selectedIncident.severity === 'critical' ? '80%' : selectedIncident.severity === 'high' ? '55%' : '30%'}
-                          </Text>
-                          {' '}trong 15 phút tới tại các nút giao lân cận.
+                          <Text style={{ color: '#F59E0B', fontWeight: '700' }}>{t('emergency.predictionHeader')} </Text>
+                          {t('emergency.aiForecastText', {
+                            percent: selectedIncident.severity === 'critical' ? '80%' : selectedIncident.severity === 'high' ? '55%' : '30%'
+                          })}
                         </Text>
                       </View>
 
@@ -1102,12 +1102,12 @@ const MapScreen = () => {
                       <View style={styles.aiRecRow}>
                         <Icon name="lightbulb-outline" size={14} color="#34D399" />
                         <Text style={styles.aiRecText}>
-                          <Text style={{ color: '#34D399', fontWeight: '700' }}>Đề xuất: </Text>
+                          <Text style={{ color: '#34D399', fontWeight: '700' }}>{t('emergency.recommendationHeader')} </Text>
                           {selectedIncident.type === 'congestion'
-                            ? 'Điều chỉnh chu kỳ đèn giao thông khu vực. Chuyển hướng phương tiện sang trục phụ song song.'
+                            ? t('notifications.recommendations.trafficAdjustment')
                             : selectedIncident.type === 'accident'
-                            ? 'Phối hợp cảnh sát + y tế. Phân luồng tạm thời tại 2 nút giao gần nhất.'
-                            : 'Xác minh hiện trường và kích hoạt đội ứng cứu phù hợp.'}
+                            ? t('notifications.recommendations.accidentResponse')
+                            : t('notifications.recommendations.defaultResponse')}
                         </Text>
                       </View>
 
@@ -1115,9 +1115,8 @@ const MapScreen = () => {
                       <View style={styles.aiGraphRow}>
                         <Icon name="graph-outline" size={13} color="#818CF8" />
                         <Text style={styles.aiGraphText}>
-                          Bản sao số đang theo dõi{' '}
-                          <Text style={{ color: '#818CF8', fontWeight: '600' }}>24 cạnh đồ thị (edges)</Text>
-                          {' '}trong vùng ảnh hưởng.
+                          {t('emergency.aiTrackingEdges', { count: 24 })}
+                          {' '}{t('emergency.aiInInfluenceArea')}
                         </Text>
                       </View>
                     </View>
@@ -1134,7 +1133,7 @@ const MapScreen = () => {
                         }}
                       >
                         <Icon name="shield-alert-outline" size={17} color="#fff" />
-                        <Text style={styles.dtBtnDispatchText}>Điều phối & Xử lý</Text>
+                        <Text style={styles.dtBtnDispatchText}>{t('emergency.dispatchAndProcess')}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -1145,7 +1144,7 @@ const MapScreen = () => {
                         }}
                       >
                         <Icon name="robot-outline" size={17} color="#A78BFA" />
-                        <Text style={styles.dtBtnSimulateText}>Chạy Mô phỏng AI</Text>
+                        <Text style={styles.dtBtnSimulateText}>{t('emergency.runSimulation')}</Text>
                       </TouchableOpacity>
                     </View>
                   </ScrollView>
@@ -1165,7 +1164,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   map: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
   },
   headerOverlay: {
     position: 'absolute',
@@ -1173,7 +1172,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: SCREEN_PADDING.horizontal,
-    backgroundColor: theme.colors.white,
+    backgroundColor: 'transparent',
+    zIndex: 10,
   },
   searchContainer: {
     marginTop: SPACING.sm,

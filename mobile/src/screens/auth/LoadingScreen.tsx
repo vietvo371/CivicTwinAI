@@ -7,40 +7,31 @@ import {
 } from 'react-native';
 import { theme } from '../../theme/colors';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../utils/Api';
+import { SPACING } from '../../theme';
 
 interface LoadingScreenProps {
   navigation: any;
 }
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ navigation }) => {
-  const { user, isEmergency } = useAuth();
+  const { user, loading, isAuthenticated, userRole } = useAuth();
 
   useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        await new Promise((resolve: any) => setTimeout(resolve, 1500));
-        const res = await api.get('/auth/check-login');
-
-        if (res.data?.success && res.data?.data?.user) {
-          const userData = res.data?.data?.user;
-          const roles: string[] = userData?.roles || [];
-
-          // Role-based navigation
-          if (roles.includes('emergency')) {
-            navigation.replace('EmergencyTabs');
-          } else {
-            navigation.replace('CitizenTabs');
-          }
+    // Navigate only after AuthContext has finished its initial load
+    if (!loading) {
+      if (isAuthenticated && user) {
+        // Role-based navigation based on the computed role from AuthContext
+        if (userRole === 'emergency') {
+          navigation.replace('EmergencyTabs');
         } else {
-          navigation.replace('Login');
+          navigation.replace('CitizenTabs');
         }
-      } catch (error: any) {
+      } else {
+        // Not authenticated
         navigation.replace('Login');
       }
-    };
-    checkLogin();
-  }, [navigation]);
+    }
+  }, [loading, isAuthenticated, user, userRole, navigation]);
 
   return (
     <View style={styles.container}>
@@ -66,12 +57,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.white,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: theme.spacing.xl,
+    width: 120,
+    height: 120,
+    marginBottom: SPACING.xl,
   },
   spinner: {
-    marginTop: theme.spacing.lg,
+    marginTop: SPACING.lg,
   },
 });
 

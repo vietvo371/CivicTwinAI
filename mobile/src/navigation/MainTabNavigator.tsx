@@ -7,6 +7,7 @@ import { theme, TAB_BAR } from '../theme';
 import { RootStackParamList, CitizenTabParamList, EmergencyTabParamList } from './types';
 import CustomTabBar from '../components/navigation/CustomTabBar';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Auth flow
 import LoadingScreen from '../screens/auth/LoadingScreen';
@@ -60,13 +61,16 @@ import PriorityRouteScreen from '../screens/emergency/PriorityRouteScreen';
 import EmergencyProfileScreen from '../screens/emergency/EmergencyProfileScreen';
 
 // Placeholder for screens being developed
-const PlaceholderScreen = ({ route }: any) => (
-  <View style={styles.placeholder}>
-    <Icon name="hammer-wrench" size={48} color={theme.colors.primary} />
-    <Text style={styles.placeholderText}>{route.name}</Text>
-    <Text style={styles.placeholderSubtext}>Đang phát triển</Text>
-  </View>
-);
+const PlaceholderScreen = ({ route }: any) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.placeholder}>
+      <Icon name="hammer-wrench" size={48} color={theme.colors.primary} />
+      <Text style={styles.placeholderText}>{route.name}</Text>
+      <Text style={styles.placeholderSubtext}>{t('common.comingSoon')}</Text>
+    </View>
+  );
+};
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const CitizenTab = createBottomTabNavigator<CitizenTabParamList>();
@@ -76,6 +80,7 @@ const EmergencyTab = createBottomTabNavigator<EmergencyTabParamList>();
 // CITIZEN TABS — Home / Map / Report(+) / Alerts / Profile
 // ============================================================================
 const CitizenTabs = () => {
+  const { t } = useTranslation();
   const tabScreenOptions = {
     headerShown: false,
     tabBarActiveTintColor: theme.colors.primary,
@@ -91,7 +96,7 @@ const CitizenTabs = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Trang chủ',
+          title: t('tabs.home'),
           tabBarIcon: ({ color }) => <Icon name="home-variant" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -99,7 +104,7 @@ const CitizenTabs = () => {
         name="Map"
         component={MapScreen}
         options={{
-          title: 'Bản đồ',
+          title: t('tabs.map'),
           tabBarIcon: ({ color }) => <Icon name="map-marker-outline" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -115,7 +120,7 @@ const CitizenTabs = () => {
         name="Alerts"
         component={ReportsScreen}
         options={{
-          title: 'Cảnh báo',
+          title: t('tabs.alerts'),
           tabBarIcon: ({ color }) => <Icon name="bell-outline" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -123,7 +128,7 @@ const CitizenTabs = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'Cá nhân',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color }) => <Icon name="account-circle" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -135,6 +140,7 @@ const CitizenTabs = () => {
 // EMERGENCY TABS — Situation / Incidents / Route / Profile
 // ============================================================================
 const EmergencyTabs = () => {
+  const { t } = useTranslation();
   const tabScreenOptions = {
     headerShown: false,
     tabBarActiveTintColor: '#EF4444', // Red for emergency
@@ -150,7 +156,7 @@ const EmergencyTabs = () => {
         name="SituationMap"
         component={MapScreen}
         options={{
-          title: 'Tình huống',
+          title: t('tabs.situation'),
           tabBarIcon: ({ color }) => <Icon name="map-marker-alert" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -158,7 +164,7 @@ const EmergencyTabs = () => {
         name="Incidents"
         component={EmergencyIncidentsScreen}
         options={{
-          title: 'Sự cố',
+          title: t('tabs.incidents'),
           tabBarIcon: ({ color }) => <Icon name="alert-circle-outline" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -166,7 +172,7 @@ const EmergencyTabs = () => {
         name="PriorityRoute"
         component={PriorityRouteScreen}
         options={{
-          title: 'Tuyến đường',
+          title: t('tabs.routes'),
           tabBarIcon: ({ color }) => <Icon name="navigation-variant-outline" size={TAB_BAR.iconSize} color={color} />,
         }}
       />
@@ -174,7 +180,7 @@ const EmergencyTabs = () => {
         name="Profile"
         component={EmergencyProfileScreen}
         options={{
-          title: 'Cá nhân',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color }) => <Icon name="account-circle" size={TAB_BAR.iconSize} color={color} />,
         }}
       />

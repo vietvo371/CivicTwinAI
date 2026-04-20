@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from '../../hooks/useTranslation';
 import PageHeader from '../../component/PageHeader';
 import {
     theme,
@@ -29,41 +30,41 @@ import { incidentService, Incident, IncidentFilterParams } from '../../services/
 import { useWebSocket } from '../../contexts/WebSocketContext';
 
 // Status config
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
-    open: { label: 'Mở', color: '#EF4444', icon: 'alert-circle' },
-    investigating: { label: 'Đang xử lý', color: '#F59E0B', icon: 'magnify' },
-    resolved: { label: 'Đã giải quyết', color: '#10B981', icon: 'check-circle' },
-    closed: { label: 'Đã đóng', color: '#6B7280', icon: 'close-circle' },
+const STATUS_CONFIG: Record<string, { labelKey: string; color: string; icon: string }> = {
+    open: { labelKey: 'incidents.open', color: '#EF4444', icon: 'alert-circle' },
+    investigating: { labelKey: 'incidents.investigating', color: '#F59E0B', icon: 'magnify' },
+    resolved: { labelKey: 'incidents.resolved', color: '#10B981', icon: 'check-circle' },
+    closed: { labelKey: 'incidents.closed', color: '#6B7280', icon: 'close-circle' },
 };
 
-const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
-    low: { label: 'Thấp', color: '#10B981' },
-    medium: { label: 'Trung bình', color: '#3B82F6' },
-    high: { label: 'Cao', color: '#F59E0B' },
-    critical: { label: 'Nghiêm trọng', color: '#EF4444' },
+const SEVERITY_CONFIG: Record<string, { labelKey: string; color: string }> = {
+    low: { labelKey: 'incidents.severity.low', color: '#10B981' },
+    medium: { labelKey: 'incidents.severity.medium', color: '#3B82F6' },
+    high: { labelKey: 'incidents.severity.high', color: '#F59E0B' },
+    critical: { labelKey: 'incidents.severity.critical', color: '#EF4444' },
 };
 
-const TYPE_CONFIG: Record<string, { label: string; icon: string }> = {
-    accident: { label: 'Tai nạn', icon: 'car-emergency' },
-    congestion: { label: 'Ùn tắc', icon: 'car-multiple' },
-    construction: { label: 'Thi công', icon: 'hard-hat' },
-    weather: { label: 'Thời tiết', icon: 'weather-lightning-rainy' },
-    other: { label: 'Khác', icon: 'alert-circle-outline' },
+const TYPE_CONFIG: Record<string, { labelKey: string; icon: string }> = {
+    accident: { labelKey: 'incidents.type.accident', icon: 'car-emergency' },
+    congestion: { labelKey: 'incidents.type.congestion', icon: 'car-multiple' },
+    construction: { labelKey: 'incidents.type.construction', icon: 'hard-hat' },
+    weather: { labelKey: 'incidents.type.weather', icon: 'weather-lightning-rainy' },
+    other: { labelKey: 'incidents.type.other', icon: 'alert-circle-outline' },
 };
 
 const FILTER_TABS = [
-    { key: 'all', label: 'Tất cả' },
-    { key: 'open', label: 'Mở' },
-    { key: 'investigating', label: 'Đang xử lý' },
-    { key: 'resolved', label: 'Đã giải quyết' },
+    { key: 'all', labelKey: 'incidents.allIncidents' },
+    { key: 'open', labelKey: 'incidents.open' },
+    { key: 'investigating', labelKey: 'incidents.investigating' },
+    { key: 'resolved', labelKey: 'incidents.resolved' },
 ];
 
 const TYPE_FILTER_TABS = [
-    { key: 'all', label: 'Mọi loại', icon: 'view-grid-outline' },
-    { key: 'accident', label: 'Tai nạn', icon: 'car-emergency' },
-    { key: 'congestion', label: 'Ùn tắc', icon: 'car-multiple' },
-    { key: 'construction', label: 'Thi công', icon: 'hard-hat' },
-    { key: 'weather', label: 'Thời tiết', icon: 'weather-lightning-rainy' },
+    { key: 'all', labelKey: 'incidents.allTypes', icon: 'view-grid-outline' },
+    { key: 'accident', labelKey: 'incidents.type.accident', icon: 'car-emergency' },
+    { key: 'congestion', labelKey: 'incidents.type.congestion', icon: 'car-multiple' },
+    { key: 'construction', labelKey: 'incidents.type.construction', icon: 'hard-hat' },
+    { key: 'weather', labelKey: 'incidents.type.weather', icon: 'weather-lightning-rainy' },
 ];
 
 const SEVERITY_ORDER: Record<string, number> = {
@@ -71,6 +72,7 @@ const SEVERITY_ORDER: Record<string, number> = {
 };
 
 const EmergencyIncidentsScreen = () => {
+    const { t, getCurrentLanguage } = useTranslation();
     const navigation = useNavigation();
     const { listen } = useWebSocket();
     const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -129,15 +131,15 @@ const EmergencyIncidentsScreen = () => {
     }, [fetchIncidents]);
 
     const handleUpdateStatus = async (incident: Incident, newStatus: 'investigating' | 'resolved') => {
-        const statusLabel = STATUS_CONFIG[newStatus].label;
+        const statusLabel = t(STATUS_CONFIG[newStatus].labelKey);
 
         Alert.alert(
-            'Cập nhật trạng thái',
-            `Chuyển sự cố "${incident.title}" sang "${statusLabel}"?`,
+            t('incidents.updateStatus'),
+            t('incidents.confirmStatusUpdate', { title: incident.title, status: statusLabel }),
             [
-                { text: 'Hủy', style: 'cancel' },
+                { text: t('common.cancel'), style: 'cancel' },
                 {
-                    text: 'Xác nhận',
+                    text: t('common.confirm'),
                     onPress: async () => {
                         try {
                             setUpdatingId(incident.id);
@@ -150,7 +152,7 @@ const EmergencyIncidentsScreen = () => {
                             );
                         } catch (error) {
                             console.error('Error updating incident:', error);
-                            Alert.alert('Lỗi', 'Không thể cập nhật trạng thái. Vui lòng thử lại.');
+                            Alert.alert(t('common.error'), t('incidents.updateFailed'));
                         } finally {
                             setUpdatingId(null);
                         }
@@ -197,7 +199,7 @@ const EmergencyIncidentsScreen = () => {
                                 activeFilter === tab.key && styles.filterTabTextActive,
                             ]}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                             {tab.key === 'open' && openCount > 0 ? ` (${openCount})` : ''}
                         </Text>
                     </TouchableOpacity>
@@ -232,7 +234,7 @@ const EmergencyIncidentsScreen = () => {
                                 activeTypeFilter === tab.key && styles.typeFilterTabTextActive,
                             ]}
                         >
-                            {tab.label}
+                            {t(tab.labelKey)}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -266,10 +268,10 @@ const EmergencyIncidentsScreen = () => {
                                 <Text style={styles.cardMetaId}>#{item.id}</Text>
                                 <View style={styles.dot} />
                                 <Text style={styles.cardMetaTime}>
-                                    {new Date(item.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(item.created_at).toLocaleTimeString(getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                                 </Text>
                                 <View style={styles.dot} />
-                                <Text style={styles.cardMetaLocation} numberOfLines={1}>{item.location_name || 'Vị trí không xác định'}</Text>
+                                <Text style={styles.cardMetaLocation} numberOfLines={1}>{item.location_name || t('map.unknownLocation')}</Text>
                             </View>
                         </View>
                     </View>
@@ -280,18 +282,18 @@ const EmergencyIncidentsScreen = () => {
                     <View style={[styles.badge, { backgroundColor: statusConf.color + '15' }]}>
                         <Icon name={statusConf.icon} size={14} color={statusConf.color} />
                         <Text style={[styles.badgeText, { color: statusConf.color }]}>
-                            {statusConf.label}
+                            {t(statusConf.labelKey)}
                         </Text>
                     </View>
                     <View style={[styles.badge, { backgroundColor: severityConf.color + '15' }]}>
                         <Text style={[styles.badgeText, { color: severityConf.color }]}>
-                            {severityConf.label}
+                            {t(severityConf.labelKey)}
                         </Text>
                     </View>
                     {item.source === 'citizen' && (
                         <View style={[styles.badge, { backgroundColor: '#8B5CF615' }]}>
                             <Icon name="account" size={14} color="#8B5CF6" />
-                            <Text style={[styles.badgeText, { color: '#8B5CF6' }]}>Công dân</Text>
+                            <Text style={[styles.badgeText, { color: '#8B5CF6' }]}>{t('incidents.source.citizen')}</Text>
                         </View>
                     )}
                 </View>
@@ -318,7 +320,7 @@ const EmergencyIncidentsScreen = () => {
                                     <>
                                         <Icon name="magnify" size={16} color="#F59E0B" />
                                         <Text style={[styles.actionBtnText, { color: '#F59E0B' }]}>
-                                            Đang xử lý
+                                            {t('incidents.investigating')}
                                         </Text>
                                     </>
                                 )}
@@ -335,7 +337,7 @@ const EmergencyIncidentsScreen = () => {
                                 <>
                                     <Icon name="check-circle" size={16} color="#10B981" />
                                     <Text style={[styles.actionBtnText, { color: '#10B981' }]}>
-                                        Đã giải quyết
+                                        {t('incidents.resolved')}
                                     </Text>
                                 </>
                             )}
@@ -351,18 +353,18 @@ const EmergencyIncidentsScreen = () => {
             return (
                 <View style={[styles.loadingContainer, { paddingVertical: SPACING['4xl'] }]}>
                     <ActivityIndicator size="large" color="#EF4444" />
-                    <Text style={styles.loadingText}>Đang tải sự cố...</Text>
+                    <Text style={styles.loadingText}>{t('incidents.loadingIncidents')}</Text>
                 </View>
             );
         }
         return (
             <View style={styles.emptyContainer}>
                 <Icon name="shield-check-outline" size={64} color={theme.colors.textSecondary} />
-                <Text style={styles.emptyTitle}>Không có sự cố</Text>
+                <Text style={styles.emptyTitle}>{t('incidents.noIncidents')}</Text>
                 <Text style={styles.emptyText}>
                     {activeFilter === 'all'
-                        ? 'Chưa có sự cố nào được báo cáo'
-                        : `Không có sự cố nào ở trạng thái "${FILTER_TABS.find(t => t.key === activeFilter)?.label}"`}
+                        ? t('incidents.noIncidentsReported')
+                        : t('incidents.noIncidentsInStatus', { status: t(FILTER_TABS.find(t => t.key === activeFilter)?.labelKey || '') })}
                 </Text>
             </View>
         );
@@ -372,8 +374,8 @@ const EmergencyIncidentsScreen = () => {
         <SafeAreaView style={styles.safeTop} edges={['top']}>
             <StatusBar barStyle="dark-content" />
             <PageHeader 
-                title="Sự cố & Điều phối" 
-                subtitle="Theo dõi thời gian thực từ AI Model"
+                title={t('emergency.title')} 
+                subtitle={t('emergency.subtitle')}
                 variant="default"
                 showNotification={true}
             />
@@ -384,7 +386,7 @@ const EmergencyIncidentsScreen = () => {
                         <View style={styles.openBannerContent}>
                             <Icon name="alert-circle" size={16} color="#EF4444" />
                             <Text style={styles.openBannerText}>
-                                {openCount} sự cố chưa xử lý — cần hành động ngay
+                                {t('emergency.unhandledBanner', { count: openCount })}
                             </Text>
                         </View>
                     </View>

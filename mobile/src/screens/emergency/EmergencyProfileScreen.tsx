@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, StatusBar, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -8,6 +9,7 @@ import { AlertService } from '../../services/AlertService';
 import { useNavigation } from '@react-navigation/native';
 
 const EmergencyProfileScreen = () => {
+    const { t } = useTranslation();
     const { user, signOut } = useAuth();
     const [isOnDuty, setIsOnDuty] = useState(true);
     const navigation = useNavigation();
@@ -17,16 +19,16 @@ const EmergencyProfileScreen = () => {
     const currentUser: any = user;
 
     const operatorStats = [
-        { id: 1, label: 'Đang xử lý', value: '12', icon: 'clock-outline', color: '#F59E0B' },
-        { id: 2, label: 'Hoàn thành ca', value: '8', icon: 'check-circle-outline', color: '#10B981' },
-        { id: 3, label: 'Tốc độ phản hồi', value: '2.5m', icon: 'lightning-bolt-outline', color: '#3B82F6' },
-        { id: 4, label: 'Độ tin cậy', value: '98%', icon: 'shield-check-outline', color: '#8B5CF6' },
+        { id: 1, label: t('emergency.processing'), value: '12', icon: 'clock-outline', color: '#F59E0B' },
+        { id: 2, label: t('emergency.shiftCompleted'), value: '8', icon: 'check-circle-outline', color: '#10B981' },
+        { id: 3, label: t('emergency.responseTime'), value: '2.5m', icon: 'lightning-bolt-outline', color: '#3B82F6' },
+        { id: 4, label: t('emergency.reliability'), value: '98%', icon: 'shield-check-outline', color: '#8B5CF6' },
     ];
 
     const handleLogout = () => {
         AlertService.confirm(
-            'Xác nhận đăng xuất',
-            'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống làm việc không? Mọi ca trực chưa đóng sẽ bị tạm dừng.',
+            t('profile.logoutConfirmTitle'),
+            t('emergency.logoutConfirmDesc'),
             () => signOut(),
             () => console.log('Hủy đăng xuất')
         );
@@ -41,8 +43,8 @@ const EmergencyProfileScreen = () => {
                 <SafeAreaView edges={['top']}>
                     <View style={styles.heroHeader}>
                         <View>
-                            <Text style={styles.heroTitle}>Hồ sơ Tác nhân</Text>
-                            <Text style={styles.heroSubtitle}>Trung tâm Điều phối Đô thị</Text>
+                            <Text style={styles.heroTitle}>{t('emergency.agentProfile')}</Text>
+                            <Text style={styles.heroSubtitle}>{t('emergency.dispatchCenter')}</Text>
                         </View>
                         <TouchableOpacity style={styles.notifBtn} onPress={() => navigation.navigate('Notifications')}>
                             <Icon name="bell-outline" size={22} color="white" />
@@ -88,9 +90,9 @@ const EmergencyProfileScreen = () => {
                             <Icon name={isOnDuty ? 'shield-check' : 'shield-off-outline'} size={24} color={isOnDuty ? '#10B981' : '#64748b'} />
                         </View>
                         <View style={styles.cardHeaderText}>
-                            <Text style={styles.cardTitle}>Trạng thái hoạt động</Text>
+                            <Text style={styles.cardTitle}>{t('emergency.dutyStatus')}</Text>
                             <Text style={styles.cardDesc}>
-                                {isOnDuty ? 'Đang trong ca trực • Sẵn sàng' : 'Ngoại tuyến • Đang nghỉ ca'}
+                                {isOnDuty ? t('emergency.onDuty') : t('emergency.offDuty')}
                             </Text>
                         </View>
                     </View>
@@ -104,9 +106,9 @@ const EmergencyProfileScreen = () => {
 
                 {/* Stats Section */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Chỉ số hiệu suất</Text>
+                    <Text style={styles.sectionTitle}>{t('emergency.performanceMetrics')}</Text>
                     <TouchableOpacity>
-                        <Text style={styles.seeDetail}>Chi tiết</Text>
+                        <Text style={styles.seeDetail}>{t('common.details')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -123,14 +125,14 @@ const EmergencyProfileScreen = () => {
                 </View>
 
                 {/* Action Menu */}
-                <Text style={styles.sectionTitle}>Quản lý Nghiệp vụ</Text>
+                <Text style={styles.sectionTitle}>{t('emergency.businessManagement')}</Text>
                 <View style={styles.menuContainer}>
                     <TouchableOpacity style={styles.menuItem}>
                         <View style={styles.menuItemLeft}>
                             <View style={[styles.menuIcon, { backgroundColor: '#3B82F615' }]}>
                                 <Icon name="history" size={20} color="#3B82F6" />
                             </View>
-                            <Text style={styles.menuText}>Lịch sử điều phối</Text>
+                            <Text style={styles.menuText}>{t('emergency.dispatchHistory')}</Text>
                         </View>
                         <Icon name="chevron-right" size={20} color="#cbd5e1" />
                     </TouchableOpacity>
@@ -140,7 +142,7 @@ const EmergencyProfileScreen = () => {
                             <View style={[styles.menuIcon, { backgroundColor: '#F59E0B15' }]}>
                                 <Icon name="file-document-edit-outline" size={20} color="#F59E0B" />
                             </View>
-                            <Text style={styles.menuText}>Báo cáo giao ban</Text>
+                            <Text style={styles.menuText}>{t('emergency.handoverReport')}</Text>
                         </View>
                         <Icon name="chevron-right" size={20} color="#cbd5e1" />
                     </TouchableOpacity>
@@ -150,7 +152,7 @@ const EmergencyProfileScreen = () => {
                             <View style={[styles.menuIcon, { backgroundColor: '#8B5CF615' }]}>
                                 <Icon name="shield-key-outline" size={20} color="#8B5CF6" />
                             </View>
-                            <Text style={styles.menuText}>Bảo mật & Tài khoản</Text>
+                            <Text style={styles.menuText}>{t('profile.securityAccount')}</Text>
                         </View>
                         <Icon name="chevron-right" size={20} color="#cbd5e1" />
                     </TouchableOpacity>
@@ -159,7 +161,7 @@ const EmergencyProfileScreen = () => {
                 {/* Logout Button at bottom */}
                 <TouchableOpacity style={styles.logoutBtnFull} onPress={handleLogout}>
                     <Icon name="logout-variant" size={20} color="#EF4444" />
-                    <Text style={styles.logoutText}>Đăng xuất</Text>
+                    <Text style={styles.logoutText}>{t('auth.logout')}</Text>
                 </TouchableOpacity>
 
                 <Text style={styles.versionText}>CivicTwin AI • Phiên bản 2.4.0 (Enterprise)</Text>

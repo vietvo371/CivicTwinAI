@@ -220,7 +220,7 @@ const HomeScreen = () => {
       <AegisHomeHeader
         user={user}
         onProfilePress={() => navigation.navigate('Profile')}
-        logs={nearbyIncidents.map(incident => `[ALERT] ${incident.title || 'Sự cố mới'}`)}
+        logs={nearbyIncidents.map(incident => `[ALERT] ${incident.title || t('home.newIncident')}`)}
       />
 
 
@@ -277,7 +277,7 @@ const HomeScreen = () => {
             <View style={styles.footerLine} />
             <View style={styles.footerContent}>
               <Icon name="shield-check" size={16} color={COLORS.primary} />
-              <Text style={styles.footerText}>CIVICTWIN AI • SECURITY ACTIVE</Text>
+              <Text style={styles.footerText}>{t('home.branding')}</Text>
             </View>
           </View>
         </AegisEntrance>

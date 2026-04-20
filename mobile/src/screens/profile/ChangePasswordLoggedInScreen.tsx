@@ -7,11 +7,13 @@ import InputCustom from '../../component/InputCustom';
 import ButtonCustom from '../../component/ButtonCustom';
 import ModalCustom from '../../component/ModalCustom';
 import { theme, SPACING, FONT_SIZE, SCREEN_PADDING } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 import { authService } from '../../services/authService';
 
 const ChangePasswordLoggedInScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -46,9 +48,9 @@ const ChangePasswordLoggedInScreen = () => {
     };
 
     const getPasswordStrengthText = (strength: number) => {
-        if (strength <= 2) return { text: 'Yếu', color: theme.colors.error };
-        if (strength <= 4) return { text: 'Trung bình', color: theme.colors.warning };
-        return { text: 'Mạnh', color: theme.colors.success };
+        if (strength <= 2) return { text: t('changePassword.strengthWeak'), color: theme.colors.error };
+        if (strength <= 4) return { text: t('changePassword.strengthMedium'), color: theme.colors.warning };
+        return { text: t('changePassword.strengthStrong'), color: theme.colors.success };
     };
 
     const validateForm = () => {
@@ -59,21 +61,21 @@ const ChangePasswordLoggedInScreen = () => {
         } = {};
 
         if (!formData.mat_khau_cu) {
-            newErrors.mat_khau_cu = 'Vui lòng nhập mật khẩu cũ';
+            newErrors.mat_khau_cu = t('changePassword.oldPasswordRequired');
         }
 
         if (!formData.mat_khau_moi) {
-            newErrors.mat_khau_moi = 'Vui lòng nhập mật khẩu mới';
+            newErrors.mat_khau_moi = t('changePassword.newPasswordRequired');
         } else if (formData.mat_khau_moi.length < 6) {
-            newErrors.mat_khau_moi = 'Mật khẩu phải có ít nhất 6 ký tự';
+            newErrors.mat_khau_moi = t('changePassword.newPasswordMinLengthShort');
         } else if (formData.mat_khau_moi === formData.mat_khau_cu) {
-            newErrors.mat_khau_moi = 'Mật khẩu mới phải khác mật khẩu cũ';
+            newErrors.mat_khau_moi = t('changePassword.newPasswordDifferent');
         }
 
         if (!formData.mat_khau_moi_confirmation) {
-            newErrors.mat_khau_moi_confirmation = 'Vui lòng xác nhận mật khẩu mới';
+            newErrors.mat_khau_moi_confirmation = t('changePassword.confirmPasswordRequired');
         } else if (formData.mat_khau_moi !== formData.mat_khau_moi_confirmation) {
-            newErrors.mat_khau_moi_confirmation = 'Mật khẩu xác nhận không khớp';
+            newErrors.mat_khau_moi_confirmation = t('changePassword.passwordsDoNotMatchConfirm');
         }
 
         setErrors(newErrors);
@@ -91,7 +93,7 @@ const ChangePasswordLoggedInScreen = () => {
             setShowSuccessModal(true);
         } catch (error: any) {
             console.error('Change password error:', error);
-            let message = 'Không thể thay đổi mật khẩu. Vui lòng thử lại.';
+            let message = t('changePassword.passwordChangedFailed');
 
             if (error.response?.data?.message) {
                 message = error.response.data.message;
@@ -110,18 +112,18 @@ const ChangePasswordLoggedInScreen = () => {
         <SafeAreaView style={styles.container} edges={[]}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
             <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
-                <PageHeader title="Đổi mật khẩu" variant="default" />
+                <PageHeader title={t('changePassword.title')} variant="default" />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.formSection}>
                     <Text style={styles.description}>
-                        Để bảo mật tài khoản, vui lòng nhập mật khẩu cũ và mật khẩu mới của bạn.
+                        {t('changePassword.description')}
                     </Text>
 
                     <InputCustom
-                        label="Mật khẩu cũ"
-                        placeholder="Nhập mật khẩu cũ"
+                        label={t('changePassword.oldPassword')}
+                        placeholder={t('changePassword.oldPasswordPlaceholder')}
                         value={formData.mat_khau_cu}
                         onChangeText={(text) => setFormData({ ...formData, mat_khau_cu: text })}
                         secureTextEntry={!showOldPassword}
@@ -133,8 +135,8 @@ const ChangePasswordLoggedInScreen = () => {
                     />
 
                     <InputCustom
-                        label="Mật khẩu mới"
-                        placeholder="Nhập mật khẩu mới"
+                        label={t('changePassword.newPassword')}
+                        placeholder={t('changePassword.newPasswordPlaceholder')}
                         value={formData.mat_khau_moi}
                         onChangeText={(text) => {
                             setFormData({ ...formData, mat_khau_moi: text });
@@ -166,14 +168,14 @@ const ChangePasswordLoggedInScreen = () => {
                                 styles.passwordStrengthText,
                                 { color: getPasswordStrengthText(passwordStrength).color }
                             ]}>
-                                Độ mạnh: {getPasswordStrengthText(passwordStrength).text}
+                                {t('changePassword.strength')}: {getPasswordStrengthText(passwordStrength).text}
                             </Text>
                         </View>
                     )}
 
                     <InputCustom
-                        label="Xác nhận mật khẩu mới"
-                        placeholder="Nhập lại mật khẩu mới"
+                        label={t('changePassword.confirmNewPassword')}
+                        placeholder={t('changePassword.confirmNewPasswordPlaceholder')}
                         value={formData.mat_khau_moi_confirmation}
                         onChangeText={(text) => setFormData({ ...formData, mat_khau_moi_confirmation: text })}
                         secureTextEntry={!showConfirmPassword}
@@ -185,7 +187,7 @@ const ChangePasswordLoggedInScreen = () => {
                     />
 
                     <ButtonCustom
-                        title={loading ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                        title={loading ? t('common.loading') : t('changePassword.changePassword')}
                         onPress={handleChangePassword}
                         disabled={loading}
                         style={styles.submitButton}
@@ -193,11 +195,11 @@ const ChangePasswordLoggedInScreen = () => {
                     />
 
                     <View style={styles.tipsSection}>
-                        <Text style={styles.tipsTitle}>💡 Lưu ý khi tạo mật khẩu:</Text>
-                        <Text style={styles.tipText}>• Sử dụng ít nhất 8 ký tự</Text>
-                        <Text style={styles.tipText}>• Kết hợp chữ hoa, chữ thường</Text>
-                        <Text style={styles.tipText}>• Bao gồm số và ký tự đặc biệt</Text>
-                        <Text style={styles.tipText}>• Không sử dụng thông tin cá nhân dễ đoán</Text>
+                        <Text style={styles.tipsTitle}>{t('changePassword.tipsTitle')}</Text>
+                        <Text style={styles.tipText}>• {t('changePassword.tip1')}</Text>
+                        <Text style={styles.tipText}>• {t('changePassword.tip2')}</Text>
+                        <Text style={styles.tipText}>• {t('changePassword.tip3')}</Text>
+                        <Text style={styles.tipText}>• {t('changePassword.tip4')}</Text>
                     </View>
                 </View>
             </ScrollView>
@@ -206,14 +208,14 @@ const ChangePasswordLoggedInScreen = () => {
             <ModalCustom
                 isModalVisible={showSuccessModal}
                 setIsModalVisible={setShowSuccessModal}
-                title="Thành công"
+                title={t('common.success')}
                 type="success"
                 isClose={false}
                 actionText="OK"
                 onPressAction={() => navigation.goBack()}
             >
                 <Text style={{ textAlign: 'center', color: theme.colors.text }}>
-                    Mật khẩu đã được thay đổi thành công
+                    {t('changePassword.successMessage')}
                 </Text>
             </ModalCustom>
 
@@ -221,7 +223,7 @@ const ChangePasswordLoggedInScreen = () => {
             <ModalCustom
                 isModalVisible={showErrorModal}
                 setIsModalVisible={setShowErrorModal}
-                title="Lỗi"
+                title={t('common.error')}
                 type="error"
                 isClose={false}
                 actionText="OK"

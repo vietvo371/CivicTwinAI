@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
     View,
     Text,
@@ -49,6 +50,7 @@ const TYPE_ICONS: Record<string, string> = {
 };
 
 const PriorityRouteScreen = () => {
+    const { t } = useTranslation();
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<number[] | null>(null);
@@ -121,8 +123,8 @@ const PriorityRouteScreen = () => {
                 const distKm = (route.distance / 1000).toFixed(1);
                 const durMin = Math.round(route.duration / 60);
                 setRouteInfo({
-                    distance: `${distKm} km`,
-                    duration: `${durMin} phút`,
+                    distance: `${distKm} ${t('common.km')}`,
+                    duration: `${durMin} ${t('common.minutesShort')}`,
                 });
 
                 // Fit camera to route
@@ -161,13 +163,13 @@ const PriorityRouteScreen = () => {
             await new Promise(resolve => setTimeout(() => resolve(true), 1500));
             
             Alert.alert(
-                'Thành công',
-                `Đã phát lệnh ưu tiên lưu thông trên tuyến đường đến sự cố #${selectedIncident.id}. Lực lượng CSGT và đèn tín hiệu đã được nhận tín hiệu cập nhật.`,
-                [{ text: 'Đóng' }]
+                t('common.success'),
+                t('emergency.priorityCommandSent', { id: selectedIncident.id }),
+                [{ text: t('common.done') }]
             );
             clearRoute();
         } catch (error) {
-            Alert.alert('Lỗi', 'Không thể gửi lệnh ưu tiên. Vui lòng thử lại.');
+            Alert.alert(t('common.error'), t('emergency.priorityCommandFailed'));
         } finally {
             setSendingPriority(false);
         }
@@ -221,8 +223,8 @@ const PriorityRouteScreen = () => {
         <SafeAreaView style={styles.safeTop} edges={['top']}>
             <StatusBar barStyle="dark-content" />
             <PageHeader 
-                title="Tuyến đường ưu tiên" 
-                subtitle={viewMode === 'map' ? "Điều phối giao thông thời gian thực" : "Danh sách điểm nóng cần hỗ trợ"}
+                title={t('emergency.priorityRoute')} 
+                subtitle={viewMode === 'map' ? t('emergency.realtimeTraffic') : t('emergency.hotspotsList')}
                 variant="default"
                 showBack={true}
                 showNotification={false}
@@ -359,7 +361,7 @@ const PriorityRouteScreen = () => {
                                             <View style={styles.dispatchIconCircle}>
                                                 <Icon name="bullhorn-variant" size={18} color="#4F46E5" />
                                             </View>
-                                            <Text style={styles.dispatchBtnText}>PHÁT LỆNH ƯU TIÊN</Text>
+                                            <Text style={styles.dispatchBtnText}>{t('emergency.priorityCommand')}</Text>
                                         </>
                                     )}
                                 </LinearGradient>
@@ -371,7 +373,7 @@ const PriorityRouteScreen = () => {
                         <View style={styles.countChip}>
                             <Icon name="alert-circle" size={16} color="#6366F1" />
                             <Text style={styles.countText}>
-                                {loading ? '...' : `${incidents.length} điểm cần theo dõi`}
+                                {loading ? '...' : t('emergency.monitoringPoints', { count: incidents.length })}
                             </Text>
                         </View>
                     )}
@@ -379,7 +381,7 @@ const PriorityRouteScreen = () => {
             ) : (
                 <View style={styles.listContainer}>
                     <View style={styles.listSubHeader}>
-                         <Text style={styles.listSubTitle}>{incidents.length} sự cố đang hoạt động</Text>
+                         <Text style={styles.listSubTitle}>{t('emergency.activeIncidentsCount', { count: incidents.length })}</Text>
                     </View>
 
                     {loading ? (
@@ -403,7 +405,7 @@ const PriorityRouteScreen = () => {
                             ListEmptyComponent={
                                 <View style={styles.emptyContainer}>
                                     <Icon name="shield-check" size={64} color="#CBD5E1" />
-                                    <Text style={styles.emptyText}>Không có sự cố đang mở</Text>
+                                    <Text style={styles.emptyText}>{t('emergency.noActiveIncidents')}</Text>
                                 </View>
                             }
                         />

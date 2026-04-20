@@ -7,13 +7,18 @@ import {
   Modal,
   Image,
   Dimensions,
+  Animated,
+  TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { BlurView } from '@react-native-community/blur';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from 'react-native-responsive-screen';
 import { useTranslation } from '../hooks/useTranslation';
+import { theme, COLORS, SPACING, BORDER_RADIUS, FONT_SIZE, SCREEN_PADDING } from '../theme';
 
 const { height } = Dimensions.get('window');
 
@@ -45,106 +50,263 @@ type Props = {
 
 const LanguageSelector = ({ visible, onClose, onSelect, currentLanguage }: Props) => {
   const { t, changeLanguage } = useTranslation();
+  const slideAnim = React.useRef(new Animated.Value(height)).current;
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 7, // Matched with ModalCustom for high responsiveness
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: height,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, fadeAnim, slideAnim]);
+
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: height,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
 
   const handleLanguageSelect = async (languageCode: string) => {
     await changeLanguage(languageCode);
     onSelect(languageCode);
-    onClose();
+    handleClose();
   };
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
+      statusBarTranslucent
     >
-      <TouchableOpacity 
-        style={styles.overlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <View style={styles.modalContent}>
+      <View style={styles.container}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleClose}
+        >
+          <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+            <BlurView
+              style={StyleSheet.absoluteFill}
+              blurType="dark"
+              blurAmount={10}
+              reducedTransparencyFallbackColor="black"
+            />
+          </Animated.View>
+        </Pressable>
+
+        <Animated.View
+          style={[
+            styles.modalContent,
+            { transform: [{ translateY: slideAnim }] },
+          ]}
+        >
+          <View style={styles.handle} />
+          
           <View style={styles.header}>
             <Text style={styles.title}>{t('language.title')}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Icon name="close" size={24} color="#000" />
+            <TouchableOpacity 
+              onPress={handleClose}
+              style={styles.closeBtn}
+            >
+              <Icon name="close" size={22} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
-          {LANGUAGES.map((language) => (
-            <TouchableOpacity
-              key={language.code}
-              style={styles.languageItem}
-              onPress={() => handleLanguageSelect(language.code)}
-            >
-              <View style={styles.languageInfo}>
-                <Image 
-                  source={language.flag}
-                  style={styles.flag}
-                />
-                <Text style={styles.languageName}>{language.name}</Text>
-              </View>
-              {currentLanguage === language.code && (
-                <Icon name="check" size={24} color="#4A90E2" />
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </TouchableOpacity>
+          <View style={styles.languageList}>
+            {LANGUAGES.map((language) => (
+              <TouchableOpacity
+                key={language.code}
+                style={[
+                  styles.languageItem,
+                  currentLanguage === language.code && styles.languageItemSelected
+                ]}
+                onPress={() => handleLanguageSelect(language.code)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.languageInfo}>
+                  <View style={styles.flagContainer}>
+                    <Image 
+                      source={language.flag}
+                      style={styles.flag}
+                    />
+                  </View>
+                  <View style={styles.textContainer}>
+                    <Text style={[
+                      styles.languageName,
+                      currentLanguage === language.code && styles.languageNameSelected
+                    ]}>
+                      {language.name}
+                    </Text>
+                    <Text style={styles.nativeName}>{language.code === 'vi' ? 'Tiếng Việt' : 'English'}</Text>
+                  </View>
+                </View>
+                
+                {currentLanguage === language.code ? (
+                  <View style={styles.checkCircle}>
+                    <Icon name="check" size={16} color={theme.colors.white} />
+                  </View>
+                ) : (
+                  <View style={styles.uncheckCircle} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 16,
-    paddingBottom: hp('4%'),
-    maxHeight: height * 0.9,
+    backgroundColor: theme.colors.white,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: SPACING.md,
+    paddingBottom: hp('5%'),
+    paddingHorizontal: SCREEN_PADDING.horizontal,
+    ...theme.shadows.lg,
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    backgroundColor: theme.colors.divider,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: SPACING.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    marginBottom: SPACING.xl,
   },
   title: {
-    fontSize: wp('4.5%'),
-    fontWeight: '600',
-    color: '#000',
+    fontSize: FONT_SIZE.xl,
+    fontWeight: '800',
+    color: theme.colors.text,
+    letterSpacing: -0.5,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.backgroundSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageList: {
+    gap: SPACING.md,
   },
   languageItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    padding: SPACING.md,
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.xxl,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  languageItemSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '08', // Ultra-light primary
   },
   languageInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: SPACING.md,
+  },
+  flagContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    padding: 2,
+    backgroundColor: theme.colors.white,
+    ...theme.shadows.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   flag: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  textContainer: {
+    gap: 2,
   },
   languageName: {
-    fontSize: wp('4%'),
-    color: '#000',
+    fontSize: FONT_SIZE.md,
+    fontWeight: '700',
+    color: theme.colors.textSecondary,
+  },
+  languageNameSelected: {
+    color: theme.colors.primary,
+  },
+  nativeName: {
+    fontSize: 12,
+    color: theme.colors.textLight,
+    fontWeight: '500',
+  },
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows.sm,
+  },
+  uncheckCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: theme.colors.divider,
   },
 });
 

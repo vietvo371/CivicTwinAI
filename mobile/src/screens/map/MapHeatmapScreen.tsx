@@ -1,15 +1,17 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
 import PageHeader from '../../component/PageHeader';
 import { theme, SPACING, FONT_SIZE } from '../../theme';
 
 const MapHeatmapScreen = () => {
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <PageHeader title="Bản đồ nhiệt" variant="simple" />
+      <PageHeader title={t('map.heatmap')} variant="simple" />
       <View style={styles.content}>
-        <Text style={styles.placeholderText}>Bản đồ nhiệt đang được phát triển</Text>
+        <Text style={styles.placeholderText}>{t('common.comingSoon')}</Text>
       </View>
     </SafeAreaView>
   );

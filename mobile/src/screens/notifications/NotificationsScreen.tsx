@@ -103,7 +103,7 @@ const NotificationsScreen = () => {
   const navigation = useNavigation();
   const wsHook = useNotifications();
   const { fetchUnreadCount } = wsHook;
-  const { t } = useTranslation();
+  const { t, getCurrentLanguage } = useTranslation();
 
   const [apiNotifications, setApiNotifications] = useState<APINotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,7 +319,7 @@ const NotificationsScreen = () => {
               {item.title}
             </Text>
             <Text style={styles.itemTime}>
-              {item.timestamp.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              {item.timestamp.toLocaleTimeString(getCurrentLanguage() === 'vi' ? 'vi-VN' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
             </Text>
           </View>
           <Text style={[styles.itemMessage, !item.read && styles.itemMessageUnread]} numberOfLines={3}>

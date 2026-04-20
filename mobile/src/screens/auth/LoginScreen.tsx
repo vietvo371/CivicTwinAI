@@ -37,7 +37,7 @@ interface LoginScreenProps {
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const { validateLogin, signIn, isEmergency } = useAuth();
-  const { t } = useTranslation();
+  const { t, getCurrentLanguage } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

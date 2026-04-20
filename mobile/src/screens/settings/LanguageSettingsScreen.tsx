@@ -8,7 +8,7 @@ import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, SCREEN_PADDING } f
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from '../../hooks/useTranslation';
 
-const LANGUAGE_KEY = '@app_language';
+const LANGUAGE_KEY = 'user-language';
 
 interface Language {
     code: string;
@@ -25,29 +25,19 @@ const LANGUAGES: Language[] = [
 const LanguageSettingsScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
-    const { t, changeLanguage } = useTranslation();
-    const [selectedLanguage, setSelectedLanguage] = useState('vi');
+    const { t, changeLanguage, currentLanguage } = useTranslation();
 
     React.useEffect(() => {
         loadLanguage();
     }, []);
 
     const loadLanguage = async () => {
-        try {
-            const saved = await AsyncStorage.getItem(LANGUAGE_KEY);
-            if (saved) {
-                setSelectedLanguage(saved);
-            }
-        } catch (error) {
-            console.error('Error loading language:', error);
-        }
+        // i18next handles initial detection, but we ensure our UI is in sync
     };
 
     const handleSelectLanguage = async (code: string) => {
         try {
             await changeLanguage(code);
-            await AsyncStorage.setItem(LANGUAGE_KEY, code);
-            setSelectedLanguage(code);
         } catch (error) {
             console.error('Error saving language:', error);
         }
@@ -64,7 +54,7 @@ const LanguageSettingsScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>{t('language.selectLanguage')}</Text>
                     <Text style={styles.sectionDescription}>
-                        {t('language.title')}
+                        {t('language.description')}
                     </Text>
 
                     <View style={styles.languageList}>
@@ -73,7 +63,7 @@ const LanguageSettingsScreen = () => {
                                 key={language.code}
                                 style={[
                                     styles.languageItem,
-                                    selectedLanguage === language.code && styles.languageItemSelected
+                                    currentLanguage === language.code && styles.languageItemSelected
                                 ]}
                                 onPress={() => handleSelectLanguage(language.code)}
                             >
@@ -84,7 +74,7 @@ const LanguageSettingsScreen = () => {
                                         <Text style={styles.languageSubname}>{language.name}</Text>
                                     </View>
                                 </View>
-                                {selectedLanguage === language.code && (
+                                {currentLanguage === language.code && (
                                     <Icon name="check-circle" size={ICON_SIZE.md} color={theme.colors.primary} />
                                 )}
                             </TouchableOpacity>
@@ -95,7 +85,7 @@ const LanguageSettingsScreen = () => {
                 <View style={styles.noteSection}>
                     <Icon name="information-outline" size={ICON_SIZE.md} color={theme.colors.info} />
                     <Text style={styles.noteText}>
-                        {t('common.noData')}
+                        {t('help.directContactPhone')}
                     </Text>
                 </View>
             </ScrollView>

@@ -7,6 +7,7 @@ export const useTranslation = () => {
   const changeLanguage = async (languageCode: string) => {
     try {
       await i18nInstance.changeLanguage(languageCode);
+      await AsyncStorage.setItem('user-language', languageCode);
     } catch (error) {
       console.log('Error changing language:', error);
     }

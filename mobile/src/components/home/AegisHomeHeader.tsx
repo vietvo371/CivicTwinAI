@@ -41,7 +41,8 @@ export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
   aiStatus = 'active',
   logs,
 }) => {
-  const { t } = useTranslation();
+  const { t, getCurrentLanguage } = useTranslation();
+  const currentLang = getCurrentLanguage();
   const userName = user?.name || t('profile.user');
 
   const getAIStatusLabel = () => {
@@ -69,7 +70,7 @@ export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
             <View style={styles.brandGreeting}>
               <View style={styles.greetingHeader}>
                 <Text style={styles.dateText}>
-                  {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' })}
+                  {new Date().toLocaleDateString(currentLang === 'vi' ? 'vi-VN' : 'en-US', { weekday: 'long', day: 'numeric', month: 'numeric' })}
                 </Text>
                 <Text style={styles.greetingText}>{t('home.greeting')}, {userName.split(' ').pop()}!</Text>
               </View>

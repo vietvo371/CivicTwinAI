@@ -1,15 +1,17 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
 import PageHeader from '../../component/PageHeader';
 import { theme, SPACING, FONT_SIZE } from '../../theme';
 
 const MyReportsScreen = () => {
+  const { t } = useTranslation();
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <PageHeader title="Phản ánh của tôi" variant="simple" />
+      <PageHeader title={t('reports.myReports')} variant="simple" />
       <View style={styles.content}>
-        <Text style={styles.placeholderText}>Danh sách phản ánh của bạn đang được phát triển</Text>
+        <Text style={styles.placeholderText}>{t('common.comingSoon')}</Text>
       </View>
     </SafeAreaView>
   );

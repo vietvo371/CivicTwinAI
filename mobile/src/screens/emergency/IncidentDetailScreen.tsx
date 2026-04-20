@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, Platform, StatusBar, Image,
@@ -89,33 +90,33 @@ function logEmergencyIncidentFromBackend(
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const SEVERITY_MAP: Record<string, { label: string; color: string; icon: string }> = {
-  critical: { label: 'Nguy hiểm',   color: '#EF4444', icon: 'alert-octagon' },
-  high:     { label: 'Cao',          color: '#F97316', icon: 'alert' },
-  medium:   { label: 'Trung bình',  color: '#F59E0B', icon: 'alert-circle' },
-  low:      { label: 'Thấp',         color: '#10B981', icon: 'information' },
-};
+const getSeverityMap = (t: any) => ({
+  critical: { label: t('incidents.severity.critical'), color: '#EF4444', icon: 'alert-octagon' },
+  high:     { label: t('incidents.severity.high'), color: '#F97316', icon: 'alert' },
+  medium:   { label: t('incidents.severity.medium'), color: '#F59E0B', icon: 'alert-circle' },
+  low:      { label: t('incidents.severity.low'), color: '#10B981', icon: 'information' },
+});
 
-const STATUS_MAP: Record<string, { label: string; color: string; icon: string }> = {
-  open:          { label: 'Mở',           color: '#EF4444', icon: 'record-circle' },
-  investigating: { label: 'Đang xử lý',   color: '#F59E0B', icon: 'progress-clock' },
-  resolved:      { label: 'Đã giải quyết',color: '#10B981', icon: 'check-circle' },
-  closed:        { label: 'Đã đóng',      color: '#6B7280', icon: 'close-circle' },
-};
+const getStatusMap = (t: any) => ({
+  open:          { label: t('incidents.open'), color: '#EF4444', icon: 'record-circle' },
+  investigating: { label: t('incidents.investigating'), color: '#F59E0B', icon: 'progress-clock' },
+  resolved:      { label: t('incidents.resolved'), color: '#10B981', icon: 'check-circle' },
+  closed:        { label: t('incidents.closed'), color: '#6B7280', icon: 'close-circle' },
+});
 
-const TYPE_MAP: Record<string, { label: string; icon: string }> = {
-  accident:     { label: 'Tai nạn',    icon: 'car-emergency' },
-  congestion:   { label: 'Ùn tắc',     icon: 'car-brake-alert' },
-  construction: { label: 'Thi công',   icon: 'hard-hat' },
-  weather:      { label: 'Thời tiết',  icon: 'weather-lightning-rainy' },
-  other:        { label: 'Khác',       icon: 'alert-circle-outline' },
-};
+const getTypeMap = (t: any) => ({
+  accident:     { label: t('incidents.type.accident'), icon: 'car-emergency' },
+  congestion:   { label: t('incidents.type.congestion'), icon: 'car-brake-alert' },
+  construction: { label: t('incidents.type.construction'), icon: 'hard-hat' },
+  weather:      { label: t('incidents.type.weather'), icon: 'weather-lightning-rainy' },
+  other:        { label: t('incidents.type.other'), icon: 'alert-circle-outline' },
+});
 
-const fmtDate = (iso: string | null | undefined) => {
-  if (!iso) return 'Chưa xác định';
+const fmtDate = (iso: string | null | undefined, t: any) => {
+  if (!iso) return t('common.unknown');
   try {
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return 'Ngày không hợp lệ';
+    if (isNaN(d.getTime())) return t('common.invalidDate');
     
     // Manually format to avoid toLocaleString/Intl issues in Hermes Release builds
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -127,11 +128,11 @@ const fmtDate = (iso: string | null | undefined) => {
     
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   } catch (err) {
-    return 'Lỗi định dạng';
+    return t('common.formatError');
   }
 };
 
-const parseAIContent = (content: any): string => {
+const parseAIContent = (content: any, t: any): string => {
   if (!content) return '';
   let parsed: any = content;
 
@@ -147,30 +148,32 @@ const parseAIContent = (content: any): string => {
   if (parsed.model_version && Array.isArray(parsed.prediction_edges)) {
     if (parsed.prediction_edges.length === 0) {
       if (parsed.status === 'completed') {
-        return `Mô hình ${parsed.model_version}: Hệ thống đã phân tích nhưng không phát hiện ảnh hưởng lan rộng đáng kể đến các tuyến giao thông lân cận.`;
+        return t('ai.noImpact', { model: parsed.model_version });
       }
-      return `Mô hình ${parsed.model_version}: Đang xử lý [${parsed.status}]. ${parsed.error_message || ''}`;
+      return t('ai.processing', { model: parsed.model_version, status: parsed.status, error: parsed.error_message || '' });
     }
 
     const edgesInfos = parsed.prediction_edges.map((pe: any) => {
-      const roadName = pe.edge?.name || `Tuyến đường #${pe.edge_id}`;
+      const roadName = pe.edge?.name || t('map.roadWithId', { id: pe.edge_id });
       const time = pe.time_horizon_minutes;
+      
       const sevMap: Record<string, string> = {
-        severe: '🚨 Nghiêm trọng',
-        heavy: '🔴 Nặng',
-        high: '🟠 Cao',
-        moderate: '🟡 Vừa', 
-        medium: '🟡 Trung bình',
-        low: '🟢 Thấp',
-        light: '🟢 Nhẹ'
+        severe: '🚨 ' + t('incidents.severity.critical'),
+        heavy: '🔴 ' + t('incidents.severity.high'),
+        high: '🟠 ' + t('incidents.severity.high'),
+        moderate: '🟡 ' + t('incidents.severity.medium'), 
+        medium: '🟡 ' + t('incidents.severity.medium'),
+        low: '🟢 ' + t('incidents.severity.low'),
+        light: '🟢 ' + t('incidents.severity.low')
       };
+      
       const severity = sevMap[pe.severity?.toLowerCase()] || pe.severity;
       const conf = Math.round(Number(pe.confidence || 0) * 100) + '%';
       
-      return `${roadName}: Mức độ ${severity} sau ${time} phút (Độ tin cậy: ${conf})`;
+      return t('ai.impactAfter', { severity, time, confidence: conf });
     });
 
-    return `Dự báo từ mô hình ${parsed.model_version}:\n` + edgesInfos.map((e: string) => `• ${e}`).join('\n');
+    return t('ai.forecast', { model: parsed.model_version }) + '\n' + edgesInfos.map((e: string) => `• ${e}`).join('\n');
   }
 
   // 2. Dạng text thông thường (Gợi ý AI có description, message...)
@@ -186,6 +189,7 @@ const parseAIContent = (content: any): string => {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 const IncidentDetailScreen = () => {
+  const { t } = useTranslation();
   const route      = useRoute<IncidentDetailRouteProp>();
   const navigation = useNavigation();
   const { id }     = route.params;
@@ -208,6 +212,10 @@ const IncidentDetailScreen = () => {
   const [loading, setLoading]     = useState(true);
   const [dispatching, setDispatching] = useState(false);
 
+  const severityMap = useMemo(() => getSeverityMap(t), [t]);
+  const statusMap   = useMemo(() => getStatusMap(t), [t]);
+  const typeMap     = useMemo(() => getTypeMap(t), [t]);
+
   const fetchIncident = useCallback(async () => {
     if (env.LOG_REPORT_DETAIL_PAYLOAD) {
       console.warn('[EmergencyIncident BE] bắt đầu fetch id=', id, '— xem log ở terminal Metro');
@@ -219,7 +227,7 @@ const IncidentDetailScreen = () => {
       if (res.success) setIncident(res.data);
     } catch (error: unknown) {
       const err = error as { message?: string; response?: { data?: unknown; status?: number } };
-      Alert.alert('Lỗi', 'Không thể tải thông tin sự cố.');
+      Alert.alert(t('common.error'), t('incidents.fetchFailed'));
       if (env.LOG_REPORT_DETAIL_PAYLOAD) {
         console.warn('[EmergencyIncident BE] LỖI fetch:', err?.message);
         console.warn('[EmergencyIncident BE] HTTP status:', err?.response?.status);
@@ -242,12 +250,12 @@ const IncidentDetailScreen = () => {
   const handleDispatch = async () => {
     if (!incident) return;
     Alert.alert(
-      'Xác nhận điều phối',
-      `Điều phối đơn vị đến sự cố "${incident.title}"?`,
+      t('emergency.confirmDispatchTitle'),
+      t('emergency.confirmDispatchDesc', { title: incident.title }),
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Điều phối',
+          text: t('emergency.dispatch'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -255,9 +263,9 @@ const IncidentDetailScreen = () => {
               const update: UpdateIncidentData = { status: 'investigating' };
               await incidentService.updateIncident(id, update);
               await fetchIncident();
-              Alert.alert('Thành công', 'Đã chuyển trạng thái sang "Đang xử lý".');
+              Alert.alert(t('common.success'), t('emergency.dispatchSuccess'));
             } catch {
-              Alert.alert('Lỗi', 'Không thể điều phối. Thử lại sau.');
+              Alert.alert(t('common.error'), t('emergency.dispatchFailed'));
             } finally {
               setDispatching(false);
             }
@@ -269,19 +277,20 @@ const IncidentDetailScreen = () => {
 
   const handleUpdateStatus = (newStatus: UpdateIncidentData['status']) => {
     if (!newStatus) return;
+    const statusMap = getStatusMap(t);
     Alert.alert(
-      'Cập nhật trạng thái',
-      `Đổi sang "${STATUS_MAP[newStatus]?.label}"?`,
+      t('incidents.updateStatus'),
+      t('incidents.confirmStatusUpdateSimple', { status: (statusMap as any)[newStatus]?.label }),
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Xác nhận',
+          text: t('common.confirm'),
           onPress: async () => {
             try {
               await incidentService.updateIncident(id, { status: newStatus });
               await fetchIncident();
             } catch {
-              Alert.alert('Lỗi', 'Không thể cập nhật trạng thái.');
+              Alert.alert(t('common.error'), t('incidents.updateFailed'));
             }
           },
         },
@@ -295,7 +304,7 @@ const IncidentDetailScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Đang tải...</Text>
+        <Text style={styles.loadingText}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -304,17 +313,18 @@ const IncidentDetailScreen = () => {
     return (
       <View style={styles.center}>
         <Icon name="alert-circle-outline" size={48} color={theme.colors.textSecondary} />
-        <Text style={styles.emptyText}>Không tìm thấy sự cố</Text>
+        <Text style={styles.emptyText}>{t('incidents.notFound')}</Text>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backBtnText}>Quay lại</Text>
+          <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const severity   = SEVERITY_MAP[incident.severity]   || SEVERITY_MAP.medium;
-  const status     = STATUS_MAP[incident.status]       || STATUS_MAP.open;
-  const typeInfo   = TYPE_MAP[incident.type]           || TYPE_MAP.other;
+
+  const severity   = (severityMap as any)[incident.severity]   || severityMap.medium;
+  const status     = (statusMap as any)[incident.status]       || statusMap.open;
+  const typeInfo   = (typeMap as any)[incident.type]           || typeMap.other;
 
   const metadataImages: string[] =
     incident.metadata && Array.isArray((incident.metadata as any).images)
@@ -329,11 +339,10 @@ const IncidentDetailScreen = () => {
   const isInvestigating = incident.status === 'investigating';
   const isResolved      = ['resolved', 'closed'].includes(incident.status);
 
-  // Timeline steps derived from status
   const timelineEvents = [
     {
       key:   'reported',
-      label: 'Báo cáo',
+      label: t('incidents.event.reported'),
       time:  incident.created_at,
       color: '#EF4444',
       icon:  'flag',
@@ -341,7 +350,7 @@ const IncidentDetailScreen = () => {
     },
     {
       key:   'investigating',
-      label: 'Đang xử lý',
+      label: t('incidents.investigating'),
       time:  isInvestigating || isResolved ? incident.updated_at : null,
       color: '#F59E0B',
       icon:  'progress-clock',
@@ -349,7 +358,7 @@ const IncidentDetailScreen = () => {
     },
     {
       key:   'resolved',
-      label: 'Hoàn thành',
+      label: t('incidents.event.completed'),
       time:  incident.resolved_at,
       color: '#10B981',
       icon:  'check-circle',
@@ -364,7 +373,7 @@ const IncidentDetailScreen = () => {
       <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
         <View style={styles.headerShell}>
           <PageHeader
-            title={`Chi tiết #${incident.id}`}
+            title={t('incidents.detailWithId', { id: incident.id })}
             subtitle={typeInfo.label}
             variant="default"
             showNotification={false}
@@ -402,14 +411,14 @@ const IncidentDetailScreen = () => {
 
           {/* Title */}
           <Text style={styles.heroTitle} numberOfLines={2}>
-            {String(incident.title || 'Không có tiêu đề')}
+            {String(incident.title || t('incidents.noTitle'))}
           </Text>
 
           {/* Meta */}
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
               <Icon name="clock-outline" size={13} color={theme.colors.textSecondary} />
-              <Text style={styles.metaText}>{fmtDate(incident.created_at)}</Text>
+              <Text style={styles.metaText}>{fmtDate(incident.created_at, t)}</Text>
             </View>
           </View>
           {incident.location_name && (
@@ -435,7 +444,7 @@ const IncidentDetailScreen = () => {
          !isNaN(Number(incident.location.lat)) && 
          !isNaN(Number(incident.location.lng)) && (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>BẢN ĐỒ</Text>
+            <Text style={styles.cardLabel}>{t('map.mapTitleUppercase')}</Text>
             <View style={styles.mapPreviewWrap}>
               <MapboxGL.MapView
                 style={styles.mapPreview}
@@ -474,7 +483,7 @@ const IncidentDetailScreen = () => {
         {/* ── Incident Details ── */}
         {incident.description ? (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>MÔ TẢ SỰ CỐ</Text>
+            <Text style={styles.cardLabel}>{t('incidents.descriptionUppercase')}</Text>
             <Text style={styles.descText}>{incident.description}</Text>
           </View>
         ) : null}
@@ -482,7 +491,7 @@ const IncidentDetailScreen = () => {
         {/* Attached images from BE (metadata.images) */}
         {metadataImages.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>ẢNH ĐÍNH KÈM</Text>
+            <Text style={styles.cardLabel}>{t('incidents.attachedImagesUppercase')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -504,7 +513,7 @@ const IncidentDetailScreen = () => {
         <View style={styles.twoColRow}>
           {/* Reporter */}
           <View style={[styles.card, styles.halfCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 3 }]}>
-            <Text style={styles.cardLabel}>NGƯỜI BÁO CÁO</Text>
+            <Text style={styles.cardLabel}>{t('incidents.reporterUppercase')}</Text>
             {incident.reporter ? (
               <>
                 <View style={styles.personRow}>
@@ -513,18 +522,18 @@ const IncidentDetailScreen = () => {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.personName}>{incident.reporter.name}</Text>
-                    <Text style={styles.personSub}>{incident.source === 'citizen' ? 'Công dân' : 'Vận hành viên'}</Text>
+                    <Text style={styles.personSub}>{incident.source === 'citizen' ? t('incidents.source.citizen') : t('incidents.source.operator')}</Text>
                   </View>
                 </View>
               </>
             ) : (
-              <Text style={styles.unassigned}>Không rõ</Text>
+              <Text style={styles.unassigned}>{t('common.unknown')}</Text>
             )}
           </View>
 
           {/* Assigned */}
           <View style={[styles.card, styles.halfCard, { borderLeftColor: '#3B82F6', borderLeftWidth: 3 }]}>
-            <Text style={styles.cardLabel}>PHÂN CÔNG</Text>
+            <Text style={styles.cardLabel}>{t('incidents.assigneeUppercase')}</Text>
             {incident.assignee ? (
               <View style={styles.personRow}>
                 <View style={[styles.avatar, { backgroundColor: '#3B82F620' }]}>
@@ -532,7 +541,7 @@ const IncidentDetailScreen = () => {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.personName}>{incident.assignee.name}</Text>
-                  <Text style={styles.personSub}>Đơn vị xử lý</Text>
+                  <Text style={styles.personSub}>{t('incidents.assigneeUnit')}</Text>
                 </View>
               </View>
             ) : (
@@ -540,7 +549,7 @@ const IncidentDetailScreen = () => {
                 <View style={[styles.avatar, { backgroundColor: '#6B728020' }]}>
                   <Icon name="account-question" size={18} color="#6B7280" />
                 </View>
-                <Text style={styles.unassigned}>Chưa phân công</Text>
+                <Text style={styles.unassigned}>{t('incidents.notAssigned')}</Text>
               </View>
             )}
           </View>
@@ -549,7 +558,7 @@ const IncidentDetailScreen = () => {
         {/* ── Quick Actions ── */}
         {canActOnIncident ? (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>HÀNH ĐỘNG NHANH</Text>
+            <Text style={styles.cardLabel}>{t('incidents.quickActionsUppercase')}</Text>
 
             {/* Dispatch - primary action */}
             {!isResolved && (
@@ -563,7 +572,7 @@ const IncidentDetailScreen = () => {
                 ) : (
                   <>
                     <Icon name="phone-in-talk" size={20} color="#fff" />
-                    <Text style={styles.actionBtnText}>Điều phối đơn vị</Text>
+                    <Text style={styles.actionBtnText}>{t('emergency.dispatchUnit')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -580,7 +589,7 @@ const IncidentDetailScreen = () => {
                   onPress={() => handleUpdateStatus('investigating')}
                 >
                   <Icon name="progress-clock" size={16} color="#F59E0B" />
-                  <Text style={[styles.secondaryBtnText, { color: '#F59E0B' }]}>Bắt đầu xử lý</Text>
+                  <Text style={[styles.secondaryBtnText, { color: '#F59E0B' }]}>{t('incidents.startProcessing')}</Text>
                 </TouchableOpacity>
               )}
               {(isOpen || isInvestigating) && (
@@ -592,7 +601,7 @@ const IncidentDetailScreen = () => {
                   onPress={() => handleUpdateStatus('resolved')}
                 >
                   <Icon name="check-circle-outline" size={16} color="#10B981" />
-                  <Text style={[styles.secondaryBtnText, { color: '#10B981' }]}>Đánh dấu xong</Text>
+                  <Text style={[styles.secondaryBtnText, { color: '#10B981' }]}>{t('incidents.markDone')}</Text>
                 </TouchableOpacity>
               )}
               {!isResolved && (
@@ -604,17 +613,15 @@ const IncidentDetailScreen = () => {
                   onPress={() => handleUpdateStatus('closed')}
                 >
                   <Icon name="close-circle-outline" size={16} color="#6B7280" />
-                  <Text style={[styles.secondaryBtnText, { color: '#6B7280' }]}>Đóng sự cố</Text>
+                  <Text style={[styles.secondaryBtnText, { color: '#6B7280' }]}>{t('incidents.closeIncident')}</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
         ) : (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>CHỈ XEM</Text>
-            <Text style={styles.viewOnlyText}>
-              Bạn đang ở chế độ xem. Các thao tác điều phối/cập nhật trạng thái chỉ dành cho tài khoản có quyền.
-            </Text>
+            <Text style={styles.cardLabel}>{t('incidents.viewOnlyUppercase')}</Text>
+            <Text style={styles.viewOnlyText}>{t('incidents.viewOnlyDesc')}</Text>
           </View>
         )}
 
@@ -628,13 +635,13 @@ const IncidentDetailScreen = () => {
                     <View style={[styles.aiIconBox, { backgroundColor: '#EEF2FF' }]}>
                       <Icon name="brain" size={18} color="#6366F1" />
                     </View>
-                    <Text style={[styles.aiCardTitle, { color: '#6366F1' }]}>Gợi ý xử lý AI</Text>
+                    <Text style={[styles.aiCardTitle, { color: '#6366F1' }]}>{t('incidents.aiRecommendations')}</Text>
                   </View>
                   <View style={styles.aiContentBox}>
                     {incident.recommendations.map((rec: any, idx: number) => (
                       <View key={idx} style={styles.recListItem}>
                         <View style={[styles.bullet, { backgroundColor: '#6366F1' }]} />
-                        <Text style={styles.aiResultText}>{parseAIContent(rec)}</Text>
+                        <Text style={styles.aiResultText}>{parseAIContent(rec, t)}</Text>
                       </View>
                     ))}
                   </View>
@@ -648,13 +655,13 @@ const IncidentDetailScreen = () => {
                     <View style={[styles.aiIconBox, { backgroundColor: '#F5F3FF' }]}>
                       <Icon name="chart-timeline-variant" size={18} color="#8B5CF6" />
                     </View>
-                    <Text style={[styles.aiCardTitle, { color: '#8B5CF6' }]}>Dự báo tác động AI</Text>
+                    <Text style={[styles.aiCardTitle, { color: '#8B5CF6' }]}>{t('incidents.aiPredictions')}</Text>
                   </View>
                   <View style={styles.aiContentBox}>
                     {incident.predictions.map((pred: any, idx: number) => (
                       <View key={idx} style={styles.recListItem}>
                         <View style={[styles.bullet, { backgroundColor: '#8B5CF6' }]} />
-                        <Text style={styles.aiResultText}>{parseAIContent(pred)}</Text>
+                        <Text style={styles.aiResultText}>{parseAIContent(pred, t)}</Text>
                       </View>
                     ))}
                   </View>
@@ -665,7 +672,7 @@ const IncidentDetailScreen = () => {
 
         {/* ── Timeline ── */}
         <View style={styles.card}>
-          <Text style={styles.cardLabel}>DÒNG THỜI GIAN</Text>
+          <Text style={styles.cardLabel}>{t('incidents.timelineUppercase')}</Text>
           {timelineEvents.map((event, idx) => (
             <View key={event.key} style={styles.timelineRow}>
               {/* Dot + line */}
@@ -688,9 +695,9 @@ const IncidentDetailScreen = () => {
                   {event.label}
                 </Text>
                 {event.time ? (
-                  <Text style={styles.timelineTime}>{fmtDate(event.time)}</Text>
+                  <Text style={styles.timelineTime}>{fmtDate(event.time, t)}</Text>
                 ) : (
-                  <Text style={[styles.timelineTime, { fontStyle: 'italic' }]}>Chưa xảy ra</Text>
+                  <Text style={[styles.timelineTime, { fontStyle: 'italic' }]}>{t('incidents.event.notHappened')}</Text>
                 )}
               </View>
             </View>
@@ -700,7 +707,7 @@ const IncidentDetailScreen = () => {
         {/* ── Metadata ── */}
         {metadataEntries.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardLabel}>DỮ LIỆU BỔ SUNG</Text>
+            <Text style={styles.cardLabel}>{t('incidents.metadataUppercase')}</Text>
             {metadataEntries.map(([key, value]) => (
               <View key={key} style={styles.metadataRow}>
                 <Text style={styles.metadataKey}>{key}</Text>
