@@ -16,6 +16,7 @@ class Incident extends Model
     protected $fillable = [
         'title', 'description', 'type', 'severity', 'status', 'source',
         'reported_by', 'assigned_to', 'resolved_at', 'metadata',
+        'affected_edge_ids',
     ];
 
     protected static array $translatedEnums = [
@@ -30,6 +31,7 @@ class Incident extends Model
         return [
             'metadata' => 'array',
             'resolved_at' => 'datetime',
+            'affected_edge_ids' => 'array',
         ];
     }
 

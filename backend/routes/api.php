@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NodeController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PredictionController;
+use App\Http\Controllers\Api\PriorityRouteController;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SensorDataController;
@@ -69,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('ai/parse-report', [AIAssistController::class, 'parseReport']);
     Route::post('ai/analyze-image', [AIAssistController::class, 'analyzeImage']);
 
+    /** Search địa điểm từ text (forward geocoding) — dùng cho Priority Route UI */
+    Route::get('geocode/search', [GeocodeController::class, 'search']);
     /** Địa chỉ chữ từ tọa độ — gọi từ mobile thay vì Mapbox trực tiếp trên thiết bị */
     Route::get('geocode/reverse', [GeocodeController::class, 'reverse']);
 
@@ -161,6 +164,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('recommendations/{recommendation}', [RecommendationController::class, 'show']);
         Route::patch('recommendations/{recommendation}/approve', [RecommendationController::class, 'approve']);
         Route::patch('recommendations/{recommendation}/reject', [RecommendationController::class, 'reject']);
+
+        // Emergency Priority Route (Dijkstra routing)
+        Route::post('emergency/priority-route', [PriorityRouteController::class, 'calculate']);
+        Route::get('emergency/priority-route/preview', [PriorityRouteController::class, 'preview']);
     });
 
     // ==========================================
