@@ -19,6 +19,7 @@ import NotificationBellButton from '../../component/NotificationBellButton';
 import { User } from '../../types/api/auth';
 import { AegisEntrance, AIPulseLED } from '../common/AegisAnimated';
 import { AIActivityStream } from './AIActivityStream';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface AegisHomeHeaderProps {
   user: User | null;
@@ -40,13 +41,14 @@ export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
   aiStatus = 'active',
   logs,
 }) => {
-  const userName = user?.name || 'Cư dân';
+  const { t } = useTranslation();
+  const userName = user?.name || t('profile.user');
 
   const getAIStatusLabel = () => {
     switch (aiStatus) {
-      case 'warning': return 'Phát hiện sự cố tiềm năng';
-      case 'alert': return 'Cảnh báo: Tắc nghẽn nghiêm trọng';
-      default: return 'AI Monitoring: Giao thông ổn định';
+      case 'warning': return t('home.aiWarning');
+      case 'alert': return t('home.aiAlert');
+      default: return t('home.aiStable');
     }
   };
 
@@ -69,7 +71,7 @@ export const AegisHomeHeader: React.FC<AegisHomeHeaderProps> = ({
                 <Text style={styles.dateText}>
                   {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'numeric' })}
                 </Text>
-                <Text style={styles.greetingText}>Xin chào, {userName.split(' ').pop()}!</Text>
+                <Text style={styles.greetingText}>{t('home.greeting')}, {userName.split(' ').pop()}!</Text>
               </View>
             </View>
           </AegisEntrance>

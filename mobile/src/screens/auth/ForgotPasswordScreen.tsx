@@ -35,7 +35,7 @@ interface ForgotPasswordScreenProps {
 }
 
 const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation }) => {
-  const { getCurrentLanguage } = useTranslation();
+  const { t, getCurrentLanguage } = useTranslation();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string }>({});
@@ -45,9 +45,9 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
     const newErrors: { email?: string } = {};
 
     if (!email.trim()) {
-      newErrors.email = 'Vui lòng nhập email';
+      newErrors.email = t('auth.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email không hợp lệ';
+      newErrors.email = t('auth.validEmail');
     }
 
     setErrors(newErrors);
@@ -95,7 +95,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
         });
       } else {
         setErrors({
-          email: 'Không thể gửi mã xác thực. Vui lòng thử lại.'
+          email: t('emailVerification.sendOtpFailed')
         });
       }
     } finally {
@@ -171,10 +171,10 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
             </View>
 
             <Text style={styles.title}>
-              Quên mật khẩu?
+              {t('auth.forgotPasswordTitle')}
             </Text>
             <Text style={styles.subtitle}>
-              Nhập email để nhận mã xác thực đặt lại mật khẩu
+              {t('auth.forgotPasswordSubtitle')}
             </Text>
           </Animated.View>
 
@@ -185,8 +185,8 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
           >
             <View style={styles.form}>
               <InputCustom
-                label="Email"
-                placeholder="Nhập địa chỉ email"
+                label={t('auth.email')}
+                placeholder={t('auth.enterEmail')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -198,7 +198,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
               />
 
               <ButtonCustom
-                title="Gửi mã xác thực"
+                title={t('auth.sendVerificationCode')}
                 onPress={handleSendOTPForgot}
                 style={styles.resetButton}
                 icon="send"
@@ -209,8 +209,8 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
                 style={styles.backToLoginContainer}
               >
                 <Text style={styles.backToLoginText}>
-                  Nhớ mật khẩu?{' '}
-                  <Text style={styles.backToLoginLinkText}>Đăng nhập ngay</Text>
+                  {t('auth.rememberPassword')}{' '}
+                  <Text style={styles.backToLoginLinkText}>{t('auth.loginNow')}</Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -225,14 +225,14 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
             <View style={styles.securityBadge}>
               <Icon name="shield-check" size={ICON_SIZE.xs} color={theme.colors.primary} />
               <Text style={styles.securityText}>
-                Dữ liệu được bảo mật và mã hóa
+                {t('auth.dataEncrypted')}
               </Text>
             </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <LoadingOverlay visible={loading} message="Đang gửi mã xác thực..." />
+      <LoadingOverlay visible={loading} message={t('auth.sendingCode')} />
     </SafeAreaView>
   );
 };

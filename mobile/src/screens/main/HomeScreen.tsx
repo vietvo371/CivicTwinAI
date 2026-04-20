@@ -26,6 +26,7 @@ import AegisHomeHeader from '../../components/home/AegisHomeHeader';
 import TrafficInsightWidget from '../../components/home/TrafficInsightWidget';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useNotifications } from '../../hooks/useNotifications';
 import { reportService } from '../../services/reportService';
 import { Report } from '../../types/api/report';
@@ -61,6 +62,7 @@ interface StatsData {
 const HomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { registerRefreshCallback } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const [statsData, setStatsData] = useState<StatsData | null>(null);
@@ -89,7 +91,7 @@ const HomeScreen = () => {
       }
     } catch (err) {
       console.error('Error fetching home data:', err);
-      setError('Không thể kết nối đến máy chủ.');
+      setError(t('errors.networkError'));
     } finally {
       setLoading(false);
     }
@@ -131,9 +133,9 @@ const HomeScreen = () => {
     const rate = statsData?.ty_le_giai_quyet?.toFixed(1) || '0';
 
     return [
-      { id: 'total', title: 'Tổng phản ánh', value: total, subtitle: `+${rate}%`, color: COLORS.primary, icon: 'chart-box-outline' },
-      { id: 'resolved', title: 'Hoàn thành', value: resolved, subtitle: 'Đã xử lý', color: COLORS.success, icon: 'check-circle-outline' },
-      { id: 'pending', title: 'Đang xử lý', value: pending, subtitle: 'Hỗ trợ 24/7', color: COLORS.warning, icon: 'clock-outline' },
+      { id: 'total', title: t('home.totalReports'), value: total, subtitle: `+${rate}%`, color: COLORS.primary, icon: 'chart-box-outline' },
+      { id: 'resolved', title: t('reports.status.completed'), value: resolved, subtitle: t('home.resolvedToday'), color: COLORS.success, icon: 'check-circle-outline' },
+      { id: 'pending', title: t('home.activeIncidents'), value: pending, subtitle: t('home.support247'), color: COLORS.warning, icon: 'clock-outline' },
     ];
   };
 
@@ -152,7 +154,7 @@ const HomeScreen = () => {
           <View style={styles.badgeRow}>
             <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(report.danh_muc_id) + '15' }]}>
               <Text style={[styles.categoryBadgeText, { color: getCategoryColor(report.danh_muc_id) }]}>
-                {report.danh_muc?.ten_danh_muc || 'Sự cố'}
+                {report.danh_muc?.ten_danh_muc || t('incidents.title')}
               </Text>
             </View>
             <View style={[styles.statusTag, { backgroundColor: getStatusColor(report.trang_thai) }]}>
@@ -167,7 +169,7 @@ const HomeScreen = () => {
         <View style={styles.reportFooterModern}>
           <View style={styles.reportMetaModern}>
             <Icon name="map-marker-outline" size={12} color={COLORS.textTertiary} />
-            <Text style={styles.locationText} numberOfLines={1}>{report.dia_chi || 'Địa điểm chưa xác định'}</Text>
+            <Text style={styles.locationText} numberOfLines={1}>{report.dia_chi || t('map.unknownLocation')}</Text>
           </View>
           <Text style={styles.dateTextSmall}>{formatDate(report.created_at)}</Text>
         </View>
@@ -186,7 +188,7 @@ const HomeScreen = () => {
       <AegisEntrance delay={1100} preset="gentle">
         <View style={styles.statsSection}>
           <View style={styles.headerRow}>
-            <Text style={styles.sectionHeading}>Hệ thống dữ liệu AI</Text>
+            <Text style={styles.sectionHeading}>{t('home.aiDataSystem')}</Text>
             <View style={styles.liveIndicator}>
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>REALTIME</Text>
@@ -249,21 +251,21 @@ const HomeScreen = () => {
         <View style={styles.section}>
           <AegisEntrance delay={1300} preset="gentle">
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionHeading}>Sự cố mới nhất</Text>
+              <Text style={styles.sectionHeading}>{t('home.latestIncidents')}</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Alerts')} style={styles.viewAllBtn}>
-                <Text style={styles.viewAllText}>XEM TẤT CẢ</Text>
+                <Text style={styles.viewAllText}>{t('home.viewAll').toUpperCase()}</Text>
               </TouchableOpacity>
             </View>
           </AegisEntrance>
 
           {loading ? (
             <View style={styles.loadingBox}>
-              <Text style={styles.loadingText}>Đang đồng bộ dữ liệu AI Core...</Text>
+              <Text style={styles.loadingText}>{t('home.loadingAiData')}</Text>
             </View>
           ) : recentReports.length === 0 ? (
             <View style={styles.emptyPrompt}>
               <Icon name="shield-check-outline" size={48} color={COLORS.success + '30'} />
-              <Text style={styles.emptyPromptText}>Mạng lưới giao thông an toàn</Text>
+              <Text style={styles.emptyPromptText}>{t('home.safeTrafficNetwork')}</Text>
             </View>
           ) : (
             recentReports.map((report, idx) => renderModernReport(report, idx))

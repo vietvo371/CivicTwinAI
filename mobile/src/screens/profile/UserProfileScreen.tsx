@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/authService';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { mediaService } from '../../services/mediaService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 type UserProfileRouteProp = RouteProp<RootStackParamList, 'UserProfile'>;
 
@@ -20,6 +21,7 @@ const UserProfileScreen = () => {
   const route = useRoute<UserProfileRouteProp>();
   const navigation = useNavigation();
   const { user: authUser, refreshProfile } = useAuth();
+  const { t } = useTranslation();
   // AuthContext `user` type hiện không có đầy đủ field tiếng Việt mà screen profile đang dùng.
   // Cast `any` để tránh lỗi TS khi render UI (BE chưa đồng bộ DTO).
   const user = authUser as any;
@@ -55,14 +57,14 @@ const UserProfileScreen = () => {
     const newErrors: { ho_ten?: string; so_dien_thoai?: string } = {};
 
     if (!formData.ho_ten.trim()) {
-      newErrors.ho_ten = 'Họ tên không được để trống';
+      newErrors.ho_ten = t('profile.fullNameRequired');
     }
 
     // Clean phone number: remove spaces, dashes, and other non-digit characters
     const cleanedPhone = formData.so_dien_thoai.replace(/\D/g, '');
 
     if (formData.so_dien_thoai && cleanedPhone.length > 0 && !/^\d{9,11}$/.test(cleanedPhone)) {
-      newErrors.so_dien_thoai = 'Số điện thoại phải có 9-11 chữ số';
+      newErrors.so_dien_thoai = t('profile.phoneInvalid');
     }
 
     setErrors(newErrors);
@@ -96,7 +98,7 @@ const UserProfileScreen = () => {
           }
         } catch (error) {
           console.error('Upload avatar error:', error);
-          setErrorMessage('Không thể tải ảnh lên. Vui lòng thử lại.');
+          setErrorMessage(t('profile.avatarUploadFailed'));
           setShowErrorModal(true);
         } finally {
           setUploadingAvatar(false);
@@ -140,7 +142,7 @@ const UserProfileScreen = () => {
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error('Update profile error:', error);
-      let message = 'Không thể cập nhật thông tin. Vui lòng thử lại.';
+      let message = t('profile.profileUpdateFailed');
 
       if (error.response?.data?.message) {
         message = error.response.data.message;
@@ -170,7 +172,7 @@ const UserProfileScreen = () => {
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
       <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
       <PageHeader
-        title="Thông tin cá nhân"
+        title={t('profile.personalInfo')}
         variant="default"
         rightComponent={
           !isEditing ? (
@@ -214,8 +216,8 @@ const UserProfileScreen = () => {
         {/* Form Section */}
         <View style={styles.formSection}>
           <InputCustom
-            label="Họ và tên"
-            placeholder="Nhập họ và tên"
+            label={t('profile.fullName')}
+            placeholder={t('profile.fullNamePlaceholder')}
             value={formData.ho_ten}
             onChangeText={(text) => setFormData({ ...formData, ho_ten: text })}
             error={errors.ho_ten}
@@ -225,18 +227,18 @@ const UserProfileScreen = () => {
           />
 
           <InputCustom
-            label="Email"
-            placeholder="Email"
+            label={t('auth.email')}
+            placeholder={t('auth.email')}
             value={user?.email || ''}
-            onChangeText={() => { }} // Read-only field
+            onChangeText={() => { }}
             editable={false}
             leftIcon="email-outline"
             containerStyle={styles.input}
           />
 
           <InputCustom
-            label="Số điện thoại"
-            placeholder="Nhập số điện thoại"
+            label={t('profile.phone')}
+            placeholder={t('profile.phonePlaceholder')}
             value={formData.so_dien_thoai}
             onChangeText={(text) => setFormData({ ...formData, so_dien_thoai: text })}
             error={errors.so_dien_thoai}
@@ -248,27 +250,27 @@ const UserProfileScreen = () => {
 
           {/* User Stats */}
           <View style={styles.statsSection}>
-            <Text style={styles.sectionTitle}>Thống kê</Text>
+            <Text style={styles.sectionTitle}>{t('profile.statistics')}</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
                 <Icon name="file-document-outline" size={24} color={theme.colors.primary} />
                 <Text style={styles.statValue}>{user?.tong_so_phan_anh || 0}</Text>
-                <Text style={styles.statLabel}>Báo cáo</Text>
+                <Text style={styles.statLabel}>{t('profile.reports')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Icon name="star-outline" size={24} color={theme.colors.warning} />
                 <Text style={styles.statValue}>{user?.diem_thanh_pho || 0}</Text>
-                <Text style={styles.statLabel}>Điểm thưởng</Text>
+                <Text style={styles.statLabel}>{t('profile.bonusPoints')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Icon name="shield-check-outline" size={24} color={theme.colors.success} />
                 <Text style={styles.statValue}>{user?.diem_uy_tin || 0}</Text>
-                <Text style={styles.statLabel}>Uy tín</Text>
+                <Text style={styles.statLabel}>{t('profile.creditScore')}</Text>
               </View>
               <View style={styles.statCard}>
                 <Icon name="percent-outline" size={24} color={theme.colors.info} />
                 <Text style={styles.statValue}>{user?.ty_le_chinh_xac || 0}%</Text>
-                <Text style={styles.statLabel}>Chính xác</Text>
+                <Text style={styles.statLabel}>{t('profile.accuracy')}</Text>
               </View>
             </View>
           </View>
@@ -278,13 +280,13 @@ const UserProfileScreen = () => {
         {isEditing && (
           <View style={styles.actionButtons}>
             <ButtonCustom
-              title="Hủy"
+              title={t('profile.cancel')}
               onPress={handleCancel}
               variant="outline"
               style={styles.cancelButton}
             />
             <ButtonCustom
-              title={loading ? 'Đang lưu...' : 'Lưu'}
+              title={loading ? t('profile.saving') : t('profile.save')}
               onPress={handleSave}
               disabled={loading}
               style={styles.saveButton}
@@ -304,7 +306,7 @@ const UserProfileScreen = () => {
       <ModalCustom
         isModalVisible={showSuccessModal}
         setIsModalVisible={setShowSuccessModal}
-        title="Thành công"
+        title={t('profile.success')}
         type="success"
         isClose={false}
         actionText="OK"
@@ -314,7 +316,7 @@ const UserProfileScreen = () => {
         }}
       >
         <Text style={{ textAlign: 'center', color: theme.colors.text }}>
-          Cập nhật thông tin thành công
+          {t('profile.profileUpdatedSuccess')}
         </Text>
       </ModalCustom>
 
@@ -322,7 +324,7 @@ const UserProfileScreen = () => {
       <ModalCustom
         isModalVisible={showErrorModal}
         setIsModalVisible={setShowErrorModal}
-        title="Lỗi"
+        title={t('profile.error')}
         type="error"
         isClose={false}
         actionText="OK"

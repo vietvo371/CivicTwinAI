@@ -22,6 +22,7 @@ import {
   isVisionDataObject,
   type IncidentFormMedia,
 } from './citizenReportFormShared';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const DRAFT_KEY = '@civictwin_report_draft';
 
@@ -29,6 +30,8 @@ const DRAFT_KEY = '@civictwin_report_draft';
 MapboxGL.setAccessToken(env.MAPBOX_ACCESS_TOKEN);
 
 const CreateReportScreen = () => {
+  const { t } = useTranslation();
+  const { getCurrentLanguage } = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
@@ -118,7 +121,7 @@ const CreateReportScreen = () => {
 
   const handleAIParse = async () => {
     if (!formData.mo_ta.trim()) {
-      setErrorMessage('Vui lòng nhập mô tả để AI phân tích.');
+      setErrorMessage(t('reports.aiNoDescription'));
       setShowErrorModal(true);
       return;
     }
@@ -139,7 +142,7 @@ const CreateReportScreen = () => {
       }
 
       if (data?.error === 'NOT_ENOUGH_INFO') {
-        setErrorMessage(data.message || 'AI không có đủ thông tin để phân tích.');
+        setErrorMessage(data.message || t('reports.aiNotEnoughInfo'));
         setShowErrorModal(true);
         setAiParseLoading(false);
         return;
@@ -154,10 +157,10 @@ const CreateReportScreen = () => {
       }));
 
       setAiFilledFields(['danh_muc', 'uu_tien', 'dia_chi']);
-      setSuccessMessage('AI đã phân tích và điền thông tin thành công!');
+      setSuccessMessage(t('reports.aiFilledSuccess'));
       setShowSuccessModal(true);
     } catch (error) {
-      setErrorMessage('Lỗi khi AI phân tích mô tả.');
+      setErrorMessage(t('reports.aiParseError'));
       setShowErrorModal(true);
     }
     setAiParseLoading(false);
@@ -268,7 +271,7 @@ const CreateReportScreen = () => {
       setUploadingMedia(false);
       setAiAnalyzing(true);
       setUploadProgress(8);
-      setUploadStatus('Đang gửi ảnh cho AI phân tích...');
+      setUploadStatus(t('reports.sendingImageToAi'));
 
       let visionPayload: Record<string, unknown> | null = null;
       let visionBeMessage = '';
@@ -295,7 +298,7 @@ const CreateReportScreen = () => {
         if (visionRes.success && isVisionDataObject(visionRes.data)) {
           visionPayload = visionRes.data as Record<string, unknown>;
           setUploadProgress(32);
-          setUploadStatus('Đang nhận kết quả từ AI...');
+          setUploadStatus(t('reports.receivingAiResult'));
         } else {
           if (__DEV__) {
             console.warn('[CreateReport] analyze-image: bỏ qua data (không phải object JSON — có thể là [] hoặc null).');
@@ -304,7 +307,7 @@ const CreateReportScreen = () => {
         }
       } catch (e) {
         console.warn('analyze-image:', e);
-        setUploadStatus('Không phân tích được ảnh — vẫn tải ảnh lên bình thường');
+        setUploadStatus(t('reports.imageAnalyzeFailed'));
         await new Promise<void>((r) => setTimeout(r, 500));
       }
 
@@ -312,7 +315,7 @@ const CreateReportScreen = () => {
       setAiAnalyzing(false);
       setMediaWfAiDone(true);
       setUploadingMedia(true);
-      setUploadStatus('Đang áp dụng kết quả vào form...');
+        setUploadStatus(t('reports.applyingAiResult'));
       setUploadProgress(40);
 
       if (visionPayload) {
@@ -368,17 +371,17 @@ const CreateReportScreen = () => {
 
         if (unclear) {
           setAiAnalysisMessage(
-            `⚠️ ${visionBeMessage || 'Ảnh chưa đủ rõ để tự điền form.'}\n\n` +
+            `⚠️ ${visionBeMessage || t('reports.imageNotClear')}\n\n` +
               (userHint ? `${userHint}\n\n` : '') +
-              (vDesc ? `📝 Gợi ý trong mô tả: ${vDesc}\n\n` : '') +
-              `👉 Bạn nên xóa ảnh này, chụp lại (gần, sáng, rõ sự cố) rồi thêm lại.`,
+              (vDesc ? `${t('reports.descriptionSuggestion')}: ${vDesc}\n\n` : '') +
+              t('reports.retakeAdvice'),
           );
         } else {
           setAiAnalysisMessage(
-            `AI đã phân tích ảnh${confPct ? ` (${confPct} tin cậy)` : ''} và điền form.\n\n` +
-              `📁 Danh mục: ${categoryLabel}\n` +
-              `⚠️ Mức độ: ${priorityLabel}\n\n` +
-              `Tiêu đề khi gửi gồm loại sự cố và địa điểm bạn chọn. Hãy xem lại mô tả và vị trí trước khi gửi.`,
+            `${t('reports.aiAnalyzedImage', { confPct: confPct })}` +
+              `\n\n${t('reports.categoryField')}: ${categoryLabel}\n` +
+              `${t('reports.severityField')}: ${priorityLabel}\n\n` +
+              t('reports.reviewBeforeSending'),
           );
         }
         if (__DEV__) {
@@ -396,11 +399,11 @@ const CreateReportScreen = () => {
 
       // —— Bước 2: Tải toàn bộ ảnh lên media (preview + gửi incident sau) ——
       setUploadProgress(44);
-      setUploadStatus(`Đang tải 0/${totalAssets} ảnh...`);
+      setUploadStatus(t('reports.uploadingImagesProgress', { current: 0, total: totalAssets }));
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = assets[i];
-        setUploadStatus(`Đang tải ${i + 1}/${totalAssets} ảnh...`);
+        setUploadStatus(t('reports.uploadingImagesProgress', { current: i + 1, total: totalAssets }));
         setUploadProgress(44 + Math.round(((i + 1) / totalAssets) * 48));
 
         try {
@@ -408,7 +411,7 @@ const CreateReportScreen = () => {
             asset,
             asset.type?.includes('video') ? 'video' : 'image',
             'phan_anh',
-            'Hình ảnh phản ánh',
+            t('reports.imageRequired'),
           );
           if (response.success && response.data) {
             newMedia.push({
@@ -435,10 +438,10 @@ const CreateReportScreen = () => {
       setMediaWfUploadDone(true);
       setUploadingMedia(false);
       setUploadProgress(100);
-      setUploadStatus('Đã tải xong ảnh');
+      setUploadStatus(t('reports.imagesUploaded'));
 
       if (visionPayload) {
-        setUploadStatus('Đang chuẩn bị hiển thị kết quả AI...');
+        setUploadStatus(t('reports.preparingAiResult'));
         setMediaWfFinishing(true);
         await new Promise<void>((r) => setTimeout(r, 700));
         setMediaWfFinishing(false);
@@ -452,7 +455,7 @@ const CreateReportScreen = () => {
       setMediaWfUploadDone(false);
       setMediaWfFinishing(false);
       setMediaWorkflowPhase('idle');
-      setErrorMessage('Đã xảy ra lỗi khi xử lý ảnh. Vui lòng thử lại.');
+      setErrorMessage(t('reports.imageProcessingError'));
       setShowErrorModal(true);
     } finally {
       setUploadingMedia(false);
@@ -475,7 +478,7 @@ const CreateReportScreen = () => {
       }
     } catch (error) {
       console.error('Camera error:', error);
-      setErrorMessage('Không thể mở camera. Vui lòng kiểm tra quyền truy cập.');
+      setErrorMessage(t('reports.cameraPermissionError'));
       setShowErrorModal(true);
     }
   };
@@ -483,7 +486,7 @@ const CreateReportScreen = () => {
   const handleSelectFromGallery = async () => {
     try {
       const result = await launchImageLibrary({
-        mediaType: 'photo', // Chỉ cho phép ảnh
+          mediaType: 'photo',
         selectionLimit: 5 - uploadedMedia.length,
         quality: 0.5, // Reduced quality to avoid 413
         maxWidth: 1024, // Resize large images
@@ -495,32 +498,32 @@ const CreateReportScreen = () => {
       }
     } catch (error) {
       console.error('Image picker error:', error);
-      setErrorMessage('Không thể chọn ảnh. Vui lòng thử lại.');
+      setErrorMessage(t('reports.cannotSelectImage'));
       setShowErrorModal(true);
     }
   };
 
   const handleSelectMedia = () => {
     if (uploadedMedia.length >= 5) {
-      setErrorMessage('Bạn chỉ được tải lên tối đa 5 ảnh/video');
+      setErrorMessage(t('reports.maxImagesLimit'));
       setShowErrorModal(true);
       return;
     }
 
     Alert.alert(
-      'Chọn hình ảnh',
-      'Chọn nguồn hình ảnh',
+      t('reports.selectImage'),
+      t('reports.selectImageSource'),
       [
         {
-          text: 'Chụp ảnh',
+          text: t('reports.takePhoto'),
           onPress: handleTakePhoto,
         },
         {
-          text: 'Chọn từ thư viện',
+          text: t('reports.selectFromGallery'),
           onPress: handleSelectFromGallery,
         },
         {
-          text: 'Hủy',
+          text: t('reports.cancel'),
           style: 'cancel',
         },
       ],
@@ -615,13 +618,13 @@ const CreateReportScreen = () => {
     const newErrors: typeof errors = {};
 
     if (!formData.mo_ta.trim()) {
-      newErrors.mo_ta = 'Vui lòng nhập mô tả';
+      newErrors.mo_ta = t('reports.descriptionRequired');
     } else if (formData.mo_ta.length < 20) {
-      newErrors.mo_ta = 'Mô tả phải có ít nhất 20 ký tự';
+      newErrors.mo_ta = t('reports.descriptionMinLength');
     }
 
     if (!formData.dia_chi.trim()) {
-      newErrors.dia_chi = 'Vui lòng nhập địa chỉ';
+      newErrors.dia_chi = t('reports.addressRequired');
     }
 
     setErrors(newErrors);
@@ -665,12 +668,12 @@ const CreateReportScreen = () => {
       const response = await incidentService.createIncident(fd);
 
       if (response.success) {
-        setSuccessMessage('Báo cáo của bạn đã được gửi thành công!');
+        setSuccessMessage(t('reports.submitSuccess'));
         setShowSuccessModal(true);
       }
     } catch (error: any) {
       console.error('❌ [API Error] Create Incident:', error);
-      setErrorMessage(error.response?.data?.message || 'Không thể tạo báo cáo. Vui lòng thử lại.');
+      setErrorMessage(error.response?.data?.message || t('reports.submitError'));
       setShowErrorModal(true);
     } finally {
       setLoading(false);
@@ -730,7 +733,7 @@ const CreateReportScreen = () => {
       dia_chi:
         (tempAddress && tempAddress.trim()) ||
         prev.dia_chi ||
-        `Vị trí: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`,
+        `${t('reports.location')}: ${tempLocation[1].toFixed(6)}, ${tempLocation[0].toFixed(6)}`,
     }));
     setShowMapModal(false);
   };
@@ -743,13 +746,13 @@ const CreateReportScreen = () => {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Quyền vị trí', 'Cần quyền vị trí để đưa ghim về chỗ bạn đang đứng.');
+          Alert.alert(t('reports.locationPermission'), t('reports.locationPermissionDesc'));
           return;
         }
       } else {
         const auth = await Geolocation.requestAuthorization('whenInUse');
         if (auth !== 'granted') {
-          Alert.alert('Quyền vị trí', 'Bật quyền vị trí trong Cài đặt để dùng tính năng này.');
+          Alert.alert(t('reports.locationPermission'), t('reports.enableLocationInSettings'));
           return;
         }
       }
@@ -774,7 +777,7 @@ const CreateReportScreen = () => {
           }
         },
         (error) => {
-          Alert.alert('Không lấy được vị trí', error.message || 'Thử lại sau.');
+          Alert.alert(t('reports.cannotGetLocation'), error.message || t('reports.tryAgainLater'));
           setMapGpsLoading(false);
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
@@ -797,7 +800,7 @@ const CreateReportScreen = () => {
       <View style={[styles.topWhiteArea, { paddingTop: insets.top }]}>
         <View style={styles.headerShell}>
           <PageHeader
-            title="Báo cáo sự cố"
+            title={t('reports.reportIncident')}
             variant="default"
             showBack={true}
             showNotification={false}
@@ -812,7 +815,7 @@ const CreateReportScreen = () => {
                   pressed && !submitDisabled && styles.headerSendPillPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Gửi phản ánh"
+                accessibilityLabel={t('reports.submitReport')}
                 accessibilityState={{ disabled: submitDisabled, busy: loading }}
               >
                 {loading ? (
@@ -820,7 +823,7 @@ const CreateReportScreen = () => {
                 ) : (
                   <>
                     <Icon name="send" size={18} color={COLORS.white} />
-                    <Text style={styles.headerSendPillText}>Gửi</Text>
+                    <Text style={styles.headerSendPillText}>{t('reports.submit')}</Text>
                   </>
                 )}
               </Pressable>
@@ -833,7 +836,7 @@ const CreateReportScreen = () => {
       {draftRestored && (
         <View style={styles.draftBanner}>
           <Icon name="content-save-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.draftBannerText}>Đã khôi phục bản nháp trước đó của bạn</Text>
+          <Text style={styles.draftBannerText}>{t('reports.draftRestored')}</Text>
           <TouchableOpacity onPress={() => {
             setDraftRestored(false);
             AsyncStorage.removeItem(DRAFT_KEY);
@@ -848,7 +851,7 @@ const CreateReportScreen = () => {
               media_ids: [],
             });
           }}>
-            <Text style={styles.draftBannerDiscard}>Xóa nháp</Text>
+            <Text style={styles.draftBannerDiscard}>{t('reports.discardDraft')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -872,7 +875,7 @@ const CreateReportScreen = () => {
             </View>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Thêm ảnh: AI đọc ảnh đầu tiên để gợi ý nội dung; mọi ảnh bạn chọn sẽ được đính kèm khi gửi phản ánh.
+            {t('reports.addImagesHint')}
           </Text>
 
           {/* Kết quả phân tích ảnh (AI) */}
@@ -890,7 +893,7 @@ const CreateReportScreen = () => {
                     <View style={styles.aiVisionIconBox}>
                       <Icon name="eye-outline" size={16} color="#10B981" />
                     </View>
-                    <Text style={styles.aiVisionTitle}>AI PHÂN TÍCH HÌNH ẢNH</Text>
+                    <Text style={styles.aiVisionTitle}>{t('reports.aiAnalyzedImages').toUpperCase()}</Text>
                   </View>
                   <TouchableOpacity onPress={() => setAiVisionResult(null)}>
                     <Icon name="close" size={18} color="#64748B" />
@@ -917,7 +920,7 @@ const CreateReportScreen = () => {
                 {aiVisionResult.confidence != null && (
                   <View style={styles.confidenceContainer}>
                     <View style={styles.confidenceHeader}>
-                      <Text style={styles.confidenceLabel}>Độ tin cậy</Text>
+                      <Text style={styles.confidenceLabel}>{t('reports.confidence')}</Text>
                       <Text style={styles.confidenceValue}>{Math.round(aiVisionResult.confidence * 100)}%</Text>
                     </View>
                     <View style={styles.confidenceBarBg}>
@@ -933,7 +936,7 @@ const CreateReportScreen = () => {
 
                 <View style={styles.aiVisionFooter}>
                   <Icon name="auto-fix" size={14} color="#64748B" />
-                  <Text style={styles.aiVisionFooterText}>AI đã tự động điền các trường thông tin</Text>
+                  <Text style={styles.aiVisionFooterText}>{t('reports.aiAutoFilledFields')}</Text>
                 </View>
               </View>
             </Animated.View>
@@ -981,7 +984,7 @@ const CreateReportScreen = () => {
                     <View style={styles.uploadIconBox}>
                       <Icon name="camera-plus-outline" size={32} color={theme.colors.primary} />
                     </View>
-                    <Text style={styles.uploadCardText}>Thêm ảnh</Text>
+                    <Text style={styles.uploadCardText}>{t('reports.addImage')}</Text>
                     <Text style={styles.uploadCardHint}>{uploadedMedia.length}/5</Text>
                   </>
                 )}
@@ -991,7 +994,7 @@ const CreateReportScreen = () => {
           <View style={styles.uploadInfoRow}>
             <Icon name="information-outline" size={16} color={theme.colors.textSecondary} />
             <Text style={styles.uploadInfo}>
-              Tối đa 5 ảnh (JPG, PNG). Ảnh đầu tiên được AI đọc để gợi ý; các ảnh còn lại chỉ đính kèm báo cáo.
+              {t('reports.maxImagesHint')}
             </Text>
           </View>
           </AegisCard>
@@ -1008,7 +1011,7 @@ const CreateReportScreen = () => {
               </View>
             ) : null}
           </View>
-          <Text style={styles.sectionSubtitle}>Chọn danh mục phù hợp với vấn đề</Text>
+          <Text style={styles.sectionSubtitle}>{t('reports.selectCategoryHint')}</Text>
 
           <TouchableOpacity
             style={styles.categorySelectButton}
@@ -1031,10 +1034,10 @@ const CreateReportScreen = () => {
                   </View>
                   <View style={styles.categorySelectContent}>
                     <Text style={styles.categorySelectLabel}>
-                      {selectedCategory?.label || 'Chọn danh mục'}
+                      {selectedCategory?.label || t('reports.selectCategory')}
                     </Text>
                     {selectedCategory && (
-                      <Text style={styles.categorySelectHint}>Nhấn để thay đổi</Text>
+                      <Text style={styles.categorySelectHint}>{t('reports.pressToChange')}</Text>
                     )}
                   </View>
                   <Icon name="chevron-down" size={24} color={theme.colors.textSecondary} />
@@ -1049,7 +1052,7 @@ const CreateReportScreen = () => {
         <AegisEntrance delay={320} preset="gentle">
           <AegisCard variant="default" padding="lg" borderRadius="xl" style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionHeading}>NỘI DUNG</Text>
+            <Text style={styles.sectionHeading}>{t('reports.content')}</Text>
             <TouchableOpacity
               style={[styles.aiParsePill, aiParseLoading && styles.aiParsePillDisabled]}
               onPress={handleAIParse}
@@ -1066,14 +1069,14 @@ const CreateReportScreen = () => {
             </TouchableOpacity>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Khi gửi, tiêu đề được tạo từ danh mục và địa chỉ. Viết mô tả rõ ràng; chạm AI Parse nếu muốn gợi ý từ đoạn chữ.
+            {t('reports.contentHint')}
           </Text>
 
           <View style={styles.inputGroup}>
             <View style={styles.inputWithBadge}>
               <InputCustom
-                label="Mô tả"
-                placeholder="Mô tả chi tiết vấn đề"
+                label={t('reports.description')}
+                placeholder={t('reports.descriptionPlaceholder')}
                 value={formData.mo_ta}
                 onChangeText={(text) => {
                   setFormData({ ...formData, mo_ta: text });
@@ -1103,10 +1106,10 @@ const CreateReportScreen = () => {
           <View style={styles.generatedTitlePreviewBox}>
             <View style={styles.generatedTitlePreviewHeader}>
               <Icon name="format-title" size={18} color={theme.colors.primary} />
-              <Text style={styles.generatedTitlePreviewHeading}>Tiêu đề khi gửi</Text>
+              <Text style={styles.generatedTitlePreviewHeading}>{t('reports.sendingTitlePreview')}</Text>
             </View>
             <Text style={styles.generatedTitlePreviewHint}>
-              Cập nhật theo danh mục (trên) và địa chỉ (mục Vị trí).
+              {t('reports.titleUpdatesFromCategory')}
             </Text>
             <Text style={styles.generatedTitlePreviewBody} numberOfLines={4}>
               {buildMobileIncidentTitle(
@@ -1127,13 +1130,13 @@ const CreateReportScreen = () => {
             <Text style={styles.sectionHeading}>VỊ TRÍ</Text>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Đã tự lấy GPS khi mở màn hình (nếu được phép). Chạm &quot;Chọn vị trí trên bản đồ&quot; để chỉnh điểm, rồi Xác nhận — địa chỉ và tọa độ sẽ cập nhật theo ghim.
+            {t('reports.gpsAutoHint')}
           </Text>
 
           <View style={styles.inputGroup}>
             <InputCustom
-              label="Địa chỉ"
-              placeholder="Nhập địa chỉ cụ thể"
+              label={t('reports.address')}
+              placeholder={t('reports.addressPlaceholder')}
               value={formData.dia_chi}
               onChangeText={(text) => setFormData({ ...formData, dia_chi: text })}
               error={errors.dia_chi}
@@ -1149,14 +1152,14 @@ const CreateReportScreen = () => {
                 <Icon name="map-search" size={24} color={theme.colors.primary} />
               </View>
               <View style={styles.mapButtonContent}>
-                <Text style={styles.mapButtonText}>Chọn vị trí trên bản đồ</Text>
-                <Text style={styles.mapButtonHint}>Chạm để mở bản đồ</Text>
+                <Text style={styles.mapButtonText}>{t('reports.openMap')}</Text>
+                <Text style={styles.mapButtonHint}>{t('reports.tapToOpenMap')}</Text>
               </View>
               <Icon name="chevron-right" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
             {formData.vi_do && formData.kinh_do && (
               <Text style={styles.coordsText}>
-                Tọa độ: {formData.vi_do.toFixed(6)}, {formData.kinh_do.toFixed(6)}
+                {t('reports.coordinates')}: {formData.vi_do.toFixed(6)}, {formData.kinh_do.toFixed(6)}
               </Text>
             )}
           </View>
@@ -1174,7 +1177,7 @@ const CreateReportScreen = () => {
               </View>
             ) : null}
           </View>
-          <Text style={styles.sectionSubtitle}>Đánh giá mức độ nghiêm trọng của vấn đề</Text>
+          <Text style={styles.sectionSubtitle}>{t('reports.severityRatingHint')}</Text>
 
           <View style={styles.priorityContainer}>
             {PRIORITIES.map((priority: any) => {
@@ -1243,9 +1246,9 @@ const CreateReportScreen = () => {
               <TouchableOpacity onPress={() => setShowMapModal(false)} style={styles.closeButton}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
-              <Text style={styles.mapTitle}>Chọn vị trí</Text>
+              <Text style={styles.mapTitle}>{t('map.selectLocation')}</Text>
               <TouchableOpacity onPress={confirmLocation} style={styles.confirmButton}>
-                <Text style={styles.confirmButtonText}>Xác nhận</Text>
+                <Text style={styles.confirmButtonText}>{t('map.confirm')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1282,7 +1285,7 @@ const CreateReportScreen = () => {
                 onPress={handleMyLocationOnMap}
                 disabled={mapGpsLoading}
                 activeOpacity={0.85}
-                accessibilityLabel="Vị trí của tôi"
+                accessibilityLabel={t('map.myLocation')}
               >
                 {mapGpsLoading ? (
                   <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -1296,7 +1299,7 @@ const CreateReportScreen = () => {
                   <ActivityIndicator size="small" color={theme.colors.primary} />
                 ) : (
                   <Text style={styles.addressText} numberOfLines={2}>
-                    {tempAddress || 'Chạm vào bản đồ để chọn vị trí'}
+                    {tempAddress || t('map.tapToSelectLocation')}
                   </Text>
                 )}
               </View>
@@ -1309,7 +1312,7 @@ const CreateReportScreen = () => {
       <ModalCustom
         isModalVisible={showSuccessModal}
         setIsModalVisible={setShowSuccessModal}
-        title="Thành công"
+        title={t('common.success')}
         type="success"
         isClose={false}
         actionText="OK"
@@ -1322,7 +1325,7 @@ const CreateReportScreen = () => {
       <ModalCustom
         isModalVisible={showErrorModal}
         setIsModalVisible={setShowErrorModal}
-        title="Lỗi"
+        title={t('common.error')}
         type="error"
         isClose={false}
         actionText="OK"
@@ -1363,7 +1366,7 @@ const CreateReportScreen = () => {
 
             {/* Modal Header */}
             <View style={styles.categoryModalHeader}>
-              <Text style={styles.categoryModalTitle}>Chọn danh mục</Text>
+              <Text style={styles.categoryModalTitle}>{t('reports.selectCategoryModal')}</Text>
               <TouchableOpacity onPress={handleCloseCategoryModal}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
@@ -1459,12 +1462,12 @@ const CreateReportScreen = () => {
 
               <Text style={styles.loadingTitle}>
                 {!mediaWfAiDone
-                  ? '🤖 Đang phân tích ảnh'
+                  ? t('reports.analyzingImages')
                   : !mediaWfUploadDone
-                    ? '📤 Đang tải ảnh lên'
+                    ? t('reports.uploadingImages')
                     : mediaWfFinishing
-                      ? '✨ Đang hoàn tất'
-                      : 'Đang xử lý'}
+                      ? t('reports.finalizing')
+                      : t('reports.processing')}
               </Text>
               <Text style={styles.loadingStatus}>{uploadStatus}</Text>
 
@@ -1504,7 +1507,7 @@ const CreateReportScreen = () => {
                       mediaWfAiDone && styles.stepTextDone,
                     ]}
                   >
-                    Phân tích AI
+                    {t('reports.aiAnalysis')}
                   </Text>
                 </View>
 
@@ -1531,7 +1534,7 @@ const CreateReportScreen = () => {
                       mediaWfUploadDone && styles.stepTextDone,
                     ]}
                   >
-                    Tải ảnh
+                    {t('reports.uploadImages')}
                   </Text>
                 </View>
 
@@ -1555,18 +1558,18 @@ const CreateReportScreen = () => {
                       mediaWfUploadDone && mediaWfFinishing && styles.stepTextActive,
                     ]}
                   >
-                    Hiển thị kết quả
+                    {t('reports.showResult')}
                   </Text>
                 </View>
               </View>
 
               <Text style={styles.loadingHint}>
                 {!mediaWfAiDone
-                  ? 'AI đang đọc ảnh — thường mất vài giây, vui lòng đợi.'
+                  ? t('reports.aiReadingImages')
                   : !mediaWfUploadDone
-                    ? 'Đang tải ảnh — vui lòng đợi và giữ mạng ổn định.'
+                    ? t('reports.uploadingImagesWait')
                     : mediaWfFinishing
-                      ? 'Chuẩn bị bảng tóm tắt cho bạn...'
+                      ? t('reports.preparingSummary')
                       : ''}
               </Text>
             </View>
@@ -1582,9 +1585,9 @@ const CreateReportScreen = () => {
                   <Icon name="check-decagram" size={40} color={theme.colors.success} />
                 </View>
               </LinearGradient>
-              <Text style={styles.loadingTitle}>Đã phân tích xong</Text>
+              <Text style={styles.loadingTitle}>{t('reports.aiAnalysisComplete')}</Text>
               <Text style={styles.mediaSummarySubtitle}>
-                Gợi ý đã được áp dụng vào form — bạn có thể chỉnh lại trước khi gửi.
+                {t('reports.suggestionsApplied')}
               </Text>
               <ScrollView
                 style={styles.mediaSummaryScroll}
@@ -1600,7 +1603,7 @@ const CreateReportScreen = () => {
                 activeOpacity={0.85}
                 onPress={() => setMediaWorkflowPhase('idle')}
               >
-                <Text style={styles.mediaSummaryButtonText}>Đã hiểu, tiếp tục</Text>
+                <Text style={styles.mediaSummaryButtonText}>{t('reports.understoodContinue')}</Text>
               </TouchableOpacity>
             </View>
           )}

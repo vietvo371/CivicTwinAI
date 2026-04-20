@@ -24,11 +24,13 @@ import {
   canCitizenEditReport,
   canCitizenDeleteReport,
 } from '../../utils/reportUtils';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user: contextUser, signOut } = useAuth();
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(contextUser);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showMenuModal, setShowMenuModal] = useState(false);
@@ -98,8 +100,8 @@ const ProfileScreen = () => {
       }
     } catch (error) {
       console.error('Error fetching my reports:', error);
-      setInfoModalTitle('Lỗi');
-      setInfoModalMessage('Không thể tải danh sách phản ánh của bạn');
+      setInfoModalTitle(t('profile.error'));
+      setInfoModalMessage(t('profile.profileUpdateFailed'));
       setShowInfoModal(true);
     } finally {
       setReportsLoading(false);
@@ -135,25 +137,25 @@ const ProfileScreen = () => {
 
   const menuItems = [
     {
-      title: 'Tài khoản',
+      title: t('profile.account'),
       items: [
-        { id: 'profile', icon: 'account-outline', label: 'Thông tin cá nhân' },
-        { id: 'security', icon: 'shield-check-outline', label: 'Bảo mật & Đăng nhập' },
+        { id: 'profile', icon: 'account-outline', label: t('profile.personalInfo') },
+        { id: 'security', icon: 'shield-check-outline', label: t('profile.securityLogin') },
       ]
     },
     {
-      title: 'Cài đặt & Hỗ trợ',
+      title: t('profile.settingsSupport'),
       items: [
-        { id: 'notifications', icon: 'bell-outline', label: 'Thông báo' },
-        { id: 'language', icon: 'translate', label: 'Ngôn ngữ' },
-        { id: 'help', icon: 'help-circle-outline', label: 'Trung tâm trợ giúp' },
-        { id: 'about', icon: 'information-outline', label: 'Về ứng dụng' },
+        { id: 'notifications', icon: 'bell-outline', label: t('notifications.title') },
+        { id: 'language', icon: 'translate', label: t('language.title') },
+        { id: 'help', icon: 'help-circle-outline', label: t('help.title') },
+        { id: 'about', icon: 'information-outline', label: t('about.title') },
       ]
     },
     {
       title: '',
       items: [
-        { id: 'logout', icon: 'logout', label: 'Đăng xuất' },
+        { id: 'logout', icon: 'logout', label: t('profile.logout') },
       ]
     }
   ];
@@ -247,10 +249,8 @@ const ProfileScreen = () => {
 
   const handleEditReport = (report: Report) => {
     if (!canCitizenEditReport(report.trang_thai)) {
-      setInfoModalTitle('Không thể chỉnh sửa');
-      setInfoModalMessage(
-        `Phản ánh đang ở trạng thái "${getStatusText(report.trang_thai)}". Chỉ có thể sửa khi còn Tiếp nhận hoặc Đã xác minh.`
-      );
+      setInfoModalTitle(t('profile.notEditable'));
+      setInfoModalMessage(t('profile.notEditableDesc', { status: getStatusText(report.trang_thai) }));
       setShowInfoModal(true);
       return;
     }
@@ -260,10 +260,8 @@ const ProfileScreen = () => {
   const handleDeleteReport = (reportId: number, trangThai: number) => {
     if (!canCitizenDeleteReport(trangThai)) {
       setOpenMenuReportId(null);
-      setInfoModalTitle('Không thể xóa');
-      setInfoModalMessage(
-        `Phản ánh đang xử lý hoặc đã hoàn thành không thể xóa (trạng thái: "${getStatusText(trangThai)}").`
-      );
+      setInfoModalTitle(t('profile.notDeletable'));
+      setInfoModalMessage(t('profile.notDeletableDesc', { status: getStatusText(trangThai) }));
       setShowInfoModal(true);
       return;
     }
@@ -286,8 +284,8 @@ const ProfileScreen = () => {
         setSelectedReportId(null);
 
         // Show success message
-        setInfoModalTitle('Thành công');
-        setInfoModalMessage('Đã xóa phản ánh');
+        setInfoModalTitle(t('profile.success'));
+        setInfoModalMessage(t('profile.reportDeleted'));
         setShowInfoModal(true);
       }
     } catch (error) {
@@ -295,8 +293,8 @@ const ProfileScreen = () => {
       setShowDeleteModal(false);
       setSelectedReportId(null);
 
-      setInfoModalTitle('Lỗi');
-      setInfoModalMessage('Không thể xóa phản ánh. Vui lòng thử lại.');
+      setInfoModalTitle(t('profile.error'));
+      setInfoModalMessage(t('profile.reportDeleteFailed'));
       setShowInfoModal(true);
     }
   };
@@ -333,7 +331,7 @@ const ProfileScreen = () => {
                       color={canEdit ? theme.colors.primary : theme.colors.textSecondary}
                     />
                     <Text style={[styles.menuOptionText, !canEdit && styles.menuOptionTextDisabled]}>
-                      Sửa
+                      {t('profile.edit')}
                     </Text>
                   </TouchableOpacity>
 
@@ -352,7 +350,7 @@ const ProfileScreen = () => {
                       color={canDelete ? theme.colors.error : theme.colors.textSecondary}
                     />
                     <Text style={[styles.menuOptionText, !canDelete && styles.menuOptionTextDisabled]}>
-                      Xóa
+                      {t('profile.delete')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -367,16 +365,16 @@ const ProfileScreen = () => {
   const renderEmpty = () => (
     <View style={styles.emptyState}>
       <Icon name="notebook-outline" size={64} color={theme.colors.textSecondary} />
-      <Text style={styles.emptyStateTitle}>Chưa có phản ánh nào</Text>
+      <Text style={styles.emptyStateTitle}>{t('profile.noReportsYet')}</Text>
       <Text style={styles.emptyStateText}>
-        Hãy tạo phản ánh đầu tiên của bạn để cải thiện thành phố
+        {t('profile.createFirstReport')}
       </Text>
       <TouchableOpacity
         style={styles.createButton}
         onPress={() => (navigation as any).navigate('CreateReport')}
       >
         <Icon name="plus-circle" size={20} color={theme.colors.white} />
-        <Text style={styles.createButtonText}>Tạo phản ánh mới</Text>
+        <Text style={styles.createButtonText}>{t('profile.createReport')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -428,8 +426,8 @@ const ProfileScreen = () => {
                 </View>
               </View>
 
-              <Text style={styles.userName}>{user?.name || 'Người dùng'}</Text>
-              <Text style={styles.userRole}>Cư dân TP.HCM</Text>
+              <Text style={styles.userName}>{user?.name || t('profile.user')}</Text>
+              <Text style={styles.userRole}>{t('profile.citizenHCM')}</Text>
             </View>
           </View>
 
@@ -439,14 +437,14 @@ const ProfileScreen = () => {
               <Text style={styles.statValue}>
                 {totalReportCount > 0 ? totalReportCount : myReports.length}
               </Text>
-              <Text style={styles.statLabel}>Báo cáo</Text>
+              <Text style={styles.statLabel}>{t('profile.reports')}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>
                 {user?.roles?.join(', ') || 'citizen'}
               </Text>
-              <Text style={styles.statLabel}>Vai trò</Text>
+              <Text style={styles.statLabel}>{t('common.role.citizen')}</Text>
             </View>
           </View>
         </View>
@@ -454,7 +452,7 @@ const ProfileScreen = () => {
 
       {/* My Reports Title */}
       <View style={styles.reportsHeader}>
-        <Text style={styles.reportsTitle}>Phản ánh của tôi</Text>
+        <Text style={styles.reportsTitle}>{t('profile.reportsTitle')}</Text>
       </View>
     </>
   );
@@ -466,7 +464,7 @@ const ProfileScreen = () => {
       {reportsLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Đang tải...</Text>
+          <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       ) : (
         <FlatList
@@ -523,7 +521,7 @@ const ProfileScreen = () => {
 
             {/* Modal Header */}
             <View style={styles.menuModalHeader}>
-              <Text style={styles.menuModalTitle}>Cài đặt</Text>
+              <Text style={styles.menuModalTitle}>{t('profile.settings')}</Text>
               <TouchableOpacity onPress={handleCloseMenuModal}>
                 <Icon name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
@@ -571,11 +569,11 @@ const ProfileScreen = () => {
       <ModalCustom
         isModalVisible={showLogoutModal}
         setIsModalVisible={setShowLogoutModal}
-        title="Đăng xuất"
+        title={t('profile.logout')}
         onPressAction={handleLogout}
       >
         <Text style={styles.modalMessage}>
-          Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?
+          {t('profile.logoutConfirm')}
         </Text>
       </ModalCustom>
 
@@ -583,11 +581,11 @@ const ProfileScreen = () => {
       <ModalCustom
         isModalVisible={showDeleteModal}
         setIsModalVisible={setShowDeleteModal}
-        title="Xóa phản ánh"
+        title={t('profile.confirmDeleteReport')}
         onPressAction={confirmDeleteReport}
       >
         <Text style={styles.modalMessage}>
-          Bạn có chắc chắn muốn xóa phản ánh này? Hành động này không thể hoàn tác.
+          {t('profile.confirmDeleteReportDesc')}
         </Text>
       </ModalCustom>
 
@@ -597,7 +595,7 @@ const ProfileScreen = () => {
         setIsModalVisible={setShowInfoModal}
         title={infoModalTitle}
         onPressAction={() => setShowInfoModal(false)}
-        actionText="Đóng"
+        actionText={t('profile.close')}
         isClose={false}
       >
         <Text style={styles.modalMessage}>

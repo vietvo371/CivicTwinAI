@@ -11,6 +11,7 @@ import ModalCustom from '../../component/ModalCustom';
 import ButtonCustom from '../../component/ButtonCustom';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, SCREEN_PADDING, wp } from '../../theme';
 import { reportService } from '../../services/reportService';
+import { useTranslation } from '../../hooks/useTranslation';
 
 import { ReportDetail } from '../../types/api/report';
 
@@ -19,6 +20,7 @@ type ReportDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
 const VOTE_STORAGE_KEY = 'user_votes';
 
 const ReportDetailScreen = () => {
+  const { t } = useTranslation();
   const route = useRoute<ReportDetailRouteProp>();
   const navigation = useNavigation();
   const { id } = route.params;
@@ -150,11 +152,11 @@ const ReportDetailScreen = () => {
 
   const getStatusColor = (status: number) => {
     switch (status) {
-      case 0: return theme.colors.warning;     // Tiếp nhận
-      case 1: return theme.colors.info;        // Đã xác minh
-      case 2: return '#8B5CF6';                // Đang xử lý - Purple
-      case 3: return theme.colors.success;     // Hoàn thành
-      case 4: return theme.colors.error;       // Từ chối
+      case 0: return theme.colors.warning;     // {{status:received}}
+      case 1: return theme.colors.info;        // {{status:verified}}
+      case 2: return '#8B5CF6';                // {{status:processing}}
+      case 3: return theme.colors.success;     // {{status:completed}}
+      case 4: return theme.colors.error;       // {{status:rejected}}
       default: return theme.colors.textSecondary;
     }
   };
@@ -162,22 +164,22 @@ const ReportDetailScreen = () => {
   const getPriorityColor = (capDo: number) => {
     // cap_do: 0=low, 1=medium, 2=high, 3=urgent
     switch (capDo) {
-      case 3: return theme.colors.error;      // Khẩn cấp
-      case 2: return theme.colors.warning;    // Cao  
-      case 1: return theme.colors.info;       // Trung bình
-      default: return theme.colors.success;   // Thấp
+      case 3: return theme.colors.error;      // {{priority:urgent}}
+      case 2: return theme.colors.warning;    // {{priority:high}}
+      case 1: return theme.colors.info;       // {{priority:medium}}
+      default: return theme.colors.success;   // {{priority:low}}
     }
   };
 
   const getStatusText = (status: number): string => {
-    switch (status) {
-      case 0: return 'Tiếp nhận';
-      case 1: return 'Đã xác minh';
-      case 2: return 'Đang xử lý';
-      case 3: return 'Hoàn thành';
-      case 4: return 'Từ chối';
-      default: return 'Không rõ';
-    }
+    const labels: Record<number, string> = {
+      0: t('reports.status.received'),
+      1: t('reports.status.verified'),
+      2: t('reports.status.processing'),
+      3: t('reports.status.completed'),
+      4: t('reports.status.rejected'),
+    };
+    return labels[status] ?? t('reports.status.unknown');
   };
 
   if (loading) {
@@ -191,15 +193,15 @@ const ReportDetailScreen = () => {
   if (!report) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Không tìm thấy phản ánh</Text>
-        <ButtonCustom title="Quay lại" onPress={() => navigation.goBack()} style={{ marginTop: SPACING.md }} />
+        <Text style={styles.errorText}>{t('reports.notFound')}</Text>
+        <ButtonCustom title={t('reports.goBack')} onPress={() => navigation.goBack()} style={{ marginTop: SPACING.md }} />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.safeTop} edges={['top']}>
-      <PageHeader title="Chi tiết phản ánh" variant="default" />
+      <PageHeader title={t('reports.reportDetail')} variant="default" />
 
       <View style={styles.body}>
       <KeyboardAvoidingView
@@ -236,7 +238,7 @@ const ReportDetailScreen = () => {
               </View>
               <View style={styles.metaItem}>
                 <Icon name="eye-outline" size={14} color={theme.colors.textSecondary} />
-                <Text style={styles.metaText}>{report.luot_xem} lượt xem</Text>
+                <Text style={styles.metaText}>{t('reports.viewsLabel', { count: report.luot_xem })}</Text>
               </View>
             </View>
 
@@ -248,7 +250,7 @@ const ReportDetailScreen = () => {
 
           {/* Description Card */}
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Mô tả chi tiết</Text>
+            <Text style={styles.sectionTitle}>{t('reports.descriptionSection')}</Text>
             <Text style={styles.description}>{report.mo_ta}</Text>
 
             {/* Media Gallery */}
@@ -285,7 +287,7 @@ const ReportDetailScreen = () => {
                   onPress={() => setShowRatingModal(true)}
                 >
                   <Icon name="star" size={18} color={theme.colors.warning} />
-                  <Text style={styles.rateButtonText}>Đánh giá</Text>
+                  <Text style={styles.rateButtonText}>{t('reports.rate')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -293,7 +295,7 @@ const ReportDetailScreen = () => {
 
           {/* Comments Section */}
           <View style={styles.commentsSection}>
-            <Text style={styles.sectionTitle}>Bình luận ({report.binh_luans?.length || 0})</Text>
+            <Text style={styles.sectionTitle}>{t('reports.comments', { count: report.binh_luans?.length || 0 })}</Text>
             {report.binh_luans && report.binh_luans.length > 0 ? (
               report.binh_luans.map((comment) => (
                 <View key={comment.id} style={styles.commentItem}>
@@ -306,7 +308,7 @@ const ReportDetailScreen = () => {
                       </View>
                       <View>
                         <Text style={styles.commentUser}>
-                          {(comment as any).user?.ho_ten || (comment as any).nguoi_dung?.ho_ten || 'Người dùng'}
+                          {(comment as any).user?.ho_ten || (comment as any).nguoi_dung?.ho_ten || t('profile.user')}
                         </Text>
                         <Text style={styles.commentTime}>
                           {new Date(comment.created_at || comment.ngay_tao || '').toLocaleDateString('vi-VN')}
@@ -319,7 +321,7 @@ const ReportDetailScreen = () => {
               ))
             ) : (
               <View style={styles.emptyComments}>
-                <Text style={styles.emptyCommentsText}>Chưa có bình luận nào. Hãy là người đầu tiên!</Text>
+                <Text style={styles.emptyCommentsText}>{t('reports.emptyComments')}</Text>
               </View>
             )}
           </View>
@@ -330,7 +332,7 @@ const ReportDetailScreen = () => {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder="Viết bình luận của bạn..."
+              placeholder={t('reports.commentPlaceholder')}
               value={commentText}
               onChangeText={setCommentText}
               multiline
@@ -375,8 +377,8 @@ const ReportDetailScreen = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Đánh giá kết quả xử lý</Text>
-            <Text style={styles.modalSubtitle}>Bạn cảm thấy thế nào về kết quả xử lý phản ánh này?</Text>
+            <Text style={styles.modalTitle}>{t('reports.ratingTitle')}</Text>
+            <Text style={styles.modalSubtitle}>{t('reports.ratingSubtitle')}</Text>
 
             <View style={styles.ratingContainer}>
               {[1, 2, 3, 4, 5].map((star) => (
@@ -395,7 +397,7 @@ const ReportDetailScreen = () => {
                 style={styles.cancelButton}
                 onPress={() => setShowRatingModal(false)}
               >
-                <Text style={styles.cancelButtonText}>Hủy</Text>
+                <Text style={styles.cancelButtonText}>{t('reports.ratingCancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.submitRatingButton}
@@ -405,7 +407,7 @@ const ReportDetailScreen = () => {
                 {submittingRating ? (
                   <ActivityIndicator size="small" color={theme.colors.white} />
                 ) : (
-                  <Text style={styles.submitRatingText}>Gửi đánh giá</Text>
+                  <Text style={styles.submitRatingText}>{t('reports.ratingSubmit')}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -416,12 +418,12 @@ const ReportDetailScreen = () => {
       <ModalCustom
         isModalVisible={showSuccessModal}
         setIsModalVisible={setShowSuccessModal}
-        title="Cảm ơn bạn!"
+        title={t('reports.ratingThanks')}
         type="success"
         isClose={true}
-        actionText="Đóng"
+        actionText={t('profile.close')}
       >
-        <Text style={styles.successText}>Đánh giá của bạn đã được ghi nhận.</Text>
+        <Text style={styles.successText}>{t('reports.ratingRecorded')}</Text>
       </ModalCustom>
     </SafeAreaView>
   );

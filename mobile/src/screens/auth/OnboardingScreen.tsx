@@ -12,29 +12,29 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const getOnboardingData = (t: any) => [
+const getOnboardingData = (t: (key: string) => string) => [
   {
     id: 1,
-    title: 'Chào mừng đến với CivicTwinAI',
-    description: 'Hệ thống báo cáo và xử lý sự cố đô thị thông minh, kết nối người dân và chính quyền',
+    title: t('onboarding.welcomeTitle'),
+    description: t('onboarding.welcomeDescription'),
     image: require('../../assets/images/started/welcom.jpg'),
   },
   {
     id: 2,
-    title: 'Báo cáo sự cố dễ dàng',
-    description: 'Chụp ảnh, định vị và mô tả sự cố chỉ trong vài giây. Hệ thống sẽ tự động phân loại và chuyển đến cơ quan có thẩm quyền',
+    title: t('onboarding.mapTitle'),
+    description: t('onboarding.mapDescription'),
     image: require('../../assets/images/started/map.jpg'),
   },
   {
     id: 3,
-    title: 'AI hỗ trợ thông minh',
-    description: 'Trí tuệ nhân tạo phân tích và dự đoán sự cố, giúp tối ưu hóa quy trình xử lý và phòng ngừa',
+    title: t('onboarding.aiTitle'),
+    description: t('onboarding.aiDescription'),
     image: require('../../assets/images/started/AiGreen.jpg'),
   },
   {
     id: 4,
-    title: 'Cộng đồng kết nối',
-    description: 'Theo dõi tiến độ xử lý, đánh giá chất lượng dịch vụ và xây dựng thành phố thông minh cùng nhau',
+    title: t('onboarding.communityTitle'),
+    description: t('onboarding.communityDescription'),
     image: require('../../assets/images/started/community.jpg'),
   },
 ];

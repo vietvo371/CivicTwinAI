@@ -19,6 +19,7 @@ import InputCustom from '../../component/InputCustom';
 import ButtonCustom from '../../component/ButtonCustom';
 import LoadingOverlay from '../../component/LoadingOverlay';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface RegisterScreenProps {
   navigation: any;
@@ -26,6 +27,7 @@ interface RegisterScreenProps {
 
 const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const { signUp } = useAuth();
+  const { t } = useTranslation();
 
   const initialFormData = {
     name: '',
@@ -144,12 +146,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       // Reset form before navigating
       resetForm();
 
-      AlertService.success('Đăng ký thành công', 'Tài khoản của bạn đã được tạo thành công',
+      AlertService.success(t('auth.registrationSuccessful'), t('auth.accountCreatedSuccess'),
         [
           {
-            text: 'Xác nhận',
+            text: t('auth.confirm'),
             onPress: () => {
-              // Navigate to login sau khi đăng ký thành công
               navigation.navigate('Login');
             }
           }
@@ -210,7 +211,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           currentStep === 2 ? 'full_name' : 'password';
 
         setErrors({
-          [currentStepFirstField]: 'Đăng ký thất bại. Vui lòng thử lại.'
+          [currentStepFirstField]: t('auth.registerFailedGeneric')
         });
       }
     } finally {
@@ -224,41 +225,41 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     switch (field) {
       case 'email':
         if (!value) {
-          error = 'Vui lòng nhập email';
+          error = t('auth.emailRequired');
         } else if (!/\S+@\S+\.\S+/.test(value)) {
-          error = 'Email không hợp lệ';
+          error = t('auth.validEmail');
         }
         break;
 
       case 'phone':
         if (!value) {
-          error = 'Vui lòng nhập số điện thoại';
+          error = t('auth.phoneRequired');
         } else if (!/^[0-9+().\-\s]{7,15}$/.test(value)) {
-          error = 'Số điện thoại không hợp lệ';
+          error = t('auth.phoneInvalid');
         }
         break;
 
       case 'name':
         if (!value) {
-          error = 'Vui lòng nhập họ tên';
+          error = t('auth.nameRequired');
         } else if (value.length < 2) {
-          error = 'Họ tên phải có ít nhất 2 ký tự';
+          error = t('auth.nameMinLength');
         }
         break;
 
       case 'password':
         if (!value) {
-          error = 'Vui lòng nhập mật khẩu';
+          error = t('auth.passwordRequired');
         } else if (value.length < 6) {
-          error = 'Mật khẩu phải có ít nhất 6 ký tự';
+          error = t('auth.passwordMinLength');
         }
         break;
 
       case 're_password':
         if (!value) {
-          error = 'Vui lòng xác nhận mật khẩu';
+          error = t('auth.confirmPasswordRequired');
         } else if (value !== formData.password) {
-          error = 'Mật khẩu không khớp';
+          error = t('auth.passwordsNotMatch');
         }
         break;
     }
@@ -287,16 +288,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   };
 
   const getPasswordStrengthText = (strength: number) => {
-    if (strength <= 2) return { text: 'Yếu', color: theme.colors.error };
-    if (strength <= 4) return { text: 'Trung bình', color: theme.colors.warning };
-    return { text: 'Mạnh', color: theme.colors.success };
+    if (strength <= 2) return { text: t('auth.weak'), color: theme.colors.error };
+    if (strength <= 4) return { text: t('auth.medium'), color: theme.colors.warning };
+    return { text: t('auth.strong'), color: theme.colors.success };
   };
 
   const renderStep1 = () => (
     <View style={styles.form}>
       <InputCustom
-        label="Email"
-        placeholder="Nhập địa chỉ email"
+        label={t('auth.email')}
+        placeholder={t('auth.enterEmailRegister')}
         value={formData.email}
         onChangeText={value => updateFormData('email', value)}
         keyboardType="email-address"
@@ -308,8 +309,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       />
 
       <InputCustom
-        label="Số điện thoại"
-        placeholder="Nhập số điện thoại"
+        label={t('auth.phone')}
+        placeholder={t('auth.phonePlaceholder')}
         value={formData.phone}
         onChangeText={value => updateFormData('phone', value)}
         keyboardType="phone-pad"
@@ -324,8 +325,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const renderStep2 = () => (
     <View style={styles.form}>
       <InputCustom
-        label="Họ và tên"
-        placeholder="Nhập họ và tên đầy đủ"
+        label={t('auth.fullName')}
+        placeholder={t('auth.enterFullNameRegister')}
         value={formData.name}
         onChangeText={value => updateFormData('name', value)}
         error={errors.full_name}
@@ -339,8 +340,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const renderStep3 = () => (
     <View style={styles.form}>
       <InputCustom
-        label="Mật khẩu"
-        placeholder="Tạo mật khẩu"
+        label={t('auth.password')}
+        placeholder={t('auth.createPasswordRegister')}
         value={formData.password}
         onChangeText={(text) => {
           updateFormData('password', text);
@@ -378,8 +379,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       )}
 
       <InputCustom
-        label="Xác nhận mật khẩu"
-        placeholder="Nhập lại mật khẩu"
+        label={t('auth.passwordConfirmation')}
+        placeholder={t('auth.confirmPasswordPlaceholder')}
         value={formData.re_password}
         onChangeText={value => updateFormData('re_password', value)}
         secureTextEntry={!showConfirmPassword}
@@ -416,10 +417,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     >
       <View style={styles.formHeader}>
         <Text style={styles.formTitle}>
-          Đăng ký tài khoản
+          {t('auth.registerAccount')}
         </Text>
         <Text style={styles.formSubtitle}>
-          Tham gia CivicTwinAI để góp phần xây dựng thành phố thông minh
+          {t('auth.welcomeBackJourney')}
         </Text>
         {renderStepIndicator()}
       </View>
@@ -430,13 +431,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
 
       <View style={styles.buttonContainer}>
         <ButtonCustom
-          title={currentStep === 1 ? 'Hủy' : 'Quay lại'}
+          title={currentStep === 1 ? t('auth.cancel') : t('auth.back')}
           onPress={handleBack}
           style={styles.backButton}
           variant="outline"
         />
         <ButtonCustom
-          title={currentStep === totalSteps ? 'Đăng ký' : 'Tiếp theo'}
+          title={currentStep === totalSteps ? t('auth.register') : t('auth.next')}
           onPress={handleNext}
           style={styles.nextButton}
           icon={currentStep === totalSteps ? "account-plus" : "chevron-right"}
@@ -486,14 +487,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={styles.welcomeText}
               entering={FadeInDown.duration(800).delay(200).springify()}
             >
-              Chào mừng đến với CivicTwinAI
+              {t('auth.welcomeCivicTwin')}
             </Animated.Text>
 
             <Animated.Text
               style={styles.title}
               entering={FadeInDown.duration(800).delay(400).springify()}
             >
-              Đăng ký tài khoản
+              {t('auth.registerAccount')}
             </Animated.Text>
           </Animated.View>
 
@@ -510,8 +511,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={styles.loginLink}
             >
               <Text style={styles.loginText}>
-                Đã có tài khoản?{' '}
-                <Text style={styles.loginLinkText}>Đăng nhập ngay</Text>
+                {t('auth.alreadyHaveAccount')}{' '}
+                <Text style={styles.loginLinkText}>{t('auth.loginNow')}</Text>
               </Text>
             </TouchableOpacity>
 
@@ -519,14 +520,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             <View style={styles.securityBadge}>
               <Icon name="shield-check" size={16} color={theme.colors.primary} />
               <Text style={styles.securityText}>
-                Dữ liệu được bảo mật và mã hóa
+                {t('auth.dataEncrypted')}
               </Text>
             </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <LoadingOverlay visible={loading} message="Đang đăng ký tài khoản..." />
+      <LoadingOverlay visible={loading} message={t('auth.registering')} />
 
     </SafeAreaView>
   );

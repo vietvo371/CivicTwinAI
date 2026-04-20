@@ -26,6 +26,7 @@ import { useNotifications, Notification as WSNotification } from '../../hooks/us
 import { notificationService } from '../../services/notificationService';
 import { Notification as APINotification } from '../../types/api/notification';
 import { isUuid } from '../../utils/isUuid';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface UnifiedNotification {
   id: string;
@@ -102,6 +103,7 @@ const NotificationsScreen = () => {
   const navigation = useNavigation();
   const wsHook = useNotifications();
   const { fetchUnreadCount } = wsHook;
+  const { t } = useTranslation();
 
   const [apiNotifications, setApiNotifications] = useState<APINotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,9 +183,9 @@ const NotificationsScreen = () => {
     yesterday.setDate(yesterday.getDate() - 1);
 
     const groups: { title: string; data: UnifiedNotification[] }[] = [
-      { title: 'Hôm nay', data: [] },
-      { title: 'Hôm qua', data: [] },
-      { title: 'Trước đó', data: [] },
+      { title: t('notifications.today'), data: [] },
+      { title: t('notifications.yesterday'), data: [] },
+      { title: t('notifications.earlier'), data: [] },
     ];
 
     notifications.forEach(notif => {
@@ -325,7 +327,7 @@ const NotificationsScreen = () => {
           </Text>
           {showDetailCta && (
             <View style={styles.ctaRow}>
-              <Text style={[styles.ctaText, { color: COLORS.primary }]}>Xem phản ánh</Text>
+              <Text style={[styles.ctaText, { color: COLORS.primary }]}>{t('notifications.seeReport')}</Text>
               <Icon name="arrow-right" size={16} color={COLORS.primary} />
             </View>
           )}
@@ -339,7 +341,7 @@ const NotificationsScreen = () => {
   const listHeader = (
     <View style={styles.listIntro}>
       <Text style={styles.listIntroText}>
-        Thông báo từ hệ thống CivicTwin và cập nhật phản ánh của bạn.
+        {t('notifications.systemNotifications')}
       </Text>
     </View>
   );
@@ -347,7 +349,7 @@ const NotificationsScreen = () => {
   return (
     <SafeAreaView style={styles.safeTop} edges={['top']}>
       <PageHeader
-        title="Thông báo"
+        title={t('notifications.title')}
         variant="default"
         rightIcon="check-all"
         onRightPress={handleMarkAllRead}
@@ -359,7 +361,7 @@ const NotificationsScreen = () => {
         {loading && !refreshing ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingLabel}>Đang tải…</Text>
+            <Text style={styles.loadingLabel}>{t('notifications.loading')}</Text>
           </View>
         ) : (
           <SectionList
@@ -384,9 +386,9 @@ const NotificationsScreen = () => {
                 <View style={styles.emptyIconWrap}>
                   <Icon name="bell-sleep-outline" size={40} color={COLORS.primary} />
                 </View>
-                <Text style={styles.emptyTitle}>Chưa có thông báo</Text>
+                <Text style={styles.emptyTitle}>{t('notifications.noNotificationsYet')}</Text>
                 <Text style={styles.emptySub}>
-                  Khi có cập nhật phản ánh hoặc sự cố liên quan, bạn sẽ thấy tại đây.
+                  {t('notifications.notificationsWillAppear')}
                 </Text>
               </View>
             }

@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import PageHeader from '../../component/PageHeader';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE, SCREEN_PADDING } from '../../theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const LANGUAGE_KEY = '@app_language';
 
@@ -19,14 +20,12 @@ interface Language {
 const LANGUAGES: Language[] = [
     { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', flag: '🇻🇳' },
     { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧' },
-    { code: 'zh', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
-    { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵' },
-    { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
 ];
 
 const LanguageSettingsScreen = () => {
     const navigation = useNavigation();
     const insets = useSafeAreaInsets();
+    const { t, changeLanguage } = useTranslation();
     const [selectedLanguage, setSelectedLanguage] = useState('vi');
 
     React.useEffect(() => {
@@ -46,10 +45,9 @@ const LanguageSettingsScreen = () => {
 
     const handleSelectLanguage = async (code: string) => {
         try {
+            await changeLanguage(code);
             await AsyncStorage.setItem(LANGUAGE_KEY, code);
             setSelectedLanguage(code);
-            // TODO: Implement i18n language switching
-            // i18n.changeLanguage(code);
         } catch (error) {
             console.error('Error saving language:', error);
         }
@@ -59,14 +57,14 @@ const LanguageSettingsScreen = () => {
         <SafeAreaView style={styles.container} edges={[]}>
             <StatusBar barStyle="dark-content" backgroundColor={theme.colors.white} />
             <View style={{ backgroundColor: theme.colors.white, paddingTop: insets.top }}>
-                <PageHeader title="Ngôn ngữ" variant="default" />
+                <PageHeader title={t('language.title')} variant="default" />
             </View>
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Chọn ngôn ngữ hiển thị</Text>
+                    <Text style={styles.sectionTitle}>{t('language.selectLanguage')}</Text>
                     <Text style={styles.sectionDescription}>
-                        Thay đổi ngôn ngữ hiển thị của ứng dụng
+                        {t('language.title')}
                     </Text>
 
                     <View style={styles.languageList}>
@@ -97,7 +95,7 @@ const LanguageSettingsScreen = () => {
                 <View style={styles.noteSection}>
                     <Icon name="information-outline" size={ICON_SIZE.md} color={theme.colors.info} />
                     <Text style={styles.noteText}>
-                        Một số nội dung có thể chưa được dịch hoàn toàn. Chúng tôi đang nỗ lực cải thiện.
+                        {t('common.noData')}
                     </Text>
                 </View>
             </ScrollView>
