@@ -14,7 +14,7 @@ class PredictionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Prediction::with('predictionEdges.edge');
+        $query = Prediction::with(['predictionEdges.edge', 'incident']);
 
         if ($request->has('incident_id')) {
             $query->where('incident_id', $request->incident_id);

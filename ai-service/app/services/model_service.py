@@ -96,7 +96,7 @@ class ModelService:
                 num_nodes=num_nodes,
                 seq_len=seq_len,
                 pred_len=pred_len,
-                hidden_channels=hidden,
+                hidden=hidden,
                 adj=adj,
             )
             self.model.load_state_dict(checkpoint['model_state_dict'], strict=False)
@@ -212,21 +212,24 @@ class ModelService:
         pred_len = self.config.get('pred_len', 6)
         num_edges = len(histories)
 
-        # Build (batch, seq_len, num_nodes) tensor
-        batch = []
+        # Build (1, seq_len, num_nodes) tensor — ST-GCN forward expects (B, T, N)
+        padded = []
         for h in histories:
-            h = self._pad_or_trim(h, seq_len)
-            batch.append(h)
-        x = torch.FloatTensor(batch)  # (num_edges, seq_len)
+            padded.append(self._pad_or_trim(h, seq_len))
+        # Pad node dim to num_nodes if fewer edges than model expects
+        num_nodes = max(num_edges, self.num_nodes)
+        node_data = padded + [[0.3] * seq_len] * (num_nodes - num_edges)
+        # node_data: (num_nodes, seq_len) → (1, seq_len, num_nodes)
+        x = torch.FloatTensor(node_data).T.unsqueeze(0)
 
         with torch.no_grad():
-            preds = self.model(x)  # (num_edges, pred_len, num_nodes)
+            preds = self.model(x)  # (1, pred_len, num_nodes)
 
         val_mae = self.metrics.get('val_mae', 0.05)
-        confidence = max(0.0, min(1.0, 1 - val_mae * 10))
+        confidence = max(0.0, min(1.0, 1 - float(val_mae) * 10))
 
-        # Return as list of per-edge predictions
-        pred_list = preds[:, :, 0].tolist()  # (num_edges, pred_len)
+        # preds: (1, pred_len, num_nodes) → take first num_edges nodes → (num_edges, pred_len)
+        pred_list = preds[0, :, :num_edges].T.tolist()  # (num_edges, pred_len)
 
         return {
             "predictions": [[round(float(p), 4) for p in edge_pred] for edge_pred in pred_list],

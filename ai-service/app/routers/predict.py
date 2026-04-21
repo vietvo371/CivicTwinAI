@@ -246,6 +246,17 @@ async def simulate_traffic(request: SimulateRequest):
     }
 
 
+def _to_serializable(obj):
+    """Recursively convert numpy/torch types to Python native for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: _to_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_serializable(v) for v in obj]
+    if hasattr(obj, 'item'):  # numpy scalar or torch tensor scalar
+        return obj.item()
+    return obj
+
+
 @router.get("/model-info")
 async def get_model_info():
     """
@@ -263,8 +274,8 @@ async def get_model_info():
         "architecture": model_service.model_info.get("architecture", ""),
         "model_type": model_service.model_type,
         "status": "active",
-        "metrics": model_service.metrics,
-        "config": model_service.config,
+        "metrics": _to_serializable(model_service.metrics),
+        "config": _to_serializable(model_service.config),
         "input_window": model_service.model_info.get("input_window", ""),
         "output_window": model_service.model_info.get("output_window", ""),
         "framework": model_service.model_info.get("framework", "PyTorch"),
@@ -282,27 +293,30 @@ def _build_recommendations(severity: str, predictions: list, model_type: str) ->
 
     recs = []
 
-    if severity in ["high", "critical"] and (critical_count + high_count) > 0:
+    total_affected = critical_count + high_count
+
+    if severity in ["high", "critical"] and total_affected > 0:
         recs.append(Recommendation(
             type="reroute",
             description=(
-                f"ST-GCN predicted {critical_count + high_count} affected segments. "
-                "Recommend rerouting traffic via parallel arterial roads."
+                f"Đề xuất chuyển hướng — {model_type.upper()} dự báo tắc nghẽn lan rộng {total_affected} đoạn."
             ),
             alternative_edges=[],
             estimated_time_saved_seconds=300,
         ))
         recs.append(Recommendation(
             type="signal_change",
-            description="Increase green phase by 15s at key intersections to reduce queue overflow.",
+            description=(
+                f"Điều chỉnh pha đèn xanh +15s tại các nút giao để giải tỏa hàng chờ "
+                f"({critical_count} đoạn nghiêm trọng, {high_count} đoạn cao)."
+            ),
             alternative_edges=[],
             estimated_time_saved_seconds=120,
         ))
         recs.append(Recommendation(
             type="alternative_route",
             description=(
-                f"Activate emergency vehicle priority routing for ambulance/fire trucks. "
-                f"Model: {model_type.upper()} — captures spatial spread of congestion."
+                f"Kích hoạt tuyến ưu tiên cứu hộ — tránh các đoạn đường bị ảnh hưởng."
             ),
             alternative_edges=[],
             estimated_time_saved_seconds=240,
@@ -310,7 +324,10 @@ def _build_recommendations(severity: str, predictions: list, model_type: str) ->
     elif severity == "medium":
         recs.append(Recommendation(
             type="advisory",
-            description="Moderate congestion predicted. Advisory warning to commuters recommended.",
+            description=(
+                f"Cảnh báo ùn tắc — khuyến cáo chọn đường khác. "
+                f"{model_type.upper()} dự báo mật độ tăng trong 30 phút tới."
+            ),
             alternative_edges=[],
             estimated_time_saved_seconds=0,
         ))

@@ -148,10 +148,8 @@ class IncidentController extends Controller
         // Broadcast realtime event to all connected clients
         IncidentCreated::dispatch($incident);
 
-        // Dispatch AI prediction job for medium+ severity
-        if (in_array($validated['severity'], ['medium', 'high', 'critical'])) {
-            CallAIPrediction::dispatch($incident);
-        }
+        // Dispatch AI prediction job for all severities
+        CallAIPrediction::dispatch($incident);
 
         return ApiResponse::created($incident->fresh(['reporter']), 'api.incident_created');
     }

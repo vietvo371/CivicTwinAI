@@ -52,9 +52,10 @@
 ### 🟡 Ưu tiên trung bình (cải thiện điểm Technical)
 
 #### 4. ST-GCN Model — ✅ Đã implement + fix (hoàn chỉnh)
->- **Trạng thái:** ✅ Hoàn thành hoàn toàn sau khi fix 2 issues:
+>- **Trạng thái:** ✅ Hoàn thành hoàn toàn sau khi fix 3 issues:
 >  1. **ST-GCN dùng real data**: Thêm `fetch_edge_history()` → query `sensor_readings` từ DB thay vì fake `[0.3]*12`
 >  2. **Deduplicate predictions**: Fix logic merge ST-GCN + BFS cascade → không còn trùng lặp edge
+>  3. **ST-GCN load crash**: `model_service.py` truyền `hidden_channels=hidden` nhưng `TrafficSTGCN.__init__` khai báo tham số là `hidden` → đổi `hidden_channels=hidden` → `hidden=hidden`
 >- **ST-GCN model:** `TrafficSTGCN-v1.0` — sparse GCN (không cần torch_geometric)
 >  - Spatial layer: sparse matrix multiply với normalized adjacency `D^{-1/2}(A+I)D^{-1/2}`
 >  - Temporal layer: causal 1D conv (kernel=3, per-node)

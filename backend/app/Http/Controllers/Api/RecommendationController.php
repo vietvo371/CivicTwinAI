@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\RecommendationGenerated;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Models\Recommendation;
@@ -32,7 +33,7 @@ class RecommendationController extends Controller
 
     public function show(Recommendation $recommendation): JsonResponse
     {
-        $recommendation->load(['incident', 'prediction.predictionEdges', 'approver']);
+        $recommendation->load(['incident', 'prediction.predictionEdges.edge', 'approver']);
 
         return ApiResponse::success($recommendation, 'api.recommendation_details');
     }
@@ -48,6 +49,8 @@ class RecommendationController extends Controller
             'approved_by' => $request->user()->id,
             'approved_at' => now(),
         ]);
+
+        broadcast(new RecommendationGenerated($recommendation, 'approved'));
 
         $this->dispatchRecommendationNotifications($recommendation, $request->user(), 'approve');
 

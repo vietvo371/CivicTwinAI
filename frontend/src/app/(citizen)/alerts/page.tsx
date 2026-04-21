@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "@/lib/i18n";
-import { useEcho } from "@/hooks/useEcho";
+import { useEcho, useEchoMulti } from "@/hooks/useEcho";
 import api from "@/lib/api";
 import { Bell, AlertTriangle, Info, ShieldAlert, MapPin, Clock, Filter, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,18 +51,31 @@ export default function AlertsPage() {
     fetchAlerts();
   }, []);
 
-  // Real-time: new incidents appear as alerts
-  useEcho<any>('traffic', 'IncidentCreated', (data) => {
-    const newAlert: Alert = {
-      id: data.id || Date.now(),
-      title: data.title || 'New Incident',
-      description: data.description || '',
-      severity: mapSeverity(data.severity || 'medium'),
-      area: data.location_name || '',
-      created_at: data.created_at || new Date().toISOString(),
-      active: true,
-    };
-    setLiveAlerts(prev => [newAlert, ...prev]);
+  // Real-time: new incidents + approved recommendations appear as alerts
+  useEchoMulti('traffic', {
+    IncidentCreated: (data: any) => {
+      setLiveAlerts(prev => [{
+        id: data.id || Date.now(),
+        title: data.title || 'New Incident',
+        description: data.description || '',
+        severity: mapSeverity(data.severity || 'medium'),
+        area: data.location_name || '',
+        created_at: data.created_at || new Date().toISOString(),
+        active: true,
+      }, ...prev]);
+    },
+    RecommendationGenerated: (data: any) => {
+      if (data.action !== 'approved') return;
+      setLiveAlerts(prev => [{
+        id: Date.now(),
+        title: t('citizen.trafficAdvisory') || 'Traffic Advisory',
+        description: data.description || t('citizen.trafficAdvisoryDesc') || 'A traffic management recommendation has been approved. Please check your route.',
+        severity: 'warning',
+        area: '',
+        created_at: new Date().toISOString(),
+        active: true,
+      }, ...prev]);
+    },
   });
 
   const allAlerts = [...liveAlerts, ...apiAlerts];
