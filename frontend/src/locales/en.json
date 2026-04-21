@@ -798,7 +798,14 @@
     "validLocationEx": "E.g., Nguyen Van Linh intersection, Dragon Bridge...",
     "validDescMin": "Description is too short (minimum 10 characters).",
     "validDescEx": "Clear descriptions help the rescue team respond faster.",
-    "imageTooLarge": "Image is too large (max 5MB)."
+    "imageTooLarge": "Image is too large (max 5MB).",
+    "incidentType": {
+      "accident": "Accident",
+      "congestion": "Congestion",
+      "construction": "Construction",
+      "weather": "Weather",
+      "other": "Other"
+    }
   },
   "enums": {
     "roles": {

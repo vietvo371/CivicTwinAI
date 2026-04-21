@@ -82,7 +82,7 @@ class MapController extends Controller
                     'id' => $incident->id,
                     'tieu_de' => $incident->title,
                     'danh_muc' => $catId,
-                    'danh_muc_text' => __('incident_type.' . $incident->type),
+                    'danh_muc_text' => __("enums.incident_type.{$incident->type}"),
                     'trang_thai' => $statusToNum[$incident->status] ?? 0,
                     'uu_tien' => $severityToNum[$incident->severity] ?? 1,
                     'kinh_do' => (float) $incident->longitude,

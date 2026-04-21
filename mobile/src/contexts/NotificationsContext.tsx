@@ -11,6 +11,7 @@ import { useWebSocket } from './WebSocketContext';
 import { useAuth } from './AuthContext';
 import { notificationService } from '../services/notificationService';
 import { isUuid } from '../utils/isUuid';
+import { useTranslation } from '../hooks/useTranslation';
 
 export interface Notification {
   id: string;
@@ -25,20 +26,20 @@ export interface Notification {
 type RefreshCallback = () => void;
 let refreshCallbacks: RefreshCallback[] = [];
 
-function getStatusText(status: number): string {
+function getStatusKey(status: number): string {
   switch (status) {
     case 0:
-      return 'tiếp nhận';
+      return 'received';
     case 1:
-      return 'xác minh';
+      return 'verified';
     case 2:
-      return 'đang xử lý';
+      return 'processing';
     case 3:
-      return 'hoàn thành';
+      return 'completed';
     case 4:
-      return 'từ chối';
+      return 'rejected';
     default:
-      return 'cập nhật';
+      return 'updated';
   }
 }
 
@@ -56,6 +57,7 @@ interface NotificationsContextValue {
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const { isConnected, subscribe, unsubscribe, listen, subscribePusher } = useWebSocket();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -121,28 +123,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const reportTitle = data.report?.tieu_de || 'Phản ánh của bạn';
       const newStatus = data.new_status ?? data.report?.trang_thai;
       const oldStatus = data.old_status;
-      const statusText = data.status_text || getStatusText(newStatus);
-
-      let message = '';
-      switch (newStatus) {
-        case 0:
-          message = `"${reportTitle}" đã được tiếp nhận`;
-          break;
-        case 1:
-          message = `"${reportTitle}" đang được xác minh`;
-          break;
-        case 2:
-          message = `"${reportTitle}" đang được xử lý`;
-          break;
-        case 3:
-          message = `"${reportTitle}" đã hoàn thành`;
-          break;
-        case 4:
-          message = `"${reportTitle}" đã bị từ chối`;
-          break;
-        default:
-          message = `"${reportTitle}" đã cập nhật: ${statusText}`;
-      }
+      const statusKey = getStatusKey(newStatus);
+      const message = t(`notifications.messages.reportStatus.${statusKey}`, { title: reportTitle });
 
       const notification: Notification = {
         id: `report-${data.report_id || Date.now()}`,
@@ -153,7 +135,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           ...data.report,
           old_status: oldStatus,
           new_status: newStatus,
-          status_text: statusText,
+          status_key: statusKey,
         },
         timestamp: new Date(),
         read: false,
@@ -191,8 +173,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const notification: Notification = {
         id: `points-${Date.now()}`,
         type: 'points_updated',
-        title: change > 0 ? 'Điểm uy tín tăng' : 'Điểm uy tín giảm',
-        message: `${change > 0 ? '+' : ''}${change} điểm (${reason}). Tổng: ${newBalance} điểm`,
+        title: change > 0 ? t('notifications.titles.pointsIncreased') : t('notifications.titles.pointsDecreased'),
+        message: t('notifications.messages.pointsUpdate', {
+          change: `${change > 0 ? '+' : ''}${change}`,
+          reason,
+          balance: newBalance
+        }),
         data,
         timestamp: new Date(),
         read: false,
@@ -207,8 +193,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const notification: Notification = {
         id: `incident-${data.id || Date.now()}`,
         type: 'incident_created',
-        title: 'Sự cố mới',
-        message: data.title || data.tieu_de || 'Có sự cố mới trong khu vực',
+        title: t('notifications.titles.newIncident'),
+        message: data.title || data.tieu_de || t('notifications.messages.defaultIncident'),
         data,
         timestamp: new Date(),
         read: false,
@@ -240,8 +226,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const notification: Notification = {
           id: `traffic-incident-${data.id || Date.now()}`,
           type: 'incident_created',
-          title: `Sự cố ${data.severity || ''}`.trim(),
-          message: data.title || 'Sự cố giao thông mới',
+          title: t('notifications.titles.incidentWithSeverity', { severity: data.severity || '' }),
+          message: data.title || t('notifications.messages.defaultTrafficIncident'),
           data,
           timestamp: new Date(),
           read: false,
@@ -265,7 +251,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const notification: Notification = {
         id,
         type: data.type || 'report_status',
-        title: data.title || data.tieu_de || 'Thông báo mới',
+        title: data.title || data.tieu_de || t('notifications.titles.newNotification'),
         message: data.message || data.noi_dung || '',
         data,
         timestamp: new Date(),

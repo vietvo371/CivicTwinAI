@@ -435,7 +435,33 @@ const MapScreen = () => {
     }
   }, [selectedReport, selectedIncident]);
 
+  const getCleanIncidentType = (type: string | undefined | null): string => {
+    return (type || '').replace('incident_type.', '').trim();
+  };
+
+  const toFeature = (incident: Incident) => ({
+    type: 'Feature' as const,
+    id: incident.id.toString(),
+    geometry: {
+      type: 'Point' as const,
+      coordinates: [incident.location?.lng || 108.2122, incident.location?.lat || 16.0680],
+    },
+    properties: {
+      ...incident,
+      _isIncident: true,
+      _cleanType: getCleanIncidentType(incident.type),
+      _severityColor:
+        incident.severity === 'critical' ? '#EF4444'
+        : incident.severity === 'high'   ? '#F97316'
+        : incident.severity === 'medium' ? '#F59E0B'
+        : '#10B981',
+      _isCritical: incident.severity === 'critical' ? 1 : 0,
+    },
+  });
+
   const mapEmergencyTypeToIcon = (type: string) => {
+    const cleanType = getCleanIncidentType(type);
+
     const map: any = {
       accident: 'alert-octagon',
       congestion: 'car-brake-alert',
@@ -443,7 +469,7 @@ const MapScreen = () => {
       weather: 'weather-lightning-rainy',
       other: 'alert-circle-outline'
     };
-    return map[type] || 'alert-circle-outline';
+    return map[cleanType] || 'alert-circle-outline';
   };
 
   const mapEmergencySeverityColor = (severity: string) => {
@@ -477,14 +503,16 @@ const MapScreen = () => {
   };
 
   const mapEmergencyTypeLabel = (type: string) => {
+    const cleanType = getCleanIncidentType(type);
+
     const map: any = {
-      accident: t('emergency.type.accident'),
-      congestion: t('emergency.type.congestion'),
-      construction: t('emergency.type.construction'),
-      weather: t('emergency.type.weather'),
-      other: t('emergency.type.other')
+      accident: t('incidents.type.accident'),
+      congestion: t('incidents.type.congestion'),
+      construction: t('incidents.type.construction'),
+      weather: t('incidents.type.weather'),
+      other: t('incidents.type.other')
     };
-    return map[type] || t('emergency.type.other');
+    return map[cleanType] || t('incidents.type.other');
   };
 
   return (
@@ -565,25 +593,9 @@ const MapScreen = () => {
 
               if (selectedCategory === -1 || selectedCategory === 1 || selectedCategory === 2) {
                 let incToDisplay = mapIncidents;
-                if (selectedCategory === 1) incToDisplay = mapIncidents.filter(i => i.type === 'congestion');
-                if (selectedCategory === 2) incToDisplay = mapIncidents.filter(i => i.type !== 'congestion');
-                features.push(...incToDisplay.map(incident => ({
-                  type: 'Feature',
-                  id: incident.id.toString(),
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [incident.location?.lng || 108.2122, incident.location?.lat || 16.0680],
-                  },
-                  properties: {
-                    ...incident, _isIncident: true,
-                    _severityColor:
-                      incident.severity === 'critical' ? '#EF4444'
-                      : incident.severity === 'high'   ? '#F97316'
-                      : incident.severity === 'medium' ? '#F59E0B'
-                      : '#10B981',
-                    _isCritical: incident.severity === 'critical' ? 1 : 0,
-                  },
-                })));
+                if (selectedCategory === 1) incToDisplay = mapIncidents.filter(i => getCleanIncidentType(i.type) === 'congestion');
+                if (selectedCategory === 2) incToDisplay = mapIncidents.filter(i => getCleanIncidentType(i.type) !== 'congestion');
+                features.push(...incToDisplay.map(incident => toFeature(incident)));
               }
               if (selectedCategory === -1 || selectedCategory === 3) {
                 features.push(...MOCK_CAMERAS.map(cam => ({
@@ -656,14 +668,14 @@ const MapScreen = () => {
           <MapboxGL.SymbolLayer
             id="reportsLayer"
             style={{
-              iconImage: isEmergency ? (['match', ['get', 'type'],
-                'accident',    'icon_accident',
-                'congestion',  'icon_congestion',
-                'construction','icon_construction',
-                'weather',     'icon_weather',
-                'camera',      'icon_camera',
-                'patrol',      'icon_patrol',
-                'icon_default'
+              iconImage: isEmergency ? (['match', ['get', '_cleanType'],
+                'accident',     'icon_accident',
+                'congestion',   'icon_congestion',
+                'construction', 'icon_construction',
+                'weather',      'icon_weather',
+                'camera',       'icon_camera',
+                'patrol',       'icon_patrol',
+                'other',        'icon_default'
               ] as any) : (['match', ['get', 'danh_muc'],
                 1, 'icon_traffic',  2, 'icon_environment',
                 3, 'icon_fire',     4, 'icon_trash',
@@ -763,8 +775,8 @@ const MapScreen = () => {
                { id: 3, label: t('map.emergencyCategories.monitoringCamera'), icon: 'cctv', type: 'camera', color: '#06B6D4' },
                { id: 4, label: t('map.emergencyCategories.mobileForce'), icon: 'police-badge-outline', type: 'patrol', color: '#10B981' },
               ].map((cat) => {
-                const count = cat.type === 'congestion' ? mapIncidents.filter(i => i.type === 'congestion').length
-                  : cat.type === 'accident' ? mapIncidents.filter(i => !['congestion'].includes(i.type)).length
+                const count = cat.type === 'congestion' ? mapIncidents.filter(i => getCleanIncidentType(i.type) === 'congestion').length
+                  : cat.type === 'accident' ? mapIncidents.filter(i => getCleanIncidentType(i.type) !== 'congestion').length
                   : cat.type === 'camera' ? MOCK_CAMERAS.length
                   : cat.type === 'patrol' ? MOCK_PATROLS.length
                   : mapIncidents.length + MOCK_CAMERAS.length + MOCK_PATROLS.length;
@@ -1103,9 +1115,9 @@ const MapScreen = () => {
                         <Icon name="lightbulb-outline" size={14} color="#34D399" />
                         <Text style={styles.aiRecText}>
                           <Text style={{ color: '#34D399', fontWeight: '700' }}>{t('emergency.recommendationHeader')} </Text>
-                          {selectedIncident.type === 'congestion'
+                          {getCleanIncidentType(selectedIncident.type) === 'congestion'
                             ? t('notifications.recommendations.trafficAdjustment')
-                            : selectedIncident.type === 'accident'
+                            : getCleanIncidentType(selectedIncident.type) === 'accident'
                             ? t('notifications.recommendations.accidentResponse')
                             : t('notifications.recommendations.defaultResponse')}
                         </Text>

@@ -245,7 +245,11 @@ const EmergencyIncidentsScreen = () => {
     const renderIncidentCard = ({ item }: { item: Incident }) => {
         const statusConf = STATUS_CONFIG[item.status] || STATUS_CONFIG.open;
         const severityConf = SEVERITY_CONFIG[item.severity] || SEVERITY_CONFIG.medium;
-        const typeConf = TYPE_CONFIG[item.type] || TYPE_CONFIG.other;
+        
+        // Sanitize type from backend (remove 'incident_type.' prefix if present)
+        const cleanType = item.type?.replace('incident_type.', '');
+        const typeConf = TYPE_CONFIG[cleanType] || TYPE_CONFIG.other;
+        
         const isUpdating = updatingId === item.id;
 
         return (

@@ -798,7 +798,14 @@
     "validLocationEx": "VD: Ngã tư Nguyễn Văn Linh, cầu Rồng...",
     "validDescMin": "Mô tả quá ngắn (tối thiểu 10 ký tự).",
     "validDescEx": "Mô tả rõ ràng giúp đội cứu hộ phản ứng nhanh hơn.",
-    "imageTooLarge": "Ảnh quá lớn (tối đa 5MB)."
+    "imageTooLarge": "Ảnh quá lớn (tối đa 5MB).",
+    "incidentType": {
+      "accident": "Tai nạn",
+      "congestion": "Ùn tắc",
+      "construction": "Thi công",
+      "weather": "Thời tiết",
+      "other": "Khác"
+    }
   },
   "enums": {
     "roles": {

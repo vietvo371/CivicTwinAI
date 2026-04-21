@@ -23,6 +23,10 @@ import { useAuth } from '../../contexts/AuthContext';
 
 type IncidentDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
 
+const getCleanIncidentType = (type: string | undefined | null): string => {
+  return (type || '').replace('incident_type.', '').trim();
+};
+
 /**
  * Log payload BE cho màn chi tiết sự cố khẩn cấp.
  * Xem ở terminal đang chạy Metro (yarn start / npx react-native start), lọc "[EmergencyIncident BE]".
@@ -324,7 +328,7 @@ const IncidentDetailScreen = () => {
 
   const severity   = (severityMap as any)[incident.severity]   || severityMap.medium;
   const status     = (statusMap as any)[incident.status]       || statusMap.open;
-  const typeInfo   = (typeMap as any)[incident.type]           || typeMap.other;
+  const typeInfo   = (typeMap as any)[getCleanIncidentType(incident.type)] || typeMap.other;
 
   const metadataImages: string[] =
     incident.metadata && Array.isArray((incident.metadata as any).images)

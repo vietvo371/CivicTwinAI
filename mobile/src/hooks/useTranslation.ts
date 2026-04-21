@@ -1,8 +1,21 @@
 import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '../i18n';
 
 export const useTranslation = () => {
   const { t, i18n: i18nInstance } = useI18nTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState(() => i18nInstance.language);
+
+  useEffect(() => {
+    const listener = (lng: string) => {
+      setCurrentLanguage(lng);
+    };
+    i18nInstance.on('languageChanged', listener);
+    return () => {
+      i18nInstance.off('languageChanged', listener);
+    };
+  }, [i18nInstance]);
 
   const changeLanguage = async (languageCode: string) => {
     try {
@@ -26,7 +39,7 @@ export const useTranslation = () => {
     changeLanguage,
     getCurrentLanguage,
     isRTL,
-    currentLanguage: getCurrentLanguage(),
+    currentLanguage,
   };
 };
 

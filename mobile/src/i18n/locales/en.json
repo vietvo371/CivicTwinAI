@@ -359,6 +359,7 @@
     "tapToOpenMap": "Tap to open map",
     "coordinates": "Coordinates",
     "severityRatingHint": "Rate the severity of the issue",
+    "citizenReport": "CITIZEN REPORT",
     "submitError": "Cannot create report. Please try again.",
     "locationPermission": "Location Permission",
     "locationPermissionDesc": "Location permission is needed to place the pin where you are standing.",
@@ -589,6 +590,26 @@
     "notificationsWillAppear": "When there are report updates or related incidents, you will see them here.",
     "seeReport": "See Report",
     "systemNotifications": "Notifications from CivicTwin system and your report updates.",
+    "titles": {
+      "pointsIncreased": "Reliability Points Increased",
+      "pointsDecreased": "Reliability Points Decreased",
+      "newIncident": "New Incident",
+      "incidentWithSeverity": "{{severity}} Incident",
+      "newNotification": "New Notification"
+    },
+    "messages": {
+      "reportStatus": {
+        "received": "\"{{title}}\" has been received",
+        "verified": "\"{{title}}\" is being verified",
+        "processing": "\"{{title}}\" is being processed",
+        "completed": "\"{{title}}\" has been completed",
+        "rejected": "\"{{title}}\" has been rejected",
+        "updated": "\"{{title}}\" status has been updated"
+      },
+      "pointsUpdate": "{{change}} points ({{reason}}). Total: {{balance}} points",
+      "defaultIncident": "New incident in the area",
+      "defaultTrafficIncident": "New traffic incident"
+    },
     "recommendations": {
       "trafficAdjustment": "Adjust regional traffic light cycles. Divert vehicles to parallel secondary axes.",
       "accidentResponse": "Coordinate police + medical. Temporary traffic diversion at the 2 nearest intersections.",
