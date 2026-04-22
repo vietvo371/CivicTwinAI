@@ -435,6 +435,11 @@
     "content": "Nội dung",
     "reportIncident": "Báo cáo sự cố",
     "sending": "Đang gửi...",
+    "justNow": "Vừa xong",
+    "hoursAgo": "{{count}} giờ trước",
+    "daysAgo": "{{count}} ngày trước",
+    "user": "Người dùng",
+    "other": "Khác",
     "send": "Gửi",
     "sendSuccess": "Báo cáo đã được gửi thành công!",
     "sendFailed": "Không thể gửi báo cáo. Vui lòng thử lại.",
@@ -552,7 +557,22 @@
     "suggestionsApplied": "Đề xuất đã được áp dụng vào biểu mẫu — bạn có thể chỉnh sửa trước khi gửi.",
     "understoodContinue": "Đã hiểu, tiếp tục",
     "updateReport": "Cập nhật",
-    "loadingDetail": "Đang tải thông tin..."
+    "loadingDetail": "Đang tải thông tin...",
+    "filters": {
+      "title": "Bộ lọc",
+      "allCategories": "Tất cả danh mục",
+      "allStatuses": "Tất cả trạng thái",
+      "allPriorities": "Tất cả mức độ",
+      "sortBy": "Sắp xếp theo",
+      "sortByDate": "Ngày tạo",
+      "sortByVotes": "Lượt ủng hộ",
+      "sortByViews": "Lượt xem",
+      "sortByRecent": "Cập nhật gần đây",
+      "descending": "Giảm dần",
+      "ascending": "Tăng dần",
+      "reset": "Đặt lại",
+      "apply": "Áp dụng"
+    }
   },
   "emergency": {
     "title": "Sự cố & Điều phối",

@@ -29,14 +29,10 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
     const initWebSocket = async () => {
       try {
-        // Tắt nếu disabled trong env
         if (!env.ENABLE_WEBSOCKET) return;
-
         const token = await AsyncStorage.getItem('@auth_token');
         if (!token) return;
-
         await WebSocketService.connect();
-
         if (mounted) {
           setIsConnected(true);
           wsReady.current = true;
@@ -48,19 +44,31 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 
     initWebSocket();
 
+    return () => {
+      mounted = false;
+      wsReady.current = false;
+      WebSocketService.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
     const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-      if (state.isConnected && !isConnected) {
-        initWebSocket();
+      if (state.isConnected && !wsReady.current) {
+        WebSocketService.disconnect();
+        WebSocketService.connect().then(() => {
+          setIsConnected(true);
+          wsReady.current = true;
+        }).catch(() => {});
+      } else if (!state.isConnected && wsReady.current) {
+        setIsConnected(false);
+        WebSocketService.disconnect();
       }
     });
 
     return () => {
-      mounted = false;
-      wsReady.current = false;
       unsubscribeNetInfo();
-      WebSocketService.disconnect();
     };
-  }, [isConnected]);
+  }, []);
 
   const subscribe = (channel: string) => {
     if (!wsReady.current) return;

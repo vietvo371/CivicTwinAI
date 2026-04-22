@@ -333,6 +333,11 @@
     "views": "views",
     "reportIncident": "Report Incident",
     "submit": "Submit",
+    "justNow": "Just now",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago",
+    "user": "User",
+    "other": "Other",
     "draftRestored": "Draft restored from your previous session",
     "discardDraft": "Discard",
     "draftDiscarded": "Draft discarded",
@@ -435,7 +440,22 @@
     "cannotEdit": "Cannot edit",
     "editReport": "Edit Report",
     "updateReport": "Update",
-    "loadingDetail": "Loading details..."
+    "loadingDetail": "Loading details...",
+    "filters": {
+      "title": "Filters",
+      "allCategories": "All categories",
+      "allStatuses": "All statuses",
+      "allPriorities": "All priorities",
+      "sortBy": "Sort by",
+      "sortByDate": "Date created",
+      "sortByVotes": "Votes",
+      "sortByViews": "Views",
+      "sortByRecent": "Recently updated",
+      "descending": "Descending",
+      "ascending": "Ascending",
+      "reset": "Reset",
+      "apply": "Apply"
+    }
   },
   "emergency": {
     "title": "Incidents & Dispatch",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, StatusBar, RefreshControl, ActivityIndicator, FlatList, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -135,7 +135,7 @@ const ProfileScreen = () => {
     }
   };
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     {
       title: t('profile.account'),
       items: [
@@ -158,7 +158,7 @@ const ProfileScreen = () => {
         { id: 'logout', icon: 'logout', label: t('profile.logout') },
       ]
     }
-  ];
+  ], [t]);
 
   const handleLogout = async () => {
     try {

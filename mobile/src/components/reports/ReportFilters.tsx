@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export interface FilterOptions {
     danh_muc_id?: number;
@@ -24,42 +25,44 @@ interface ReportFiltersProps {
     onFiltersChange: (filters: FilterOptions) => void;
 }
 
-const CATEGORIES = [
-    { value: -1, label: 'Tất cả danh mục' },
-    { value: 1, label: 'Giao thông', icon: 'car', color: theme.colors.primary },
-    { value: 2, label: 'Môi trường', icon: 'leaf', color: theme.colors.success },
-    { value: 3, label: 'Cháy nổ', icon: 'fire', color: theme.colors.error },
-    { value: 4, label: 'Rác thải', icon: 'trash-can', color: theme.colors.warning },
-    { value: 5, label: 'Ngập lụt', icon: 'weather-pouring', color: theme.colors.info },
-    { value: 6, label: 'Khác', icon: 'dots-horizontal', color: theme.colors.textSecondary },
-];
-
-const STATUSES = [
-    { value: -1, label: 'Tất cả trạng thái' },
-    { value: 0, label: 'Tiếp nhận', color: theme.colors.warning },
-    { value: 1, label: 'Đã xác minh', color: theme.colors.info },
-    { value: 2, label: 'Đang xử lý', color: theme.colors.primary },
-    { value: 3, label: 'Hoàn thành', color: theme.colors.success },
-    { value: 4, label: 'Từ chối', color: theme.colors.error },
-];
-
-const PRIORITIES = [
-    { value: -1, label: 'Tất cả mức độ' },
-    { value: 1, label: 'Thấp', color: theme.colors.success },
-    { value: 2, label: 'Trung bình', color: theme.colors.info },
-    { value: 3, label: 'Cao', color: theme.colors.warning },
-    { value: 4, label: 'Khẩn cấp', color: theme.colors.error },
-];
-
-const SORT_OPTIONS = [
-    { value: 'created_at', label: 'Ngày tạo' },
-    { value: 'luot_ung_ho', label: 'Lượt ủng hộ' },
-    { value: 'luot_xem', label: 'Lượt xem' },
-    { value: 'updated_at', label: 'Cập nhật gần đây' },
-];
-
 export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, onClose, filters, onApply }) => {
+    const { t } = useTranslation();
     const [tempFilters, setTempFilters] = useState<FilterOptions>(filters);
+
+    // Dynamic filter options based on locale
+    const CATEGORIES = useMemo(() => [
+        { value: -1, label: t('reports.filters.allCategories'), icon: 'dots-horizontal', color: theme.colors.textSecondary },
+        { value: 1, label: t('reports.categories.traffic'), icon: 'car', color: theme.colors.primary },
+        { value: 2, label: t('reports.categories.environment'), icon: 'leaf', color: theme.colors.success },
+        { value: 3, label: t('reports.categories.fire'), icon: 'fire', color: theme.colors.error },
+        { value: 4, label: t('reports.categories.waste'), icon: 'trash-can', color: theme.colors.warning },
+        { value: 5, label: t('reports.categories.flood'), icon: 'weather-pouring', color: theme.colors.info },
+        { value: 6, label: t('reports.categories.other'), icon: 'dots-horizontal', color: theme.colors.textSecondary },
+    ], [t]);
+
+    const STATUSES = useMemo(() => [
+        { value: -1, label: t('reports.filters.allStatuses') },
+        { value: 0, label: t('reports.status.received'), color: theme.colors.warning },
+        { value: 1, label: t('reports.status.verified'), color: theme.colors.info },
+        { value: 2, label: t('reports.status.processing'), color: theme.colors.primary },
+        { value: 3, label: t('reports.status.completed'), color: theme.colors.success },
+        { value: 4, label: t('reports.status.rejected'), color: theme.colors.error },
+    ], [t]);
+
+    const PRIORITIES = useMemo(() => [
+        { value: -1, label: t('reports.filters.allPriorities') },
+        { value: 1, label: t('reports.priorities.low'), color: theme.colors.success },
+        { value: 2, label: t('reports.priorities.medium'), color: theme.colors.info },
+        { value: 3, label: t('reports.priorities.high'), color: theme.colors.warning },
+        { value: 4, label: t('reports.priorities.critical'), color: theme.colors.error },
+    ], [t]);
+
+    const SORT_OPTIONS = useMemo(() => [
+        { value: 'created_at', label: t('reports.filters.sortByDate') },
+        { value: 'luot_ung_ho', label: t('reports.filters.sortByVotes') },
+        { value: 'luot_xem', label: t('reports.filters.sortByViews') },
+        { value: 'updated_at', label: t('reports.filters.sortByRecent') },
+    ], [t]);
 
     // Update tempFilters when filters prop changes or modal opens
     React.useEffect(() => {
@@ -114,7 +117,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
                 <View style={styles.modalContent}>
                     {/* Header */}
                     <View style={styles.modalHeader}>
-                        <Text style={styles.modalTitle}>Bộ lọc</Text>
+                        <Text style={styles.modalTitle}>{t('reports.filters.title')}</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Icon name="close" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
@@ -123,7 +126,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
                     <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                         {/* Category Filter */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterLabel}>Danh mục</Text>
+                            <Text style={styles.filterLabel}>{t('reports.category')}</Text>
                             <View style={styles.optionsGrid}>
                                 {CATEGORIES.map(category => (
                                     <TouchableOpacity
@@ -157,7 +160,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
 
                         {/* Status Filter */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterLabel}>Trạng thái</Text>
+                            <Text style={styles.filterLabel}>{t('reports.status.title')}</Text>
                             <View style={styles.optionsGrid}>
                                 {STATUSES.map(status => (
                                     <TouchableOpacity
@@ -184,7 +187,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
 
                         {/* Priority Filter */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterLabel}>Mức độ ưu tiên</Text>
+                            <Text style={styles.filterLabel}>{t('reports.priority')}</Text>
                             <View style={styles.optionsGrid}>
                                 {PRIORITIES.map(priority => (
                                     <TouchableOpacity
@@ -211,7 +214,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
 
                         {/* Sort Options */}
                         <View style={styles.filterSection}>
-                            <Text style={styles.filterLabel}>Sắp xếp theo</Text>
+                            <Text style={styles.filterLabel}>{t('reports.filters.sortBy')}</Text>
                             <View style={styles.optionsGrid}>
                                 {SORT_OPTIONS.map(sort => (
                                     <TouchableOpacity
@@ -248,7 +251,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
                                     <Text style={[
                                         styles.sortOrderText,
                                         tempFilters.sort_order === 'desc' && styles.sortOrderTextActive
-                                    ]}>Giảm dần</Text>
+                                    ]}>{t('reports.filters.descending')}</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={[
@@ -261,7 +264,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
                                     <Text style={[
                                         styles.sortOrderText,
                                         tempFilters.sort_order === 'asc' && styles.sortOrderTextActive
-                                    ]}>Tăng dần</Text>
+                                    ]}>{t('reports.filters.ascending')}</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -270,10 +273,10 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
                     {/* Footer */}
                     <View style={styles.modalFooter}>
                         <TouchableOpacity style={styles.resetButton} onPress={handleResetAndApply}>
-                            <Text style={styles.resetButtonText}>Đặt lại</Text>
+                            <Text style={styles.resetButtonText}>{t('reports.filters.reset')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-                            <Text style={styles.applyButtonText}>Áp dụng</Text>
+                            <Text style={styles.applyButtonText}>{t('reports.filters.apply')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -283,6 +286,7 @@ export const ReportFilterModal: React.FC<ReportFilterModalProps> = ({ visible, o
 };
 
 const ReportFilters: React.FC<ReportFiltersProps> = ({ filters, onFiltersChange }) => {
+    const { t } = useTranslation();
     const [showModal, setShowModal] = useState(false);
     const activeFiltersCount = Object.values(filters).filter(v => v !== undefined && v !== -1).length;
 
@@ -290,7 +294,7 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({ filters, onFiltersChange 
         <>
             <TouchableOpacity style={styles.filterButton} onPress={() => setShowModal(true)} activeOpacity={0.7}>
                 <Icon name="filter-variant" size={ICON_SIZE.sm} color={theme.colors.primary} />
-                <Text style={styles.filterButtonText}>Bộ lọc</Text>
+                <Text style={styles.filterButtonText}>{t('reports.filters.title')}</Text>
                 {activeFiltersCount > 0 && (
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>{activeFiltersCount}</Text>

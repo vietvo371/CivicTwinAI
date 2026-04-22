@@ -187,9 +187,9 @@ const ReportsScreen = () => {
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-          <TouchableOpacity onPress={() => setShowFilterModal(true)}>
+          {/* <TouchableOpacity onPress={() => setShowFilterModal(true)}>
             <Icon name="tune-variant" size={ICON_SIZE.md} color={theme.colors.primary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 

@@ -14,16 +14,21 @@ export const NotificationBanner = () => {
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(1)).current;
+  const prependRef = useRef(prependNotification);
 
   const latestNotification = notifications.find(n => !n.read);
 
   useEffect(() => {
+    prependRef.current = prependNotification;
+  }, [prependNotification]);
+
+  useEffect(() => {
     setFcmForegroundHandler(msg => {
       const n = mapRemoteMessageToInAppNotification(msg);
-      if (n) prependNotification(n);
+      if (n) prependRef.current(n);
     });
     return () => setFcmForegroundHandler(null);
-  }, [prependNotification]);
+  }, []);
 
   useEffect(() => {
     if (latestNotification) {

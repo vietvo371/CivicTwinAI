@@ -28,6 +28,9 @@ class WebSocketService {
   private pusher: Pusher | null = null;
   private channels: Map<string, any> = new Map();
   private isConnected: boolean = false;
+  private reconnectAttempts = 0;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private isConnecting = false;
 
   /**
    * Initialize Laravel Echo connection
@@ -114,19 +117,31 @@ class WebSocketService {
         console.log('🔄 WebSocket connecting...');
       });
 
+      this.pusher.connection.bind('connected', () => {
+        this.isConnected = true;
+        this.reconnectAttempts = 0;
+        if (this.reconnectTimer) {
+          clearTimeout(this.reconnectTimer);
+          this.reconnectTimer = null;
+        }
+      });
+
       this.pusher.connection.bind('disconnected', () => {
         console.log('❌ WebSocket disconnected');
         this.isConnected = false;
+        this.attemptReconnect();
       });
 
       this.pusher.connection.bind('unavailable', () => {
         console.log('⚠️ WebSocket unavailable');
         this.isConnected = false;
+        this.attemptReconnect();
       });
 
       this.pusher.connection.bind('failed', () => {
         console.error('💥 WebSocket connection FAILED');
         this.isConnected = false;
+        this.attemptReconnect();
       });
 
       this.pusher.connection.bind('error', (err: any) => {
@@ -157,10 +172,49 @@ class WebSocketService {
     }
   }
 
+  private attemptReconnect() {
+    if (this.isConnecting || this.reconnectAttempts >= 5) {
+      if (this.reconnectAttempts >= 5) {
+        console.error('❌ Max reconnect attempts (5) reached');
+      }
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 16000);
+    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/5)...`);
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectAttempts++;
+      this.isConnecting = true;
+
+      try {
+        this.echo = null;
+        this.pusher = null;
+        this.channels.clear();
+        await this.connect();
+        this.reconnectAttempts = 0;
+        console.log('✅ Reconnected successfully');
+      } catch (error) {
+        console.error('⚠️ Reconnect failed:', error);
+      } finally {
+        this.isConnecting = false;
+      }
+    }, delay);
+  }
+
   /**
    * Disconnect WebSocket
    */
   disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (this.echo) {
       this.echo.disconnect();
       this.echo = null;

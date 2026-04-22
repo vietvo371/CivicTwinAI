@@ -147,22 +147,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     };
 
     try {
-      listen(userChannel, 'report.status.updated', handleReportStatusUpdate);
-      listen(userChannel, 'App\\Events\\ReportStatusUpdated', handleReportStatusUpdate);
       listen(userChannel, 'App\\Events\\ReportStatusUpdatedForUsers', handleReportStatusUpdate);
-      listen(publicChannel, 'report.status.updated', handleReportStatusUpdate);
       listen(publicChannel, 'App\\Events\\ReportStatusUpdatedForUsers', handleReportStatusUpdate);
     } catch (error) {
-      console.error('❌ Failed to register Echo listeners:', error);
-    }
-
-    let unsubscribePusherReport: (() => void) | undefined;
-    try {
-      unsubscribePusherReport = subscribePusher('user-reports', 'report.status.updated', (data: any) => {
-        handleReportStatusUpdate(data);
-      });
-    } catch (error) {
-      console.error('❌ Failed to register Pusher listener:', error);
+      console.error('❌ Failed to register report status listeners:', error);
     }
 
     listen(userChannel, 'points.updated', data => {
@@ -264,13 +252,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
-      unsubscribePusherReport?.();
       unsubscribe(userChannel);
       unsubscribe(publicChannel);
       unsubscribe(trafficChannel);
     };
-    // Chỉ phụ thuộc user + kết nối; hàm từ WebSocketContext không memo → tránh vòng re-subscribe.
-  }, [isConnected, user?.id]);
+  }, [isConnected, user?.id, listen, subscribe, unsubscribe, subscribePusher, t]);
 
   const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));

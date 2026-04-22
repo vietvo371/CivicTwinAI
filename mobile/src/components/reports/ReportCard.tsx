@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Report } from '../../types/api/report';
 import { theme, SPACING, FONT_SIZE, BORDER_RADIUS, ICON_SIZE } from '../../theme';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ReportCardProps {
     report: Report;
@@ -12,6 +13,7 @@ interface ReportCardProps {
 }
 
 const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, showActions = false, renderAction }) => {
+    const { t } = useTranslation();
     const getCategoryColor = (category: number) => {
         const colors: { [key: number]: string } = {
             1: '#EF4444',   // Giao thông
@@ -47,24 +49,24 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, showActions = 
 
     const getStatusText = (status: number): string => {
         switch (status) {
-            case 0: return 'Tiếp nhận';
-            case 1: return 'Đã xác minh';
-            case 2: return 'Đang xử lý';
-            case 3: return 'Hoàn thành';
-            case 4: return 'Từ chối';
-            default: return 'Không rõ';
+            case 0: return t('reports.status.received');
+            case 1: return t('reports.status.verified');
+            case 2: return t('reports.status.processing');
+            case 3: return t('reports.status.completed');
+            case 4: return t('reports.status.rejected');
+            default: return t('common.unknown');
         }
     };
 
     const formatDate = (dateString: string) => {
-        if (!dateString) return 'Không rõ';
+        if (!dateString) return t('common.unknown');
 
         try {
             const date = new Date(dateString);
 
             // Check if date is valid
             if (isNaN(date.getTime())) {
-                return 'Không rõ';
+                return t('common.unknown');
             }
 
             const now = new Date();
@@ -72,13 +74,13 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, showActions = 
             const hours = Math.floor(diff / (1000 * 60 * 60));
             const days = Math.floor(hours / 24);
 
-            if (hours < 1) return 'Vừa xong';
-            if (hours < 24) return `${hours} giờ trước`;
-            if (days < 7) return `${days} ngày trước`;
-            return date.toLocaleDateString('vi-VN');
+            if (hours < 1) return t('reports.justNow');
+            if (hours < 24) return t('reports.hoursAgo', { count: hours });
+            if (days < 7) return t('reports.daysAgo', { count: days });
+            return date.toLocaleDateString();
         } catch (error) {
             console.error('Error formatting date:', dateString, error);
-            return 'Không rõ';
+            return t('common.unknown');
         }
     };
 
@@ -112,7 +114,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, showActions = 
     };
 
     // Get category name and color from nested object or ID
-    const categoryName = report.danh_muc?.ten_danh_muc || 'Khác';
+    const categoryName = report.danh_muc?.ten_danh_muc || t('reports.other');
     const categoryColor = report.danh_muc?.mau_sac || getCategoryColor(report.danh_muc_id);
 
     // Get priority from nested object
@@ -133,7 +135,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onPress, showActions = 
                         </View>
                     )}
                     <View style={styles.userDetails}>
-                        <Text style={styles.userName}>{report.nguoi_dung?.ho_ten || 'Người dùng'}</Text>
+                        <Text style={styles.userName}>{report.nguoi_dung?.ho_ten || t('reports.user')}</Text>
                         <Text style={styles.date}>{formatDate(report.created_at)}</Text>
                     </View>
                 </View>

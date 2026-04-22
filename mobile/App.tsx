@@ -85,11 +85,11 @@ const App = () => {
         <ErrorModalProvider>
           <AlertProvider>
             <AlertServiceConnector />
-            <NotificationService
-              onNotification={handleNotification}
-              onNotificationOpened={handleNotificationOpened}
-            />
             <AuthProvider>
+              <NotificationService
+                onNotification={handleNotification}
+                onNotificationOpened={handleNotificationOpened}
+              />
               <WebSocketProvider>
                 <NotificationsProvider>
                   <StatusBar
