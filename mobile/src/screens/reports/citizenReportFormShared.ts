@@ -27,21 +27,36 @@ export function isVisionDataObject(data: unknown): data is Record<string, unknow
   return data !== null && typeof data === 'object' && !Array.isArray(data);
 }
 
-/** Tiêu đề gửi lên API report (legacy): «Danh mục» - «địa chỉ». */
+/** Tiêu đề gửi lên API report. Ưu tiên:
+ *  1. visionDescription — mô tả từ Vision AI phân tích ảnh
+ *  2. aiParseTitle    — tiêu đề từ AI Parse mô tả text
+ *  3. fallback        — «Danh mục» tại «địa chỉ»
+ */
 export function buildMobileIncidentTitle(
   danh_muc: string,
   dia_chi: string,
   vi_do: number,
   kinh_do: number,
   t: (key: string) => string,
+  visionDescription?: string,
+  aiParseTitle?: string,
 ): string {
+  if (visionDescription && visionDescription.trim()) {
+    const loc = dia_chi?.trim() || `${Number(vi_do).toFixed(5)}, ${Number(kinh_do).toFixed(5)}`;
+    return `${visionDescription.trim()} tại ${loc}`;
+  }
+
+  if (aiParseTitle && aiParseTitle.trim()) {
+    return aiParseTitle.trim();
+  }
+
   const category = CATEGORIES.find((c) => c.value === danh_muc);
   const categoryLabel = category ? t(category.labelKey) : t('reports.categories.other');
   const loc =
     dia_chi && String(dia_chi).trim() !== ''
       ? String(dia_chi).trim()
       : `${Number(vi_do).toFixed(5)}, ${Number(kinh_do).toFixed(5)}`;
-  const raw = `${categoryLabel} - ${loc}`;
+  const raw = `${categoryLabel} tại ${loc}`;
   return raw.length > 200 ? `${raw.slice(0, 197)}...` : raw;
 }
 
@@ -84,6 +99,8 @@ export type CitizenReportFormState = {
 export function toReportUpdateBody(
   form: CitizenReportFormState,
   t: (key: string) => string,
+  visionDescription?: string,
+  aiParseTitle?: string,
 ): Partial<CreateReportRequest> {
   const typeToNum: Record<string, number> = {
     accident: 1,
@@ -99,7 +116,7 @@ export function toReportUpdateBody(
     critical: 4,
   };
   return {
-    tieu_de: buildMobileIncidentTitle(form.danh_muc, form.dia_chi, form.vi_do, form.kinh_do, t),
+    tieu_de: buildMobileIncidentTitle(form.danh_muc, form.dia_chi, form.vi_do, form.kinh_do, t, visionDescription, aiParseTitle),
     mo_ta: form.mo_ta,
     danh_muc: typeToNum[form.danh_muc] ?? 6,
     uu_tien: severityToNum[form.uu_tien] ?? 2,

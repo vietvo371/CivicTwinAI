@@ -89,49 +89,43 @@ class GraphService:
             queue.append((u, v, 0, base_density))
             visited_edges.add(self.graph[u][v]['edge_id'])
 
-        max_depth = 4 # Chi lan truyen duoc den 4 canh (hops) lien ke
+        max_depth = 2  # Only 2 hops from incident — prevents flooding small graph
 
         while queue:
             u, v, depth, current_density = queue.pop(0)
             edge_info = self.graph[u][v]
             edge_id = edge_info['edge_id']
-            
-            # Predict qua thoi gian (time horizons)
+
             for horizon in time_horizons:
-                # density phai sinh thay doi chut dinh theo thoi gian (cang de lau o node trung tam cang nut)
                 time_factor = 1.0 + (horizon / 60) * 0.2 if depth == 0 else max(1.0 - (horizon / 60) * 0.3, 0.5)
                 final_density = min(current_density * time_factor, 1.0)
-                
-                # Confidence giam dan theo depth va theo tuong lai (horizon)
-                conf = 0.9 - (depth * 0.1) - (horizon / 60 * 0.15)
-                
-                if final_density > 0.4: # Chi report nhung edge thuc su bi anh huong (mat do > 40%)
+                conf = max(0.9 - (depth * 0.15) - (horizon / 60 * 0.15), 0.3)
+
+                if final_density > 0.45:
                     predictions.append({
                         "edge_id": edge_id,
                         "time_horizon_minutes": horizon,
                         "predicted_density": round(final_density, 4),
-                        "predicted_delay_s": int(final_density * 300), # cong thuc uoc tinh cua heuristic (density * 300s)
+                        "predicted_delay_s": int(final_density * 300),
                         "confidence": round(conf, 2),
                         "severity": "critical" if final_density > 0.8 else "high" if final_density > 0.6 else "medium"
                     })
-                    
+
             if depth >= max_depth:
                 continue
-                
-            # Sang canh ke tiep (successors)
+
             for next_node in self.graph.successors(v):
-                # Bo qua U-turn (quay dau truc tiep lai node thu 1)
                 if next_node == u:
                     continue
-                    
+
                 next_edge_info = self.graph[v][next_node]
                 next_edge_id = next_edge_info['edge_id']
-                
+
                 if next_edge_id not in visited_edges:
                     visited_edges.add(next_edge_id)
-                    decay_rate = 0.8 # Decay rate is 20%
+                    decay_rate = 0.55  # Aggressive decay — only nearby edges affected
                     next_density = current_density * decay_rate
-                    if next_density > 0.3:
+                    if next_density > 0.45:
                         queue.append((v, next_node, depth + 1, next_density))
                         
         return predictions

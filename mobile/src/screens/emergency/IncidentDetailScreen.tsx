@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, Platform, StatusBar, Image,
+  ActivityIndicator, Alert, Platform, StatusBar, Image, Dimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
@@ -18,7 +18,33 @@ import { ApiResponse } from '../../types/api/common';
 import env from '../../config/env';
 import { useAuth } from '../../contexts/AuthContext';
 
-// MapboxGL.setAccessToken should be called inside component/lifecycle in version 10+
+// ─── Icons & Maps ────────────────────────────────────────────────────────────
+
+const SEVERITY_COLOR: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+  low:      { bg: '#10B98115', border: '#10B98130', text: '#10B981', dot: '#10b981' },
+  medium:   { bg: '#F59E0B15', border: '#F59E0B30', text: '#F59E0B', dot: '#eab308' },
+  high:     { bg: '#F9731615', border: '#F9731630', text: '#F97316', dot: '#f97316' },
+  critical: { bg: '#EF444415', border: '#EF444430', text: '#EF4444', dot: '#ef4444' },
+};
+
+const TYPE_ICON: Record<string, string> = {
+  accident:     'car-emergency',
+  congestion:   'car-brake-alert',
+  construction: 'hard-hat',
+  weather:      'weather-lightning-rainy',
+  other:        'alert-circle-outline',
+};
+
+const REC_ICON: Record<string, string> = {
+  reroute:           'map-marker-distance',
+  priority_route:    'shield-check',
+  alert:             'bell-alert',
+  signal_change:     'traffic-light',
+  alternative_route: 'route',
+  advisory:          'alert-circle',
+  emergency_alert:   'alert-octagon',
+  congestion_alert:  'car-brake-alert',
+};
 
 
 type IncidentDetailRouteProp = RouteProp<RootStackParamList, 'IncidentDetail'>;
@@ -180,13 +206,25 @@ const parseAIContent = (content: any, t: any): string => {
     return t('ai.forecast', { model: parsed.model_version }) + '\n' + edgesInfos.map((e: string) => `• ${e}`).join('\n');
   }
 
-  // 2. Dạng text thông thường (Gợi ý AI có description, message...)
+  // 2. Dạng recommendation có type → dùng i18n để localize
+  if (parsed.type && parsed.description) {
+    const typeKey = `incidents.recommendations.${parsed.type}`;
+    const translated = t(typeKey);
+    // Nếu key tồn tại (khác key gốc), dùng bản dịch kèm count replacement
+    if (translated !== typeKey) {
+      return translated.replace(':count', String(parsed.details?.affected_edges?.length || 0));
+    }
+    // Fallback: trả về description gốc nếu không có key i18n
+    return parsed.description;
+  }
+
+  // 3. Dạng text thông thường (Gợi ý AI có description, message...)
   const simpleText = parsed.description || parsed.message || parsed.title || parsed.prediction || parsed.text || parsed.content || parsed.insight || parsed.impact;
   if (simpleText) {
     return typeof simpleText === 'string' ? simpleText : JSON.stringify(simpleText);
   }
 
-  // 3. Fallback
+  // 4. Fallback
   return typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
 };
 
@@ -215,6 +253,7 @@ const IncidentDetailScreen = () => {
   const [incident, setIncident]   = useState<Incident | null>(null);
   const [loading, setLoading]     = useState(true);
   const [dispatching, setDispatching] = useState(false);
+  const [imgIdx, setImgIdx] = useState(0);
 
   const severityMap = useMemo(() => getSeverityMap(t), [t]);
   const statusMap   = useMemo(() => getStatusMap(t), [t]);
@@ -492,24 +531,54 @@ const IncidentDetailScreen = () => {
           </View>
         ) : null}
 
-        {/* Attached images from BE (metadata.images) */}
+        {/* ── Image Gallery ── */}
         {metadataImages.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardLabel}>{t('incidents.attachedImagesUppercase')}</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.mediaScroll}
-            >
-              {metadataImages.map((url, idx) => (
-                <Image
-                  key={`${url}-${idx}`}
-                  source={{ uri: String(url) }}
-                  style={styles.mediaImage}
-                  resizeMode="cover"
-                />
-              ))}
-            </ScrollView>
+          <View style={styles.galleryCard}>
+            {/* Image display */}
+            <View style={styles.galleryContainer}>
+              <Image
+                source={{ uri: String(metadataImages[imgIdx]) }}
+                style={styles.galleryImage}
+                resizeMode="cover"
+              />
+              {/* Gradient overlay */}
+              <View style={styles.galleryOverlay} />
+              
+              {/* Navigation arrows */}
+              {metadataImages.length > 1 && (
+                <>
+                  <TouchableOpacity
+                    style={styles.galleryArrowLeft}
+                    onPress={() => setImgIdx((i) => (i - 1 + metadataImages.length) % metadataImages.length)}
+                  >
+                    <Icon name="chevron-left" size={24} color="#fff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.galleryArrowRight}
+                    onPress={() => setImgIdx((i) => (i + 1) % metadataImages.length)}
+                  >
+                    <Icon name="chevron-right" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </>
+              )}
+              
+              {/* Dots indicator */}
+              {metadataImages.length > 1 && (
+                <View style={styles.galleryDots}>
+                  {metadataImages.map((_, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => setImgIdx(i)}
+                    >
+                      <View style={[
+                        styles.galleryDot,
+                        i === imgIdx && styles.galleryDotActive
+                      ]} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         )}
 
@@ -629,48 +698,68 @@ const IncidentDetailScreen = () => {
           </View>
         )}
 
-        {/* ── AI Insights Row ── */}
-        {( (incident.recommendations && incident.recommendations.length > 0) || (incident.predictions && incident.predictions.length > 0) ) && (
-          <View style={styles.aiInsightsContainer}>
-             {/* Recommendations Section */}
-             {incident.recommendations && incident.recommendations.length > 0 && (
-                <View style={styles.aiCard}>
-                  <View style={styles.aiCardHeader}>
-                    <View style={[styles.aiIconBox, { backgroundColor: '#EEF2FF' }]}>
-                      <Icon name="brain" size={18} color="#6366F1" />
-                    </View>
-                    <Text style={[styles.aiCardTitle, { color: '#6366F1' }]}>{t('incidents.aiRecommendations')}</Text>
-                  </View>
-                  <View style={styles.aiContentBox}>
-                    {incident.recommendations.map((rec: any, idx: number) => (
-                      <View key={idx} style={styles.recListItem}>
-                        <View style={[styles.bullet, { backgroundColor: '#6366F1' }]} />
-                        <Text style={styles.aiResultText}>{parseAIContent(rec, t)}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-             )}
+        {/* ── AI Analysis Card ── */}
+        {incident.prediction && (
+          <View style={styles.aiCard}>
+            <View style={styles.aiCardHeader}>
+              <View style={[styles.aiIconBox, { backgroundColor: '#F3E8FF' }]}>
+                <Icon name="brain" size={18} color="#9333EA" />
+              </View>
+              <Text style={[styles.aiCardTitle, { color: '#9333EA' }]}>{t('incidents.aiAnalysis')}</Text>
+              <View style={styles.aiModelBadge}>
+                <Text style={styles.aiModelBadgeText}>{incident.prediction.model_version || 'ST-GCN'}</Text>
+              </View>
+            </View>
+            
+            {/* Grid stats */}
+            <View style={styles.aiGridStats}>
+              <View style={styles.aiStatItem}>
+                <Text style={styles.aiStatValue}>
+                  {incident.prediction.edges_count || 0}
+                </Text>
+                <Text style={styles.aiStatLabel}>{t('incidents.edgesAnalyzed')}</Text>
+              </View>
+              <View style={styles.aiStatItem}>
+                <Text style={[styles.aiStatValue, { color: '#EF4444' }]}>
+                  {Math.round((incident.prediction.max_density || 0) * 100)}%
+                </Text>
+                <Text style={styles.aiStatLabel}>{t('incidents.maxDensity')}</Text>
+              </View>
+              <View style={styles.aiStatItem}>
+                <Text style={[styles.aiStatValue, { color: '#10B981' }]}>
+                  {Math.round((incident.prediction.avg_confidence || 0) * 100)}%
+                </Text>
+                <Text style={styles.aiStatLabel}>{t('incidents.avgConfidence')}</Text>
+              </View>
+            </View>
+            
+            {/* Processing time */}
+            {incident.prediction.processing_time_ms && (
+              <View style={styles.aiProcessingTime}>
+                <Icon name="lightning-bolt" size={12} color={theme.colors.textSecondary} />
+                <Text style={styles.aiProcessingTimeText}>
+                  {t('incidents.processingIn', { ms: incident.prediction.processing_time_ms })}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
-             {/* Predictions Section */}
-             {incident.predictions && incident.predictions.length > 0 && (
-                <View style={[styles.aiCard, { marginTop: SPACING.md }]}>
-                  <View style={styles.aiCardHeader}>
-                    <View style={[styles.aiIconBox, { backgroundColor: '#F5F3FF' }]}>
-                      <Icon name="chart-timeline-variant" size={18} color="#8B5CF6" />
-                    </View>
-                    <Text style={[styles.aiCardTitle, { color: '#8B5CF6' }]}>{t('incidents.aiPredictions')}</Text>
-                  </View>
-                  <View style={styles.aiContentBox}>
-                    {incident.predictions.map((pred: any, idx: number) => (
-                      <View key={idx} style={styles.recListItem}>
-                        <View style={[styles.bullet, { backgroundColor: '#8B5CF6' }]} />
-                        <Text style={styles.aiResultText}>{parseAIContent(pred, t)}</Text>
-                      </View>
-                    ))}
-                  </View>
+        {/* ── Recommendations ── */}
+        {incident.recommendations && incident.recommendations.length > 0 && (
+          <View style={styles.recCard}>
+            <View style={styles.recCardHeader}>
+              <Icon name="check-circle" size={16} color="#10B981" />
+              <Text style={styles.recCardTitle}>{t('incidents.approvedRecommendations')}</Text>
+            </View>
+            {incident.recommendations.map((rec: any, idx: number) => (
+              <View key={idx} style={styles.recItemCard}>
+                <View style={styles.recItemIcon}>
+                  <Icon name={REC_ICON[rec.type] || 'check'} size={18} color="#10B981" />
                 </View>
-             )}
+                <Text style={styles.recItemText}>{parseAIContent(rec, t)}</Text>
+              </View>
+            ))}
           </View>
         )}
 
@@ -778,6 +867,170 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundSecondary,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
+  },
+
+  // Gallery
+  galleryCard: {
+    marginBottom: SPACING.md,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  galleryContainer: {
+    width: '100%',
+    height: 220,
+    backgroundColor: theme.colors.backgroundSecondary,
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  galleryOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: 'transparent',
+  },
+  galleryArrowLeft: {
+    position: 'absolute',
+    left: 10,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  galleryArrowRight: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  galleryDots: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  galleryDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  galleryDotActive: {
+    backgroundColor: '#fff',
+    width: 20,
+  },
+
+  // AI Grid Stats
+  aiGridStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.backgroundSecondary,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: 12,
+  },
+  aiStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  aiStatValue: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: theme.colors.text,
+  },
+  aiStatLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: theme.colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  aiModelBadge: {
+    marginLeft: 'auto',
+    backgroundColor: '#F3E8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#9333EA20',
+  },
+  aiModelBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#9333EA',
+  },
+  aiProcessingTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  aiProcessingTimeText: {
+    fontSize: 10,
+    color: theme.colors.textSecondary,
+  },
+
+  // Recommendations Card
+  recCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#10B98130',
+  },
+  recCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  recCardTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#059669',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  recItemCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: 8,
+  },
+  recItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#10B98115',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recItemText: {
+    flex: 1,
+    fontSize: FONT_SIZE.sm,
+    color: '#334155',
+    lineHeight: 20,
+    fontWeight: '500',
   },
 
   // Map preview

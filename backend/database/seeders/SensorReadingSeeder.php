@@ -79,7 +79,6 @@ class SensorReadingSeeder extends Seeder
                     'density'       => round($density, 4),
                     'data_quality'  => 0.95 + (mt_rand(0, 50) / 1000),
                     'is_anomaly'    => false,
-                    'created_at'    => $recordedAt->format('Y-m-d H:i:s'),
                 ];
             }
         }

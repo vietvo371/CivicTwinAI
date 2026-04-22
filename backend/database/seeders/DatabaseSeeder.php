@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             GraphSeeder::class,
-            SensorReadingSeeder::class,
+            // SensorReadingSeeder::class, // requires sensors seeded first
             IncidentSeeder::class,
             PredictionSeeder::class,
             RecommendationSeeder::class,

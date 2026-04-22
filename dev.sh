@@ -61,6 +61,16 @@ start_worker() {
   "
 }
 
+start_scheduler() {
+  echo -e "${GREEN}⏰ Starting Laravel Scheduler...${NC}"
+  osascript -e "
+    tell application \"Terminal\"
+      do script \"cd '$ROOT_DIR/backend' && php artisan schedule:work\"
+      set custom title of front window to \"⏰ Scheduler\"
+    end tell
+  "
+}
+
 start_ai() {
   echo -e "${BLUE}🧠 Starting AI Service (port 8001)...${NC}"
   osascript -e "
@@ -110,11 +120,11 @@ if [ -z "$1" ]; then
   sleep 1
   start_worker
   sleep 1
-  start_traffic_consumer
+  start_scheduler
   sleep 1
   start_ai
-  sleep 1
-  start_simulator
+  # start_traffic_consumer  # Kafka IoT consumer — không cần cho incident flow
+  # start_simulator          # Traffic telemetry simulator — không cần cho incident flow
 
   echo ""
   echo -e "${GREEN}✅ All services started!${NC}"
@@ -133,7 +143,8 @@ else
     frontend) start_frontend ;;
     reverb)   start_reverb ;;
     worker)   start_worker ;;
-    ai)       start_ai ;;
+    ai)        start_ai ;;
+    scheduler) start_scheduler ;;
     sim)      start_simulator ;;
     consumer) start_traffic_consumer ;;
     *)

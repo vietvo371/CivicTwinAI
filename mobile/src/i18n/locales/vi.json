@@ -325,6 +325,12 @@
     "viewOnlyDesc": "Bạn chỉ có quyền xem sự cố này.",
     "aiRecommendations": "Đề xuất từ AI",
     "aiPredictions": "Dự đoán từ AI",
+    "aiAnalysis": "Phân tích CivicTwin AI",
+    "edgesAnalyzed": "Đoạn phân tích",
+    "maxDensity": "Mật độ tối đa",
+    "avgConfidence": "Độ tin cậy TB",
+    "processingIn": "Xử lý trong {{ms}}ms",
+    "approvedRecommendations": "Khuyến nghị đã duyệt",
     "timelineUppercase": "DÒNG THỜI GIAN",
     "metadataUppercase": "DỮ LIỆU TỔNG HỢP",
     "event": {
@@ -724,7 +730,14 @@
     "recommendations": {
       "trafficAdjustment": "Điều chỉnh chu kỳ đèn giao thông khu vực. Chuyển hướng phương tiện sang trục phụ song song.",
       "accidentResponse": "Phối hợp cảnh sát + y tế. Phân luồng tạm thời tại 2 nút giao gần nhất.",
-      "defaultResponse": "Xác minh hiện trường và kích hoạt đội ứng cứu phù hợp."
+      "defaultResponse": "Xác minh hiện trường và kích hoạt đội ứng cứu phù hợp.",
+      "reroute": "Đề xuất chuyển hướng — dự đoán tắc nghẽn lan rộng :count đoạn.",
+      "priority_route": "Kích hoạt tuyến ưu tiên cứu hộ — tránh :count đoạn đường bị ảnh hưởng.",
+      "alert": "Cảnh báo đã phát — kiểm tra chi tiết khu vực bị ảnh hưởng.",
+      "emergency_alert": "Cảnh báo khẩn cấp cho người dân trong khu vực bị ảnh hưởng.",
+      "congestion_alert": "Cảnh báo ùn tắc — khuyến cáo chọn đường khác.",
+      "advisory": "Gợi ý ùn tắc — có thể tắc trong 15–60 phút tới.",
+      "signal_change": "Điều chỉnh thời gian đèn tín hiệu tại các nút giao bị ảnh hưởng."
     },
     "settingsTitle": "Cài đặt thông báo",
     "comingSoon": "Tính năng cài đặt thông báo đang được phát triển"

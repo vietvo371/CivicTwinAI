@@ -22,7 +22,8 @@ class CallAIPrediction implements ShouldQueue
     public int $backoff = 5;
 
     public function __construct(
-        public Incident $incident
+        public Incident $incident,
+        public string $locale = 'vi'
     ) {}
 
     public function handle(): void
@@ -72,6 +73,7 @@ class CallAIPrediction implements ShouldQueue
                 'incident_id' => $this->incident->id,
                 'severity' => $this->incident->severity,
                 'affected_edge_ids' => $edgeIds,
+                'locale' => $this->locale,
             ]);
 
             if (! $response->successful()) {
@@ -113,11 +115,23 @@ class CallAIPrediction implements ShouldQueue
                 'edges_predicted' => count($data['predictions'] ?? []),
             ]);
 
+            // Update edges with predicted density so map reflects real AI output
+            foreach ($grouped as $pred) {
+                DB::table('edges')
+                    ->where('id', $pred['edge_id'])
+                    ->update([
+                        'current_density'    => $pred['predicted_density'],
+                        'current_speed_kmh'  => DB::raw("ROUND((speed_limit_kmh * (1.0 - {$pred['predicted_density']}) * 0.9)::numeric, 1)"),
+                        'congestion_level'   => $pred['severity'],
+                        'metrics_updated_at' => now(),
+                    ]);
+            }
+
             // Broadcast prediction result to dashboard
             \App\Events\PredictionReceived::dispatch($prediction);
 
-            // Auto-generate recommendations based on prediction
-            app(\App\Services\RecommendationGenerator::class)->generate($prediction);
+            // Auto-generate recommendations based on prediction (with locale)
+            app(\App\Services\RecommendationGenerator::class)->generate($prediction, $this->locale);
 
         } catch (\Exception $e) {
             Log::error("AI prediction failed for incident #{$this->incident->id}: {$e->getMessage()}");

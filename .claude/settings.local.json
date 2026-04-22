@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:sca.duytan.edu.vn)"
+      "WebFetch(domain:sca.duytan.edu.vn)",
+      "Bash(php artisan *)",
+      "Bash(python3 -m notebooks.benchmark)",
+      "Bash(pip3 install *)",
+      "Read(//Users/voviet/.pyenv/versions/**)",
+      "Bash(pyenv versions *)",
+      "Bash(brew list *)",
+      "Bash(/opt/homebrew/bin/python3.11 -m pip install numpy pandas torch --quiet)",
+      "Bash(/opt/homebrew/bin/python3.11 -m notebooks.benchmark)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(./dev.sh worker *)",
+      "Bash(./dev.sh scheduler *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

@@ -83,6 +83,13 @@ class GraphSeeder extends Seeder
 
         ");
 
+        // Calculate realistic speed from density: speed = speed_limit * (1 - density) * 0.9
+        DB::statement("
+            UPDATE edges
+            SET current_speed_kmh = ROUND((speed_limit_kmh * (1.0 - current_density) * 0.9)::numeric, 1)
+            WHERE current_speed_kmh = 0 OR current_speed_kmh IS NULL
+        ");
+
         // ==========================================
         // SENSORS — 12 IoT sensors tại các điểm quan trọng
         // ==========================================

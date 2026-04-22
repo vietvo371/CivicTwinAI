@@ -267,6 +267,12 @@
     "viewOnlyDesc": "You only have view-only access to this incident.",
     "aiRecommendations": "AI Recommendations",
     "aiPredictions": "AI Predictions",
+    "aiAnalysis": "CivicTwin AI Analysis",
+    "edgesAnalyzed": "Edges Analyzed",
+    "maxDensity": "Max Density",
+    "avgConfidence": "Avg Confidence",
+    "processingIn": "Processed in {{ms}}ms",
+    "approvedRecommendations": "Approved Recommendations",
     "timelineUppercase": "TIMELINE",
     "metadataUppercase": "METADATA",
     "event": {
@@ -613,7 +619,14 @@
     "recommendations": {
       "trafficAdjustment": "Adjust regional traffic light cycles. Divert vehicles to parallel secondary axes.",
       "accidentResponse": "Coordinate police + medical. Temporary traffic diversion at the 2 nearest intersections.",
-      "defaultResponse": "Verify scene and activate appropriate response team."
+      "defaultResponse": "Verify scene and activate appropriate response team.",
+      "reroute": "Rerouting recommended — congestion spreading to :count segments.",
+      "priority_route": "Activate priority rescue route — avoid :count affected road segments.",
+      "alert": "Alert issued — check details for affected areas.",
+      "emergency_alert": "Emergency alert issued for residents in affected area.",
+      "congestion_alert": "Congestion warning — consider alternative routes.",
+      "advisory": "Traffic advisory — possible congestion in the next 15-60 minutes.",
+      "signal_change": "Adjust traffic signal timing at affected intersections."
     },
     "settingsTitle": "Notification Settings",
     "comingSoon": "Notification settings feature is under development"

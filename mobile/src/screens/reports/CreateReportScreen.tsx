@@ -47,6 +47,7 @@ const CreateReportScreen = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [aiAnalysisMessage, setAiAnalysisMessage] = useState('');
   const [aiFilledFields, setAiFilledFields] = useState<string[]>([]);
+  const [aiParseSuggestion, setAiParseSuggestion] = useState<string | null>(null);
 
   // Map Modal State
   const [showMapModal, setShowMapModal] = useState(false);
@@ -155,6 +156,10 @@ const CreateReportScreen = () => {
         uu_tien: data?.severity || prev.uu_tien,
         dia_chi: data?.location || prev.dia_chi,
       }));
+
+      if (data?.title || data?.summary) {
+        setAiParseSuggestion((data.title || data.summary) ?? null);
+      }
 
       setAiFilledFields(['danh_muc', 'uu_tien', 'dia_chi']);
       setSuccessMessage(t('reports.aiFilledSuccess'));
@@ -647,6 +652,8 @@ const CreateReportScreen = () => {
           formData.vi_do,
           formData.kinh_do,
           t,
+          aiVisionResult?.description,
+          aiParseSuggestion ?? undefined,
         ),
       );
       fd.append('type', formData.danh_muc);
@@ -701,6 +708,8 @@ const CreateReportScreen = () => {
     setUploadedMedia([]);
     setErrors({});
     setAiFilledFields([]);
+    setAiParseSuggestion(null);
+    setAiVisionResult(null);
 
     // Navigate back
     navigation.goBack();
@@ -902,16 +911,24 @@ const CreateReportScreen = () => {
                 </View>
 
                 <View style={styles.aiVisionBadgeRow}>
-                  {aiVisionResult.type && (
-                    <View style={styles.aiResultBadge}>
-                      <Text style={styles.aiResultBadgeText}>{aiVisionResult.type.toUpperCase()}</Text>
-                    </View>
-                  )}
-                  {aiVisionResult.severity && (
-                    <View style={[styles.aiResultBadge, { backgroundColor: '#F43F5E20', borderColor: '#F43F5E40' }]}>
-                      <Text style={[styles.aiResultBadgeText, { color: '#F43F5E' }]}>{aiVisionResult.severity.toUpperCase()}</Text>
-                    </View>
-                  )}
+                  {aiVisionResult.type && (() => {
+                    const cat = CATEGORIES.find((c: any) => c.value === aiVisionResult.type);
+                    return (
+                      <View style={styles.aiResultBadge}>
+                        <Text style={styles.aiResultBadgeText}>{cat ? t(cat.labelKey) : aiVisionResult.type.toUpperCase()}</Text>
+                      </View>
+                    );
+                  })()}
+                  {aiVisionResult.severity && (() => {
+                    const pri = PRIORITIES.find((p: any) => p.value === aiVisionResult.severity);
+                    const colorMap: Record<string, string> = { low: '#10B981', medium: '#3B82F6', high: '#F59E0B', critical: '#F43F5E' };
+                    const color = colorMap[aiVisionResult.severity] ?? '#F43F5E';
+                    return (
+                      <View style={[styles.aiResultBadge, { backgroundColor: color + '20', borderColor: color + '40' }]}>
+                        <Text style={[styles.aiResultBadgeText, { color }]}>{pri ? t(pri.labelKey) : aiVisionResult.severity.toUpperCase()}</Text>
+                      </View>
+                    );
+                  })()}
                 </View>
 
                 {aiVisionResult.description && (
@@ -1119,6 +1136,8 @@ const CreateReportScreen = () => {
                 formData.vi_do,
                 formData.kinh_do,
                 t,
+                aiVisionResult?.description,
+                aiParseSuggestion ?? undefined,
               )}
             </Text>
           </View>

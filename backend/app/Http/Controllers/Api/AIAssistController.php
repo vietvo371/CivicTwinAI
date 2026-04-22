@@ -115,19 +115,25 @@ class AIAssistController extends Controller
      * @param  mixed  $parsed  Kết quả json_decode
      * @return array{type: string, severity: string, description: string, confidence: float, unclear: bool, user_hint?: string}
      */
-    private function normalizeVisionResult(mixed $parsed): array
+    private function normalizeVisionResult(mixed $parsed, bool $isVi = true): array
     {
         $allowedTypes = ['accident', 'congestion', 'construction', 'weather', 'other'];
         $allowedSev = ['low', 'medium', 'high', 'critical'];
 
-        $fallback = [
-            'type' => 'other',
-            'severity' => 'low',
-            'description' => __('api.ai_vision_unclear_description'),
-            'confidence' => 0.0,
-            'unclear' => true,
-            'user_hint' => __('api.ai_vision_user_hint'),
+        // Fallback text theo locale
+        $fallbackVi = [
+            'description' => 'Không thể phân tích hình ảnh. Vui lòng mô tả thủ công.',
+            'user_hint' => 'Thử chụp ảnh rõ hơn hoặc nhập mô tả thủ công.',
         ];
+        $fallbackEn = [
+            'description' => 'Unable to analyze the image. Please provide a manual description.',
+            'user_hint' => 'Try taking a clearer photo or enter a manual description.',
+        ];
+        $fallback = $isVi ? $fallbackVi : $fallbackEn;
+        $fallback['type'] = 'other';
+        $fallback['severity'] = 'low';
+        $fallback['confidence'] = 0.0;
+        $fallback['unclear'] = true;
 
         if (! is_array($parsed) || $parsed === [] || array_is_list($parsed)) {
             return $fallback;
@@ -162,13 +168,62 @@ class AIAssistController extends Controller
     }
 
     /**
+     * Read locale from request header.
+     * Supports both `Accept-Language` (web) and `x-Language` (mobile).
+     * x-Language takes priority over Accept-Language.
+     */
+    private function getLocale(Request $request): string
+    {
+        // x-Language (mobile) takes priority
+        if ($request->header('x-Language')) {
+            return $request->header('x-Language');
+        }
+        // Accept-Language (web)
+        $acceptLang = $request->header('Accept-Language');
+        if ($acceptLang) {
+            // Parse "en-US,en;q=0.9" → extract primary language
+            $parts = explode(',', strtolower($acceptLang));
+            $primary = trim(explode(';', $parts[0])[0]);
+            return $primary;
+        }
+        return 'vi';
+    }
+
+    /**
      * Module 2: Parse natural language text into structured incident data.
      * POST /api/ai/parse-report
+     *
+     * Respects Accept-Language (web) / x-Language (mobile) header and returns
+     * title/summary in the user's language so the frontend can display immediately.
      */
     public function parseReport(Request $request)
     {
         $request->validate(['text' => 'required|string|min:3|max:1000']);
         $text = $request->input('text');
+        $locale = $this->getLocale($request);
+        $isVi = str_starts_with(strtolower($locale), 'vi');
+
+        $systemVi = 'Bạn là trợ lý phân tích sự cố giao thông. Từ mô tả của người dân, hãy trích xuất JSON với các trường:
+- "type": một trong ["accident","congestion","construction","weather","other"]
+- "severity": một trong ["low","medium","high","critical"]
+- "location": tên đường/địa điểm (nếu có)
+- "title": tiêu đề ngắn gọn cho sự cố bằng TIẾNG VIỆT (tối đa 60 ký tự)
+- "summary": tóm tắt tình huống 1 câu bằng TIẾNG VIỆT
+
+Nếu mô tả quá ngắn hoặc vô nghĩa (ví dụ: "asdasd", "abc"), hãy trả về: {"error": "NOT_ENOUGH_INFO", "message": "Mô tả chưa đủ thông tin để phân tích."}.
+Chỉ trả về JSON, không giải thích thêm.';
+
+        $systemEn = 'You are a traffic incident analysis assistant. From the citizen description, extract a JSON with these fields:
+- "type": one of ["accident","congestion","construction","weather","other"]
+- "severity": one of ["low","medium","high","critical"]
+- "location": street/place name (if any)
+- "title": short title for the incident in ENGLISH (max 60 characters)
+- "summary": one-sentence summary in ENGLISH
+
+If the description is too short or meaningless (e.g. "asdasd", "abc"), return: {"error": "NOT_ENOUGH_INFO", "message": "Description not enough info to analyze."}.
+Return JSON only, no explanations.';
+
+        $system = $isVi ? $systemVi : $systemEn;
 
         try {
             $response = Http::withHeaders([
@@ -179,18 +234,7 @@ class AIAssistController extends Controller
                 'temperature' => 0.1,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => 'Bạn là trợ lý phân tích sự cố giao thông. Từ mô tả của người dân, hãy trích xuất JSON với các trường:
-- "type": một trong ["accident","congestion","construction","weather","other"]
-- "severity": một trong ["low","medium","high","critical"]
-- "location": tên đường/địa điểm (nếu có)
-- "title": tiêu đề ngắn gọn cho sự cố (tối đa 60 ký tự)
-- "summary": tóm tắt tình huống 1 câu
-
-Nếu mô tả quá ngắn hoặc vô nghĩa (ví dụ: "asdasd", "abc"), hãy trả về: {"error": "NOT_ENOUGH_INFO", "message": "Mô tả chưa đủ thông tin để phân tích."}.
-Chỉ trả về JSON, không giải thích thêm.'
-                    ],
+                    ['role' => 'system', 'content' => $system],
                     ['role' => 'user', 'content' => $text],
                 ],
             ]);
@@ -202,6 +246,11 @@ Chỉ trả về JSON, không giải thích thêm.'
             $content = $response->json('choices.0.message.content', '{}');
             $parsed = json_decode($content, true) ?? [];
 
+            if (!($parsed['error'] ?? false)) {
+                $parsed['title_vi'] = $parsed['title'] ?? null;
+                $parsed['summary_vi'] = $parsed['summary'] ?? null;
+            }
+
             return ApiResponse::success($parsed, 'AI analysis completed.');
         } catch (\Exception $e) {
             Log::error("AI parse-report failed: {$e->getMessage()}");
@@ -212,15 +261,35 @@ Chỉ trả về JSON, không giải thích thêm.'
     /**
      * Module 3: Analyze uploaded image to detect incident severity.
      * POST /api/ai/analyze-image
+     *
+     * Respects Accept-Language header (vi | en) and returns description in the
+     * user's language so it can be displayed directly in the Vision card.
      */
     public function analyzeImage(Request $request)
     {
         $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg|max:5120']);
 
+        $locale = $this->getLocale($request);
+        $isVi = str_starts_with(strtolower($locale), 'vi');
+
         try {
             $encoded = $this->encodeImageForGroqVision($request->file('image'));
             $imageData = $encoded['base64'];
             $mimeType = $encoded['mime'];
+
+            // Bilingual system prompt — language portion matches Accept-Language
+            $langInstruction = $isVi
+                ? '"description" (1–2 short sentences in Vietnamese: vehicles, road, crash, jam, flood, worksite, etc.)'
+                : '"description" (1–2 short sentences in English: vehicles, road, crash, jam, flood, worksite, etc.)';
+
+            $unclearHint = $isVi
+                ? 'description explaining in Vietnamese'
+                : 'description explaining in English';
+
+            // User prompt text theo locale
+            $userPromptVi = 'Phân tích ảnh cho báo cáo sự cố giao thông. Trả về đúng một JSON object theo schema.';
+            $userPromptEn = 'Analyze this image for a traffic incident report. Return exactly one JSON object following the schema.';
+            $userPrompt = $isVi ? $userPromptVi : $userPromptEn;
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->groqKey(),
@@ -237,16 +306,16 @@ Chỉ trả về JSON, không giải thích thêm.'
                             .'Reply with ONE JSON object only (no markdown). Keys: '
                             .'"type" (accident|congestion|construction|weather|other), '
                             .'"severity" (low|medium|high|critical), '
-                            .'"description" (1–2 short sentences in Vietnamese: vehicles, road, crash, jam, flood, worksite, etc.), '
+                            .$langInstruction.', '
                             .'"confidence" (0 to 1). '
-                            .'If the image is unrelated, too dark, indoor, selfie, or not showing streets/traffic: still return valid JSON with type "other", severity "low", description explaining in Vietnamese, confidence at most 0.25.',
+                            .'If the image is unrelated, too dark, indoor, selfie, or not showing streets/traffic: still return valid JSON with type "other", severity "low", '.$unclearHint.', confidence at most 0.25.',
                     ],
                     [
                         'role' => 'user',
                         'content' => [
                             [
                                 'type' => 'text',
-                                'text' => 'Phân tích ảnh cho báo cáo sự cố giao thông. Trả về đúng một JSON object theo schema.',
+                                'text' => $userPrompt,
                             ],
                             [
                                 'type' => 'image_url',
@@ -292,7 +361,7 @@ Chỉ trả về JSON, không giải thích thêm.'
                 }
             }
 
-            $normalized = $this->normalizeVisionResult($parsed);
+            $normalized = $this->normalizeVisionResult($parsed, $isVi);
 
             if ($normalized['unclear'] ?? false) {
                 Log::warning('AI analyze-image: normalized to unclear fallback', [

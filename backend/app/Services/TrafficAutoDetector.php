@@ -140,6 +140,7 @@ class TrafficAutoDetector
         Log::info("Auto-detected incident on edge #{$edge->id}: {$title}");
 
         IncidentCreated::dispatch($incident);
-        CallAIPrediction::dispatch($incident);
+        // Auto-detected incidents use English for system-generated recommendations
+        CallAIPrediction::dispatch($incident, 'en');
     }
 }

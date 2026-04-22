@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Prediction;
 use App\Models\PredictionEdge;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PredictionSeeder extends Seeder
 {
@@ -18,9 +19,9 @@ class PredictionSeeder extends Seeder
                 'status' => 'completed',
                 'processing_time_ms' => 342,
                 'edges' => [
-                    ['edge_id' => 3, 'predicted_density' => 0.9500, 'time_horizon_minutes' => 5, 'confidence' => 0.92, 'severity' => 'severe'],
+                    ['edge_id' => 3, 'predicted_density' => 0.9500, 'time_horizon_minutes' => 5, 'confidence' => 0.92, 'severity' => 'critical'],
                     ['edge_id' => 4, 'predicted_density' => 0.8800, 'time_horizon_minutes' => 10, 'confidence' => 0.89, 'severity' => 'heavy'],
-                    ['edge_id' => 17, 'predicted_density' => 0.9200, 'time_horizon_minutes' => 15, 'confidence' => 0.87, 'severity' => 'severe'],
+                    ['edge_id' => 17, 'predicted_density' => 0.9200, 'time_horizon_minutes' => 15, 'confidence' => 0.87, 'severity' => 'critical'],
                     ['edge_id' => 7, 'predicted_density' => 0.7500, 'time_horizon_minutes' => 20, 'confidence' => 0.82, 'severity' => 'heavy'],
                     ['edge_id' => 8, 'predicted_density' => 0.8000, 'time_horizon_minutes' => 25, 'confidence' => 0.80, 'severity' => 'heavy'],
                 ],
@@ -44,7 +45,7 @@ class PredictionSeeder extends Seeder
                 'status' => 'completed',
                 'processing_time_ms' => 567,
                 'edges' => [
-                    ['edge_id' => 14, 'predicted_density' => 0.9800, 'time_horizon_minutes' => 5, 'confidence' => 0.94, 'severity' => 'severe'],
+                    ['edge_id' => 14, 'predicted_density' => 0.9800, 'time_horizon_minutes' => 5, 'confidence' => 0.94, 'severity' => 'critical'],
                     ['edge_id' => 21, 'predicted_density' => 0.8500, 'time_horizon_minutes' => 10, 'confidence' => 0.90, 'severity' => 'heavy'],
                     ['edge_id' => 10, 'predicted_density' => 0.7200, 'time_horizon_minutes' => 15, 'confidence' => 0.86, 'severity' => 'moderate'],
                     ['edge_id' => 19, 'predicted_density' => 0.6500, 'time_horizon_minutes' => 20, 'confidence' => 0.83, 'severity' => 'moderate'],
@@ -59,7 +60,7 @@ class PredictionSeeder extends Seeder
                 'status' => 'completed',
                 'processing_time_ms' => 298,
                 'edges' => [
-                    ['edge_id' => 8, 'predicted_density' => 0.9000, 'time_horizon_minutes' => 5, 'confidence' => 0.89, 'severity' => 'severe'],
+                    ['edge_id' => 8, 'predicted_density' => 0.9000, 'time_horizon_minutes' => 5, 'confidence' => 0.89, 'severity' => 'critical'],
                     ['edge_id' => 7, 'predicted_density' => 0.8200, 'time_horizon_minutes' => 10, 'confidence' => 0.85, 'severity' => 'heavy'],
                     ['edge_id' => 1, 'predicted_density' => 0.7000, 'time_horizon_minutes' => 15, 'confidence' => 0.80, 'severity' => 'moderate'],
                 ],
@@ -83,7 +84,7 @@ class PredictionSeeder extends Seeder
                 'status' => 'completed',
                 'processing_time_ms' => 890,
                 'edges' => [
-                    ['edge_id' => 16, 'predicted_density' => 0.9500, 'time_horizon_minutes' => 10, 'confidence' => 0.91, 'severity' => 'severe'],
+                    ['edge_id' => 16, 'predicted_density' => 0.9500, 'time_horizon_minutes' => 10, 'confidence' => 0.91, 'severity' => 'critical'],
                     ['edge_id' => 15, 'predicted_density' => 0.7800, 'time_horizon_minutes' => 20, 'confidence' => 0.87, 'severity' => 'heavy'],
                     ['edge_id' => 24, 'predicted_density' => 0.7200, 'time_horizon_minutes' => 30, 'confidence' => 0.83, 'severity' => 'moderate'],
                     ['edge_id' => 13, 'predicted_density' => 0.6500, 'time_horizon_minutes' => 60, 'confidence' => 0.79, 'severity' => 'moderate'],
@@ -111,6 +112,12 @@ class PredictionSeeder extends Seeder
             ],
         ];
 
+        // Incidents that are still active (not resolved) — edges should reflect AI density
+        $activeIncidentIds = \App\Models\Incident::whereNotIn('status', ['resolved', 'closed'])
+            ->pluck('id')
+            ->flip()
+            ->all();
+
         foreach ($predictions as $data) {
             $edges = $data['edges'];
             unset($data['edges']);
@@ -121,6 +128,18 @@ class PredictionSeeder extends Seeder
                 PredictionEdge::create(array_merge($edge, [
                     'prediction_id' => $prediction->id,
                 ]));
+
+                // Sync edge density to reflect active incident AI predictions
+                if (isset($activeIncidentIds[$prediction->incident_id]) && $prediction->status === 'completed') {
+                    DB::table('edges')
+                        ->where('id', $edge['edge_id'])
+                        ->update([
+                            'current_density'    => $edge['predicted_density'],
+                            'current_speed_kmh'  => DB::raw("ROUND((speed_limit_kmh * (1.0 - {$edge['predicted_density']}) * 0.9)::numeric, 1)"),
+                            'congestion_level'   => $edge['severity'],
+                            'metrics_updated_at' => now(),
+                        ]);
+                }
             }
         }
     }

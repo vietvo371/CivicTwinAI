@@ -101,7 +101,36 @@
 >  - `frontend/src/app/(emergency)/emergency/priority-route/page.tsx` — UI mới (search, map click, presets)
 >  - `frontend/src/components/TrafficMap.tsx` — thêm `onMapClick` prop
 
-#### 6. Benchmark AI Model — Đo độ chính xác của mô hình
+#### 6. Demo Realism — Incident markers + Realtime edge color + Auto decay ✅ Hoàn thành
+
+- **Trạng thái:** ✅ Đầy đủ, đã test seed xong
+- **Những gì đã làm:**
+  1. **Incident markers** trên `/map` (citizen) — colored DOM pins, hover glow (box-shadow, không scale), click → IncidentDetailModal
+  2. **IncidentDetailModal** — image gallery, severity badge, AI prediction stats, approved recommendations
+  3. **Edge color tied to AI** — `CallAIPrediction` job UPDATE `edges.current_density` sau khi AI chạy → màu map phản ánh real DB value
+  4. **IncidentResolved event** — khi operator resolve: reset edge density về 40% cũ, broadcast → frontend xóa marker + reload GeoJSON
+  5. **TrafficDensityDecayed scheduled job** — mỗi 5 phút decay density × 0.92, đường 0.9 → baseline 0.30 sau ~60 phút
+  6. **Seed nhất quán** — `PredictionSeeder` UPDATE edges theo predicted density cho active incidents; fix `severity: 'severe' → 'critical'`
+- **Files đã thêm/sửa:**
+  - `backend/app/Jobs/CallAIPrediction.php` — thêm UPDATE edges sau khi save predictions
+  - `backend/app/Jobs/DecayTrafficDensity.php` — scheduled decay job (mới)
+  - `backend/app/Events/IncidentResolved.php` — broadcast khi resolve (mới)
+  - `backend/app/Events/TrafficDensityDecayed.php` — broadcast batch metrics sau decay (mới)
+  - `backend/app/Http/Controllers/Api/IncidentController.php` — reset edges khi resolve + dispatch IncidentResolved
+  - `backend/routes/console.php` — `Schedule::job(DecayTrafficDensity)->everyFiveMinutes()`
+  - `backend/database/seeders/PredictionSeeder.php` — sync edge density cho active incidents
+  - `frontend/src/components/TrafficMap.tsx` — handlers: IncidentResolved, TrafficDensityDecayed, marker management
+  - `frontend/src/app/(operator)/dashboard/page.tsx` — handler IncidentResolved → clear highlights
+  - `dev.sh` — thêm `start_scheduler` (php artisan schedule:work)
+- **Flow hoàn chỉnh:**
+
+  ```text
+  Tạo incident → AI job (5-10s) → UPDATE edges đỏ → PredictionReceived → map đỏ realtime
+  Operator resolve → UPDATE edges giảm → IncidentResolved → marker biến mất + map xanh
+  Mỗi 5 phút → DecayTrafficDensity → TrafficDensityDecayed → map tự xanh dần
+  ```
+
+#### 7. Benchmark AI Model — Đo độ chính xác của mô hình
 > **Tại sao quan trọng:** Báo cáo/slide cần con số cụ thể, ban giám khảo hay hỏi "mô hình của bạn chính xác bao nhiêu %?"
 
 - **Vấn đề:** Hiện tại không có con số đo lường nào cho mô hình LSTM — không biết dự đoán sai bao nhiêu

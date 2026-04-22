@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\IncidentCreated;
+use App\Events\IncidentResolved;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Jobs\CallAIPrediction;
@@ -51,7 +52,7 @@ class IncidentController extends Controller
     public function publicList(Request $request): JsonResponse
     {
         $query = Incident::select([
-            'id', 'title', 'type', 'severity', 'status', 'created_at',
+            'id', 'title', 'type', 'severity', 'status', 'description', 'affected_edge_ids', 'created_at',
             DB::raw('ST_X(location::geometry) as longitude'),
             DB::raw('ST_Y(location::geometry) as latitude'),
         ])
@@ -148,10 +149,56 @@ class IncidentController extends Controller
         // Broadcast realtime event to all connected clients
         IncidentCreated::dispatch($incident);
 
-        // Dispatch AI prediction job for all severities
-        CallAIPrediction::dispatch($incident);
+        // Dispatch AI prediction job for all severities (with locale for localized recommendations)
+        $locale = $request->header('Accept-Language') ?? $request->header('x-Language') ?? 'vi';
+        CallAIPrediction::dispatch($incident, str_starts_with(strtolower($locale), 'en') ? 'en' : 'vi');
 
         return ApiResponse::created($incident->fresh(['reporter']), 'api.incident_created');
+    }
+
+    public function publicShow(Incident $incident): JsonResponse
+    {
+        $incident->load(['predictions.predictionEdges', 'recommendations' => function ($q) {
+            $q->whereIn('status', ['approved', 'executed'])->latest()->limit(3);
+        }]);
+
+        $coords = null;
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $coords = DB::selectOne(
+                'SELECT ST_X(location::geometry) as lng, ST_Y(location::geometry) as lat FROM incidents WHERE id = ? AND location IS NOT NULL',
+                [$incident->id]
+            );
+        }
+
+        $latestPrediction = $incident->predictions->sortByDesc('created_at')->first();
+
+        return ApiResponse::success([
+            'id' => $incident->id,
+            'title' => $incident->title,
+            'description' => $incident->description,
+            'type' => $incident->type,
+            'severity' => $incident->severity,
+            'status' => $incident->status,
+            'source' => $incident->source,
+            'location_name' => $incident->location_name,
+            'affected_edge_ids' => $incident->affected_edge_ids ?? [],
+            'images' => $incident->metadata['images'] ?? [],
+            'created_at' => $incident->created_at->toISOString(),
+            'location' => $coords,
+            'prediction' => $latestPrediction ? [
+                'model_version' => $latestPrediction->model_version,
+                'status' => $latestPrediction->status,
+                'processing_time_ms' => $latestPrediction->processing_time_ms,
+                'edges_count' => $latestPrediction->predictionEdges->count(),
+                'max_density' => $latestPrediction->predictionEdges->max(fn ($e) => (float) $e->predicted_density),
+                'avg_confidence' => $latestPrediction->predictionEdges->avg(fn ($e) => (float) $e->confidence),
+            ] : null,
+            'recommendations' => $incident->recommendations->map(fn ($r) => [
+                'type' => $r->type,
+                'description' => $r->description,
+                'status' => $r->status,
+            ])->values(),
+        ], 'api.incident_details');
     }
 
     public function show(Incident $incident): JsonResponse
@@ -161,13 +208,25 @@ class IncidentController extends Controller
         $coords = null;
         if (DB::connection()->getDriverName() === 'pgsql') {
             $coords = DB::selectOne(
-                'SELECT ST_X(location) as lng, ST_Y(location) as lat FROM incidents WHERE id = ? AND location IS NOT NULL',
+                'SELECT ST_X(location::geometry) as lng, ST_Y(location::geometry) as lat FROM incidents WHERE id = ? AND location IS NOT NULL',
                 [$incident->id]
             );
         }
 
+        // Build prediction summary (same as publicShow)
+        $latestPrediction = $incident->predictions->sortByDesc('created_at')->first();
+
         return ApiResponse::success(array_merge($incident->toArray(), [
             'location' => $coords,
+            'images' => $incident->metadata['images'] ?? [],
+            'prediction' => $latestPrediction ? [
+                'model_version' => $latestPrediction->model_version,
+                'status' => $latestPrediction->status,
+                'processing_time_ms' => $latestPrediction->processing_time_ms,
+                'edges_count' => $latestPrediction->predictionEdges->count(),
+                'max_density' => $latestPrediction->predictionEdges->max(fn ($e) => (float) $e->predicted_density),
+                'avg_confidence' => $latestPrediction->predictionEdges->avg(fn ($e) => (float) $e->confidence),
+            ] : null,
         ]), 'api.incident_details');
     }
 
@@ -181,11 +240,43 @@ class IncidentController extends Controller
             'description' => 'sometimes|nullable|string',
         ]);
 
-        if (isset($validated['status']) && $validated['status'] === 'resolved') {
+        $isResolving = isset($validated['status'])
+            && in_array($validated['status'], ['resolved', 'closed'])
+            && ! in_array($incident->status, ['resolved', 'closed']);
+
+        if ($isResolving) {
             $validated['resolved_at'] = now();
         }
 
         $incident->update($validated);
+
+        // When resolved/closed: restore affected edges to baseline density
+        if ($isResolving) {
+            $affectedIds = $incident->affected_edge_ids ?? [];
+
+            // Also collect edge IDs from the latest prediction for this incident
+            $predEdgeIds = DB::table('prediction_edges as pe')
+                ->join('predictions as p', 'p.id', '=', 'pe.prediction_id')
+                ->where('p.incident_id', $incident->id)
+                ->where('p.status', 'completed')
+                ->pluck('pe.edge_id')
+                ->toArray();
+
+            $allEdgeIds = array_unique(array_merge($affectedIds, $predEdgeIds));
+
+            if (! empty($allEdgeIds)) {
+                DB::table('edges')
+                    ->whereIn('id', $allEdgeIds)
+                    ->update([
+                        'current_density'    => DB::raw('LEAST(current_density * 0.4, 0.3)'),
+                        'current_speed_kmh'  => DB::raw('ROUND((speed_limit_kmh * (1.0 - LEAST(current_density * 0.4, 0.3)) * 0.9)::numeric, 1)'),
+                        'congestion_level'   => 'none',
+                        'metrics_updated_at' => now(),
+                    ]);
+            }
+
+            IncidentResolved::dispatch($incident->fresh(), $allEdgeIds);
+        }
 
         return ApiResponse::success($incident->fresh(['reporter', 'assignee']), 'api.incident_updated');
     }

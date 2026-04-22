@@ -5,14 +5,18 @@ namespace App\Services;
 use App\Models\Prediction;
 use App\Models\Recommendation;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Lang;
 
 class RecommendationGenerator
 {
     /**
      * Generate recommendations based on prediction results.
      * Logic from business-logic.md Luồng 4.
+     * 
+     * Uses Laravel i18n (lang files) so frontend gets locale-aware text
+     * when displaying recommendations via t('recommendations.type.KEY').
      */
-    public function generate(Prediction $prediction): void
+    public function generate(Prediction $prediction, string $locale = 'vi'): void
     {
         $prediction->load(['incident', 'predictionEdges']);
 
@@ -31,52 +35,63 @@ class RecommendationGenerator
         }
 
         match ($severity) {
-            'critical' => $this->generateCritical($prediction, $highConfidenceEdges),
-            'high' => $this->generateHigh($prediction, $highConfidenceEdges),
-            'medium' => $this->generateMedium($prediction, $highConfidenceEdges),
+            'critical' => $this->generateCritical($prediction, $highConfidenceEdges, $locale),
+            'high' => $this->generateHigh($prediction, $highConfidenceEdges, $locale),
+            'medium' => $this->generateMedium($prediction, $highConfidenceEdges, $locale),
             default => null,
         };
     }
 
-    private function generateCritical(Prediction $prediction, $edges): void
+    private function generateCritical(Prediction $prediction, $edges, string $locale): void
     {
-        // Priority route + alert
+        $affectedCount = $edges->count();
+        $maxDensity = $edges->max('predicted_density');
+
+        // Priority route
         Recommendation::create([
             'prediction_id' => $prediction->id,
             'incident_id' => $prediction->incident_id,
             'type' => 'priority_route',
-            'description' => 'Kích hoạt tuyến ưu tiên cứu hộ — tránh các đoạn đường bị ảnh hưởng.',
+            'description' => Lang::get("recommendations.priority_route.description", [
+                'count' => $affectedCount,
+            ], $locale),
             'details' => [
                 'affected_edges' => $edges->pluck('edge_id')->values(),
-                'max_predicted_density' => $edges->max('predicted_density'),
+                'max_predicted_density' => $maxDensity,
+                'message_key' => 'recommendations.priority_route.message',
             ],
             'status' => 'pending',
         ]);
 
+        // Emergency alert
         Recommendation::create([
             'prediction_id' => $prediction->id,
             'incident_id' => $prediction->incident_id,
             'type' => 'alert',
-            'description' => 'Cảnh báo khẩn cấp cho người dân trong khu vực bị ảnh hưởng.',
+            'description' => Lang::get("recommendations.emergency_alert.description", [], $locale),
             'details' => [
-                'message' => '⚠️ Sự cố nghiêm trọng. Vui lòng tránh khu vực.',
+                'message' => Lang::get("recommendations.emergency_alert.message", [], $locale),
                 'affected_edges' => $edges->pluck('edge_id')->values(),
+                'severity' => 'critical',
             ],
             'status' => 'pending',
         ]);
     }
 
-    private function generateHigh(Prediction $prediction, $edges): void
+    private function generateHigh(Prediction $prediction, $edges, string $locale): void
     {
-        // Reroute + alert
         $affectedEdgeIds = $edges->pluck('edge_id')->values();
         $avgDelay = $edges->avg('predicted_delay_s');
+        $affectedCount = $affectedEdgeIds->count();
 
+        // Reroute recommendation
         Recommendation::create([
             'prediction_id' => $prediction->id,
             'incident_id' => $prediction->incident_id,
             'type' => 'reroute',
-            'description' => "Đề xuất chuyển hướng — dự đoán tắc nghẽn lan rộng {$affectedEdgeIds->count()} đoạn.",
+            'description' => Lang::get("recommendations.reroute.description", [
+                'count' => $affectedCount,
+            ], $locale),
             'details' => [
                 'affected_edges' => $affectedEdgeIds,
                 'estimated_delay_s' => (int) $avgDelay,
@@ -84,27 +99,29 @@ class RecommendationGenerator
             'status' => 'pending',
         ]);
 
+        // Congestion alert
         Recommendation::create([
             'prediction_id' => $prediction->id,
             'incident_id' => $prediction->incident_id,
             'type' => 'alert',
-            'description' => 'Cảnh báo ùn tắc — khuyến cáo chọn đường khác.',
+            'description' => Lang::get("recommendations.congestion_alert.description", [], $locale),
             'details' => [
-                'message' => '⚠️ Ùn tắc nghiêm trọng phía trước. Nên chuyển hướng.',
+                'message' => Lang::get("recommendations.congestion_alert.message", [], $locale),
                 'affected_edges' => $affectedEdgeIds,
+                'severity' => 'high',
             ],
             'status' => 'pending',
         ]);
     }
 
-    private function generateMedium(Prediction $prediction, $edges): void
+    private function generateMedium(Prediction $prediction, $edges, string $locale): void
     {
-        // Reroute suggestion only
+        // Advisory reroute suggestion
         Recommendation::create([
             'prediction_id' => $prediction->id,
             'incident_id' => $prediction->incident_id,
-            'type' => 'reroute',
-            'description' => 'Gợi ý chuyển hướng — dự đoán có thể tắc trong 15–60 phút tới.',
+            'type' => 'advisory',
+            'description' => Lang::get("recommendations.advisory.description", [], $locale),
             'details' => [
                 'affected_edges' => $edges->pluck('edge_id')->values(),
                 'estimated_delay_s' => (int) $edges->avg('predicted_delay_s'),

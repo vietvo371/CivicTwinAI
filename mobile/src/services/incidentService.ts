@@ -19,7 +19,14 @@ export interface Incident {
     metadata: Record<string, any> | null;
     reporter?: { id: number; name: string; email: string };
     assignee?: { id: number; name: string; email: string } | null;
-    predictions?: any[];
+    prediction?: {
+        model_version: string;
+        status: string;
+        processing_time_ms: number | null;
+        edges_count: number;
+        max_density: number;
+        avg_confidence: number;
+    } | null;
     recommendations?: any[];
     created_at: string;
     updated_at: string;

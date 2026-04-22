@@ -50,7 +50,8 @@ Route::prefix('auth')->group(function () {
 // APIs that don't need authentication (e.g. Map embedding for public)
 Route::prefix('public')->group(function () {
     Route::get('edges/geojson', [EdgeController::class, 'geojson']);
-    Route::get('incidents', [IncidentController::class, 'publicList']); // placeholder if public list needed
+    Route::get('incidents', [IncidentController::class, 'publicList']);
+    Route::get('incidents/{incident}', [IncidentController::class, 'publicShow']);
 });
 
 // ==========================================
